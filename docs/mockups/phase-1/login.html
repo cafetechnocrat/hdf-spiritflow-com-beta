@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spirit Flow</title>
+<link rel="icon" type="image/png" href="../../../src/app/icon.png">
+<style>
+  /* Apple-inspired theme: one blue accent, soft neutral greys, system font,
+     generous spacing, segmented control, rounded surfaces. Original layout. */
+  :root, :root[data-theme="light"] {
+    --accent: #0071E3;          /* button fill */
+    --accent-hover: #0077ED;
+    --accent-press: #0062C4;
+    --on-accent: #FFFFFF;
+    --link: #0066CC;            /* link and active text, 5.6:1 on white */
+    --background: #F5F5F7;
+    --surface: #FFFFFF;
+    --field: #FFFFFF;
+    --track: #E8E8ED;           /* segmented control track */
+    --text: #1D1D1F;
+    --text-muted: #6E6E73;
+    --border: #86868B;
+    --border-soft: #D2D2D7;
+    --error: #C9342A;
+    --error-bg: #FFF1F0;
+    --shadow: 0 2px 8px rgba(0,0,0,.04), 0 12px 40px rgba(0,0,0,.08);
+    color-scheme: light;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    min-height: 100vh; min-height: 100dvh;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 17px; line-height: 1.47;
+    letter-spacing: -.01em;
+    color: var(--text);
+    background: var(--background);
+    -webkit-font-smoothing: antialiased;
+  }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  .page { position: relative; min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; }
+  /* Card is centred in the full viewport, both ways. The footer sits at the bottom edge. */
+  .main { flex: 1; display: flex; align-items: center; justify-content: center; padding: 48px 16px; }
+
+  .card {
+    width: 100%; max-width: 340px;
+    background: var(--surface); border-radius: 16px;
+    padding: 16px 16px 12px;
+    box-shadow: var(--shadow);
+  }
+  .brand { display: flex; justify-content: center; margin: 0 0 24px; }
+  .brand-chip { line-height: 0; }
+  .brand-logo { width: 150px; height: auto; margin: -10px 0; }
+  h1 { margin: 0 0 1px; text-align: center; font-size: 1.25rem; line-height: 1.25; font-weight: 600; letter-spacing: -.02em; }
+  .sub { margin: 0 0 12px; text-align: center; color: var(--text-muted); font-size: .85rem; }
+
+  /* Segmented control */
+  .tabs {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 2px; padding: 2px; margin-bottom: 12px;
+    background: var(--track); border-radius: 10px;
+  }
+  .tab {
+    min-height: 44px; border: 0; border-radius: 8px; cursor: pointer; padding: 0 4px; white-space: nowrap;
+    background: transparent; color: var(--text-muted);
+    font: inherit; font-size: .82rem; font-weight: 500; letter-spacing: -.005em;
+    transition: background .2s, color .2s, box-shadow .2s;
+  }
+  .tab:hover:not([aria-selected="true"]) { color: var(--text); }
+  .tab[aria-selected="true"] { background: var(--surface); color: var(--text); font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,.2), 0 0 0 .5px rgba(0,0,0,.04); }
+
+  /* Fields: label above, rounded input */
+  .field { margin-bottom: 8px; }
+  label.lbl, .lbl { display: block; margin: 0 0 3px 2px; font-size: .78rem; font-weight: 500; color: var(--text-muted); }
+  .control { position: relative; }
+  input[type="text"], input[type="email"], input[type="password"] {
+    width: 100%; height: 44px; padding: 0 12px; font: inherit; font-size: .9rem; letter-spacing: -.01em;
+    color: var(--text); background: var(--field);
+    border: 1px solid var(--border-soft); border-radius: 12px;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  input::placeholder { color: var(--text-muted); opacity: .75; }
+  input:hover { border-color: var(--border); }
+  input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 28%, transparent); }
+  .has-toggle input { padding-right: 46px; }
+  .toggle {
+    position: absolute; top: 0; right: 0; width: 44px; height: 44px;
+    display: grid; place-items: center; border: 0; background: transparent;
+    color: var(--text-muted); border-radius: 10px; cursor: pointer;
+  }
+  .toggle:hover { color: var(--text); }
+  .toggle svg { width: 22px; height: 22px; }
+  .hint { margin: 6px 2px 0; color: var(--text-muted); font-size: .78rem; }
+
+  .pin { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+  .pin input { height: 44px; padding: 0; text-align: center; font-size: 1.15rem; font-weight: 600; border-radius: 10px; }
+
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin: 0 0 4px; }
+  .check { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; cursor: pointer; font-size: .875rem; }
+  .check input { width: 18px; height: 18px; accent-color: var(--accent); margin: 0; }
+  a { color: var(--link); text-decoration: none; font-size: .875rem; }
+  a:hover { text-decoration: underline; text-underline-offset: 3px; }
+  .link-btn { display: inline-flex; align-items: center; min-height: 44px; }
+  a, button, input { -webkit-tap-highlight-color: transparent; }
+
+  .btn {
+    width: 100%; height: 44px; border: 0; border-radius: 12px; cursor: pointer;
+    background: var(--accent); color: var(--on-accent);
+    font: inherit; font-size: .95rem; font-weight: 600; letter-spacing: -.01em;
+    transition: background .15s, transform .1s;
+  }
+  .btn:hover { background: var(--accent-hover); }
+  .btn:active { background: var(--accent-press); transform: scale(.99); }
+  :focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+  input:focus-visible { outline: none; }
+
+  .alert {
+    display: none; align-items: flex-start; gap: 8px; margin-bottom: 12px;
+    padding: 10px 12px; border-radius: 10px;
+    background: var(--error-bg); color: var(--error); font-size: .85rem;
+  }
+  .alert.show { display: flex; }
+  .alert svg { width: 20px; height: 20px; flex: none; margin-top: 1px; }
+  .alert strong { color: var(--text); font-weight: 600; }
+
+  .help { margin: 8px 0 0; text-align: center; color: var(--text-muted); font-size: .8rem; }
+  footer { position: absolute; left: 0; right: 0; bottom: 0; padding: 8px 16px 14px; text-align: center; color: var(--text-muted); font-size: .8rem; }
+
+  @media (min-width: 600px) {
+    .main { padding: 48px 28px; }
+    .card { padding: 20px 22px 16px; border-radius: 18px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <main class="main">
+    <section class="card" aria-labelledby="title">
+<div class="brand"><div class="brand-chip"><img class="brand-logo" src="../../../public/brand/spiritflow-logo.png" alt="Spirit Flow"></div></div>
+      <h1 id="title">Sign In</h1>
+      <p class="sub">Use your work account to continue.</p>
+
+      <div class="tabs" role="tablist" aria-label="Sign In Method">
+        <button class="tab" role="tab" id="tab-email" aria-selected="true" aria-controls="panel-email">Email And Password</button>
+        <button class="tab" role="tab" id="tab-pin" aria-selected="false" aria-controls="panel-pin" tabindex="-1">Username And PIN</button>
+      </div>
+
+      <div class="alert" id="alert" role="alert">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v5M12 16h.01"/></svg>
+        <div><strong>Could not sign in.</strong> <span id="alert-text">Check your details and try again.</span></div>
+      </div>
+
+      <form id="panel-email" role="tabpanel" aria-labelledby="tab-email" novalidate>
+        <div class="field">
+          <label class="lbl" for="email">Email Address</label>
+          <input id="email" type="email" inputmode="email" autocomplete="username" placeholder="name@example.com">
+        </div>
+        <div class="field">
+          <label class="lbl" for="password">Password</label>
+          <div class="control has-toggle">
+            <input id="password" type="password" autocomplete="current-password" placeholder="Enter your password">
+            <button class="toggle" type="button" data-target="password" aria-label="Show Password">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="row">
+          <label class="check"><input type="checkbox"> Keep Me Signed In</label>
+          <a class="link-btn" href="#">Forgot Password?</a>
+        </div>
+        <button class="btn" type="submit">Sign In</button>
+      </form>
+
+      <form id="panel-pin" role="tabpanel" aria-labelledby="tab-pin" hidden novalidate>
+        <div class="field">
+          <label class="lbl" for="username">Username</label>
+          <input id="username" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="Enter your username">
+        </div>
+        <div class="field">
+          <span class="lbl" id="pin-label">PIN</span>
+          <div class="pin" role="group" aria-labelledby="pin-label">
+            <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="off" aria-label="PIN Digit 1">
+            <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="off" aria-label="PIN Digit 2">
+            <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="off" aria-label="PIN Digit 3">
+            <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="off" aria-label="PIN Digit 4">
+            <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="off" aria-label="PIN Digit 5">
+            <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="off" aria-label="PIN Digit 6">
+          </div>
+          <p class="hint">Enter your 6 digit PIN.</p>
+        </div>
+        <div style="height:8px"></div>
+        <button class="btn" type="submit">Sign In</button>
+        <p class="help">Forgot your PIN? Ask the System Admin to reset it.</p>
+      </form>
+    </section>
+  </main>
+
+  <footer>&copy; Cafe Technocrat</footer>
+</div>
+
+<script>
+  // Mockup behaviour only. No real sign-in happens here.
+
+  var tabs = [document.getElementById('tab-email'), document.getElementById('tab-pin')];
+  var panels = [document.getElementById('panel-email'), document.getElementById('panel-pin')];
+  var alertBox = document.getElementById('alert');
+  function selectTab(i) {
+    tabs.forEach(function (t, n) {
+      t.setAttribute('aria-selected', n === i ? 'true' : 'false');
+      t.tabIndex = n === i ? 0 : -1;
+      panels[n].hidden = n !== i;
+    });
+    alertBox.classList.remove('show');
+  }
+  tabs.forEach(function (t, i) {
+    t.addEventListener('click', function () { selectTab(i); });
+    t.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+        var n = (i + 1) % 2; selectTab(n); tabs[n].focus();
+      }
+    });
+  });
+
+  document.querySelectorAll('.toggle').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var input = document.getElementById(b.dataset.target);
+      var show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      b.setAttribute('aria-label', show ? 'Hide Password' : 'Show Password');
+    });
+  });
+
+  var pins = Array.prototype.slice.call(document.querySelectorAll('.pin input'));
+  pins.forEach(function (p, i) {
+    p.addEventListener('input', function () {
+      p.value = p.value.replace(/\D/g, '').slice(0, 1);
+      if (p.value && pins[i + 1]) pins[i + 1].focus();
+    });
+    p.addEventListener('keydown', function (e) {
+      if (e.key === 'Backspace' && !p.value && pins[i - 1]) pins[i - 1].focus();
+    });
+    p.addEventListener('paste', function (e) {
+      var d = (e.clipboardData.getData('text') || '').replace(/\D/g, '').slice(0, 6);
+      if (!d) return;
+      e.preventDefault();
+      d.split('').forEach(function (c, n) { pins[n].value = c; });
+      pins[Math.min(d.length, 5)].focus();
+    });
+  });
+
+  panels.forEach(function (f) {
+    f.addEventListener('submit', function (e) {
+      e.preventDefault();
+      document.getElementById('alert-text').textContent =
+        'This is a mockup, so sign in is not connected yet.';
+      alertBox.classList.add('show');
+    });
+  });
+</script>
+</body>
+</html>
