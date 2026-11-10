@@ -15,6 +15,7 @@
   --text-muted: #6e6e73;
   --border: #86868b;
   --border-soft: #d2d2d7;
+  --success: #1e7e34;
   --error: #c9342a;
   --error-bg: #fff1f0;
 }
@@ -32,6 +33,7 @@
   --color-muted: var(--text-muted);
   --color-border: var(--border);
   --color-border-soft: var(--border-soft);
+  --color-success: var(--success);
   --color-error: var(--error);
   --color-error-bg: var(--error-bg);
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI",
