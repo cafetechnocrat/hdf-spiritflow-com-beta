@@ -1,26 +1,70 @@
 @import "tailwindcss";
 
+/* Design tokens. Light theme only for now. Values match the approved login mockup
+   (docs/mockups/phase-1/login.html). */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --accent: #0071e3; /* button fill */
+  --accent-hover: #0077ed;
+  --accent-press: #0062c4;
+  --link: #0066cc; /* link text, 5.6:1 on white */
+  --background: #f5f5f7;
+  --surface: #ffffff;
+  --field: #ffffff;
+  --track: #e8e8ed; /* segmented control track */
+  --text: #1d1d1f;
+  --text-muted: #6e6e73;
+  --border: #86868b;
+  --border-soft: #d2d2d7;
+  --error: #c9342a;
+  --error-bg: #fff1f0;
 }
 
 @theme inline {
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-press: var(--accent-press);
+  --color-link: var(--link);
   --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-surface: var(--surface);
+  --color-field: var(--field);
+  --color-track: var(--track);
+  --color-text: var(--text);
+  --color-muted: var(--text-muted);
+  --color-border: var(--border);
+  --color-border-soft: var(--border-soft);
+  --color-error: var(--error);
+  --color-error-bg: var(--error-bg);
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, sans-serif;
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.04), 0 12px 40px rgba(0, 0, 0, 0.08);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  color: var(--text);
+  font-family: var(--font-sans);
+  letter-spacing: -0.01em;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Inputs show their own focus ring, so the outline is only for other controls. */
+:focus-visible:not(input) {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+button,
+a,
+input {
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
 }
