@@ -99,7 +99,7 @@ This follows the plan agreed for the new Tally company. Confirm it applies to th
 
 ## 7. Reports (Global Report Template)
 
-All use the global report template from `docs/00-Overview-And-Architecture.md`, with Indian number format, a totals row, PDF, Excel and print view, and the © Cafe Technocrat footer.
+All use the global report template from `docs/00-Overview-And-Architecture.md`, with Indian number format, a totals row, PDF, Excel and print view, and a footer with notes only (no copyright or company branding).
 
 - **Day Book:** all transactions by date or date range, filter by voucher type, ledger and outlet tag.
 - **Ledger Statement:** one ledger with opening balance, entries, running balance and closing balance.

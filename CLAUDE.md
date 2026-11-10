@@ -69,7 +69,7 @@ This file is read first in every Claude Code session. It holds the rules that ne
 
 ### UI And Reports
 - Minimal Material-style admin, light and dark themes, fully responsive from phone to wide desktop. Design tokens and chart palette are in `docs/00-Overview-And-Architecture.md`.
-- Every report uses the global report template defined there. Footers carry **© Cafe Technocrat**.
+- Every report uses the global report template defined there. Footers carry no copyright line and no Cafe Technocrat branding unless the owner asks for it.
 - Charts use the fixed category colours defined in the overview, so the same category is always the same colour on every screen.
 
 ## Git
@@ -80,6 +80,7 @@ This file is read first in every Claude Code session. It holds the rules that ne
 
 ## Never
 
+- Never show a copyright line, the name Cafe Technocrat, or any other company branding in the app UI, reports or footers until the owner says so explicitly. The product brand is **Spirit Flow** only.
 - Never use caste-associated surnames in examples or sample data. Use first names or neutral identifiers.
 - Never put real staff names, phone numbers, passwords or API keys in code or docs.
 - Never add a feature, package or table "while we are here". Raise it as a suggestion instead.

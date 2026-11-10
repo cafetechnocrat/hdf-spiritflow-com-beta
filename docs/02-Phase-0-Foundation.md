@@ -97,7 +97,7 @@ Use whichever key names the Supabase dashboard currently shows for the public an
 
 ## 9. Global Report Template Components
 
-Build empty, reusable components (no business data yet) following section 9 of the overview: `ReportHeader`, `KpiCard`, `ChartCard` (with legend and data-table toggle), `DataTable` (sort, filter, totals row, right-aligned Indian numbers), `ReportFooter` (with © Cafe Technocrat), and loading, empty and error states. Show them on a hidden `/design-preview` page using clearly labelled placeholder values, so the owner can review the look. This page is removed before production.
+Build empty, reusable components (no business data yet) following section 9 of the overview: `ReportHeader`, `KpiCard`, `ChartCard` (with legend and data-table toggle), `DataTable` (sort, filter, totals row, right-aligned Indian numbers), `ReportFooter` (notes only, no copyright or company branding), and loading, empty and error states. Show them on a hidden `/design-preview` page using clearly labelled placeholder values, so the owner can review the look. This page is removed before production.
 
 ## 10. Vercel
 

@@ -133,7 +133,7 @@ All reports share one layout so they look and behave the same.
 2. **KPI Cards:** three to five headline numbers for the report.
 3. **Chart Area:** one or two charts using the palette above, each with a legend and a data-table toggle.
 4. **Detail Table:** sortable, filterable, with a totals row. Numbers right-aligned in Indian format.
-5. **Footer:** notes on how figures were calculated, the date range each figure covers, and **© Cafe Technocrat**.
+5. **Footer:** notes on how figures were calculated, the date range each figure covers, and no copyright or company branding (unless the owner asks for it).
 6. **Exports:** PDF, Excel and print view (print layout hides navigation).
 7. **State Handling:** loading, empty and error states on every report.
 
