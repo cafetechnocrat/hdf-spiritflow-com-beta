@@ -36,6 +36,7 @@ export const PERMISSIONS = {
   // ledger list later, with the entry screens.
   ledgers: {
     md: "V",
+    system_admin: "V",
     chief_accountant: "E",
     accounts_staff: "V",
   },
