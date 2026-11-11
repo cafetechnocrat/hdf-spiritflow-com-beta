@@ -51,6 +51,8 @@ export type LedgerRow = {
   // Display only. Never used for arithmetic.
   openingAmount: number;
   openingSide: BalanceSide;
+  // The date the opening balance is as on, as YYYY-MM-DD. Chosen by the user.
+  openingDate: string | null;
   note: string | null;
   status: RecordStatus;
 };

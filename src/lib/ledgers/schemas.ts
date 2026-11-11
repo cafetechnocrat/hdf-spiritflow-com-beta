@@ -29,7 +29,8 @@ export const groupSchema = z.object({
 // A default group keeps its place. Only the name and status can change.
 export const defaultGroupSchema = z.object({ name, status });
 
-export const ledgerSchema = z.object({
+export const ledgerSchema = z
+  .object({
   name: ledgerName,
   alias: z.string().trim().max(100, "The alias is too long.").transform(blankToNull),
   groupId: z.uuid("Choose a group."),
@@ -44,9 +45,24 @@ export const ledgerSchema = z.object({
         .regex(/^\d{1,12}(\.\d{1,2})?$/, "Enter the opening balance as an amount, like 1500.50."),
     ),
   openingSide: z.enum(BALANCE_SIDES, "Choose Dr or Cr."),
+  // From the calendar, as YYYY-MM-DD. Empty means no date.
+  openingDate: z
+    .string()
+    .trim()
+    .transform(blankToNull)
+    .refine(
+      (value) =>
+        value === null ||
+        (/^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(value))),
+      "Choose the date from the calendar.",
+    ),
   note: z.string().trim().max(500, "The note is too long.").transform(blankToNull),
   status,
-});
+})
+  .refine((value) => !/[1-9]/.test(value.openingAmount) || value.openingDate !== null, {
+    message: "Choose the date the opening balance is as on.",
+    path: ["openingDate"],
+  });
 
 export const statusChangeSchema = z.object({
   kind: z.enum(["group", "ledger"]),

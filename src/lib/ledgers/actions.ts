@@ -138,6 +138,7 @@ export async function saveLedger(
     groupId: field(formData, "groupId"),
     openingAmount: field(formData, "openingAmount"),
     openingSide: field(formData, "openingSide") || "dr",
+    openingDate: field(formData, "openingDate"),
     note: field(formData, "note"),
     status: field(formData, "status"),
   });
@@ -151,6 +152,7 @@ export async function saveLedger(
     group_id: parsed.data.groupId,
     opening_amount: parsed.data.openingAmount,
     opening_side: parsed.data.openingSide,
+    opening_date: parsed.data.openingDate,
     note: parsed.data.note,
     status: parsed.data.status,
   };

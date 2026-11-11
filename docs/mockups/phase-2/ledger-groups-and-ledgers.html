@@ -162,7 +162,10 @@
     <div class="field">
       <label class="lbl" for="l4">Opening Balance</label>
       <div class="two"><input id="l4" type="text" inputmode="decimal" placeholder="0.00"><select aria-label="Debit or credit"><option>Dr</option><option>Cr</option></select></div>
-      <p class="hint">As on 01/04/2023, when the books begin. Shown only for ledgers under Assets and Liabilities groups.</p>
+      <p class="hint">Shown only for ledgers under Assets and Liabilities groups. Leave empty for no opening balance.</p>
+      <label class="lbl" for="l4d" style="margin-top:12px">As On Date</label>
+      <input id="l4d" type="date">
+      <p class="hint">Pick the date this balance is as on. Required when there is an amount.</p>
     </div>
     <div class="field"><label class="lbl" for="l5">Status</label><select id="l5"><option>Active</option><option>Inactive</option></select></div>
     <div class="field"><label class="lbl" for="l6">Note</label><input id="l6" type="text" placeholder="Optional"></div>

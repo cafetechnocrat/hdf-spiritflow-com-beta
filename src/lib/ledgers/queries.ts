@@ -26,6 +26,7 @@ type LedgerRecord = {
   group_id: string;
   opening_amount: number | string;
   opening_side: BalanceSide;
+  opening_date: string | null;
   note: string | null;
   status: RecordStatus;
 };
@@ -40,7 +41,7 @@ export async function loadLedgerData(): Promise<LedgerData> {
       .select("id, name, parent_id, nature, is_default, sort_order, status"),
     supabase
       .from("ledgers")
-      .select("id, name, alias, group_id, opening_amount, opening_side, note, status")
+      .select("id, name, alias, group_id, opening_amount, opening_side, opening_date, note, status")
       .order("name"),
   ]);
 
@@ -94,6 +95,7 @@ export async function loadLedgerData(): Promise<LedgerData> {
     groupNature: natures.get(l.group_id) ?? "assets",
     openingAmount: Number(l.opening_amount),
     openingSide: l.opening_side,
+    openingDate: l.opening_date,
     note: l.note,
     status: l.status,
   }));

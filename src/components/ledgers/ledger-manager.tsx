@@ -95,7 +95,10 @@ const text = {
   group: "Group",
   openingLabel: "Opening Balance",
   openingHint:
-    "As on 01/04/2023, when the books begin. Shown only for ledgers under Assets and Liabilities groups.",
+    "Shown only for ledgers under Assets and Liabilities groups. Leave empty for no opening balance.",
+  openingDateLabel: "As On Date",
+  openingDateHint: "Pick the date this balance is as on. Required when there is an amount.",
+  asOn: "as on",
   drCr: "Debit or credit",
   note: "Note",
   notePlaceholder: "Optional",
@@ -131,6 +134,12 @@ const amountFormat = new Intl.NumberFormat("en-IN", {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 });
+
+// YYYY-MM-DD to DD/MM/YYYY. Split as text so no timezone can shift the day.
+function formatDate(value: string): string {
+  const [year, month, day] = value.split("-");
+  return `${day}/${month}/${year}`;
+}
 
 function StatusBadge({ status }: { status: RecordStatus }) {
   const active = status === "active";
@@ -331,6 +340,7 @@ function LedgerForm({
   const openingId = useId();
   const sideId = useId();
   const noteId = useId();
+  const dateId = useId();
 
   const selected = data.groups.find((group) => group.id === groupId);
   const showOpening = selected ? hasOpeningBalance(selected.nature) : true;
@@ -408,6 +418,17 @@ function LedgerForm({
               </select>
             </div>
             <p className={field.hint}>{text.openingHint}</p>
+            <label htmlFor={dateId} className={`${field.label} mt-3`}>
+              {text.openingDateLabel}
+            </label>
+            <input
+              id={dateId}
+              name="openingDate"
+              type="date"
+              defaultValue={record?.openingDate ?? ""}
+              className={field.input}
+            />
+            <p className={field.hint}>{text.openingDateHint}</p>
           </div>
         ) : null}
         <StatusSelect defaultValue={record?.status ?? "active"} />
@@ -770,6 +791,11 @@ export function LedgerManager({
                         {amountFormat.format(row.openingAmount)}
                       </span>{" "}
                       {BALANCE_SIDE_LABELS[row.openingSide]}
+                      {row.openingDate ? (
+                        <span className="block text-[0.8rem] text-muted">
+                          {text.asOn} {formatDate(row.openingDate)}
+                        </span>
+                      ) : null}
                     </span>
                   ) : (
                     <span className="text-[0.8rem] text-muted">{text.notApplicable}</span>
