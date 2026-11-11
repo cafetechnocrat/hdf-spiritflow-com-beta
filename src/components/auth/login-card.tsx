@@ -1,8 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { useId, useRef, useState } from "react";
+import { useActionState, useId, useRef, useState } from "react";
 import type { ClipboardEvent, FormEvent, KeyboardEvent } from "react";
+import { signInWithEmail, type SignInState } from "@/lib/auth/actions";
 
 // All visible text sits here so it can be translated later.
 const text = {
@@ -28,7 +29,8 @@ const text = {
   pinHelp: "Forgot your PIN? Ask the System Admin to reset it.",
   submit: "Sign In",
   errorTitle: "Could not sign in.",
-  errorNotConnected: "Sign in is not connected yet.",
+  errorPinNotAvailable: "PIN sign in is not available yet.",
+  submitting: "Signing In...",
   logoAlt: "Spirit Flow",
 } as const;
 
@@ -45,7 +47,12 @@ export function LoginCard() {
   const baseId = useId();
   const [tab, setTab] = useState<TabId>("email");
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [pinError, setPinError] = useState<string | null>(null);
+  const [emailState, emailAction, emailPending] = useActionState<
+    SignInState,
+    FormData
+  >(signInWithEmail, { error: null, email: "" });
+  const error = tab === "pin" ? pinError : emailState.error;
   const [pin, setPin] = useState<string[]>(() => Array(PIN_LENGTH).fill(""));
   const pinRefs = useRef<Array<HTMLInputElement | null>>([]);
   const tabRefs = useRef<Record<TabId, HTMLButtonElement | null>>({
@@ -60,7 +67,7 @@ export function LoginCard() {
 
   function selectTab(next: TabId) {
     setTab(next);
-    setError(null);
+    setPinError(null);
   }
 
   function onTabKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
@@ -71,10 +78,10 @@ export function LoginCard() {
     tabRefs.current[next]?.focus();
   }
 
-  function onSubmit(event: FormEvent<HTMLFormElement>) {
+  function onPinSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    // Sign in is wired up in a later step, when accounts are connected.
-    setError(text.errorNotConnected);
+    // Username and PIN sign in is added after outlets and counters exist.
+    setPinError(text.errorPinNotAvailable);
   }
 
   function setPinDigit(index: number, value: string) {
@@ -201,7 +208,7 @@ export function LoginCard() {
           id={emailPanelId}
           role="tabpanel"
           aria-labelledby={emailTabId}
-          onSubmit={onSubmit}
+          action={emailAction}
           noValidate
         >
           <div className="mb-2">
@@ -214,6 +221,7 @@ export function LoginCard() {
               type="email"
               inputMode="email"
               autoComplete="username"
+              defaultValue={emailState.email}
               placeholder={text.emailPlaceholder}
               className={inputClass}
             />
@@ -278,14 +286,14 @@ export function LoginCard() {
               {text.forgotPassword}
             </a>
           </div>
-          <SubmitButton />
+          <SubmitButton pending={emailPending} />
         </form>
       ) : (
         <form
           id={pinPanelId}
           role="tabpanel"
           aria-labelledby={pinTabId}
-          onSubmit={onSubmit}
+          onSubmit={onPinSubmit}
           noValidate
         >
           <div className="mb-2">
@@ -347,13 +355,14 @@ export function LoginCard() {
   );
 }
 
-function SubmitButton() {
+function SubmitButton({ pending = false }: { pending?: boolean }) {
   return (
     <button
       type="submit"
-      className="mt-1 h-11 w-full rounded-xl bg-accent text-[0.95rem] font-semibold tracking-[-0.01em] text-white transition-[background-color,transform] hover:bg-accent-hover active:scale-[0.99] active:bg-accent-press"
+      disabled={pending}
+      className="mt-1 h-11 w-full rounded-xl bg-accent text-[0.95rem] font-semibold tracking-[-0.01em] text-white transition-[background-color,transform] hover:bg-accent-hover active:scale-[0.99] active:bg-accent-press disabled:opacity-70"
     >
-      {text.submit}
+      {pending ? text.submitting : text.submit}
     </button>
   );
 }
