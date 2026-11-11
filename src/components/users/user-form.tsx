@@ -14,6 +14,7 @@ import {
 } from "@/lib/auth/roles";
 import { createUser, updateUser } from "@/lib/users/actions";
 import type { UserFormState } from "@/lib/users/schemas";
+import { DeleteDialog, type DeleteTarget } from "./delete-dialog";
 import { StatusDialog, type StatusTarget } from "./status-dialog";
 
 const text = {
@@ -44,8 +45,9 @@ const text = {
   inactive: "Inactive",
   deactivate: "Deactivate User",
   activate: "Activate User",
+  delete: "Delete User",
   statusHint:
-    "Deactivating signs the user out and blocks sign in. Records and history are kept.",
+    "Deactivating signs the user out and blocks sign in. Records and history are kept. A deactivated user can be deleted permanently.",
   cancel: "Cancel",
   create: "Create User",
   save: "Save Changes",
@@ -104,6 +106,7 @@ export function UserForm(props: Props) {
   );
   const [role, setRole] = useState<string>(initial.values.role);
   const [target, setTarget] = useState<StatusTarget | null>(null);
+  const [deleting, setDeleting] = useState<DeleteTarget | null>(null);
 
   const isCashier = user?.role === "cashier";
   const roleKey = isRole(role) ? role : undefined;
@@ -279,6 +282,15 @@ export function UserForm(props: Props) {
               >
                 {user.status === "active" ? text.deactivate : text.activate}
               </button>
+              {user.status === "inactive" ? (
+                <button
+                  type="button"
+                  onClick={() => setDeleting({ id: user.id, name: user.fullName })}
+                  className={`${button.danger} ${button.small}`}
+                >
+                  {text.delete}
+                </button>
+              ) : null}
             </div>
             <p className={`${field.hint} mb-3.5`}>{text.statusHint}</p>
           </Section>
@@ -297,6 +309,11 @@ export function UserForm(props: Props) {
       <StatusDialog
         target={target}
         onClose={() => setTarget(null)}
+        onDone={() => router.push("/users")}
+      />
+      <DeleteDialog
+        target={deleting}
+        onClose={() => setDeleting(null)}
         onDone={() => router.push("/users")}
       />
     </>

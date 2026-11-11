@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { badge, button, field } from "@/components/ui/styles";
 import { ROLE_LABELS, ROLES, type Role } from "@/lib/auth/roles";
 import type { UserRow } from "@/lib/users/queries";
+import { DeleteDialog, type DeleteTarget } from "./delete-dialog";
 import { StatusDialog, type StatusTarget } from "./status-dialog";
 
 const text = {
@@ -26,6 +27,7 @@ const text = {
   edit: "Edit",
   deactivate: "Deactivate",
   activate: "Activate",
+  delete: "Delete",
   emailAndPassword: "Email And Password",
   usernameAndPin: "Username And PIN",
   noMatch: "No Users Found",
@@ -57,6 +59,7 @@ export function UsersTable({
   const [role, setRole] = useState<"" | Role>("");
   const [status, setStatus] = useState<"" | UserRow["status"]>("");
   const [target, setTarget] = useState<StatusTarget | null>(null);
+  const [deleting, setDeleting] = useState<DeleteTarget | null>(null);
 
   const visible = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -100,6 +103,15 @@ export function UsersTable({
             {active ? text.deactivate : text.activate}
           </button>
         )}
+        {!active && !isSelf ? (
+          <button
+            type="button"
+            onClick={() => setDeleting({ id: row.id, name: row.fullName })}
+            className={`${button.danger} ${button.small}`}
+          >
+            {text.delete}
+          </button>
+        ) : null}
       </div>
     );
   }
@@ -275,6 +287,11 @@ export function UsersTable({
         target={target}
         onClose={() => setTarget(null)}
         onDone={() => setTarget(null)}
+      />
+      <DeleteDialog
+        target={deleting}
+        onClose={() => setDeleting(null)}
+        onDone={() => setDeleting(null)}
       />
     </>
   );

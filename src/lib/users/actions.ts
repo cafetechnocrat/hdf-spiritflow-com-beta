@@ -21,6 +21,9 @@ const text = {
   ownRole: "You cannot change your own role.",
   ownStatus: "You cannot deactivate your own account.",
   lastAdmin: "There must always be at least one active System Admin.",
+  ownDelete: "You cannot delete your own account.",
+  deactivateFirst: "Deactivate the user before deleting them.",
+  nameMismatch: "The name you typed does not match. Nothing was deleted.",
 } as const;
 
 // Only the System Admin may change users. The database enforces the same rule
@@ -193,6 +196,54 @@ export async function setUserStatus(
   await admin.auth.admin.updateUserById(id, {
     ban_duration: status === "inactive" ? "876000h" : "none",
   });
+
+  revalidatePath("/users");
+  return { error: null };
+}
+
+// Permanent delete. Only an inactive user can be deleted, the System Admin must
+// type the user's name, and nobody can delete their own account. The audit log
+// keeps the deleted profile's values. The database enforces the same rules.
+export async function deleteUser(
+  _previous: StatusResult,
+  formData: FormData,
+): Promise<StatusResult> {
+  const me = await requireAdmin();
+  if (!me) return { error: text.notAllowed };
+
+  const id = String(formData.get("id") ?? "");
+  const typedName = String(formData.get("confirmName") ?? "");
+  if (!statusSchema.shape.id.safeParse(id).success) {
+    return { error: text.notFound };
+  }
+  if (id === me.id) return { error: text.ownDelete };
+
+  const supabase = await createClient();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (!profile) return { error: text.notFound };
+  if (profile.status !== "inactive") return { error: text.deactivateFirst };
+  if (typedName.trim() !== String(profile.full_name).trim()) {
+    return { error: text.nameMismatch };
+  }
+
+  // The profile goes first, because it points at the sign in account.
+  const { error: profileError } = await supabase
+    .from("profiles")
+    .delete()
+    .eq("id", id);
+  if (profileError) return { error: text.failed };
+
+  const admin = createAdminClient();
+  const { error: authError } = await admin.auth.admin.deleteUser(id);
+  if (authError) {
+    // Put the profile back so the user is not left half deleted.
+    await admin.from("profiles").insert(profile);
+    return { error: text.failed };
+  }
 
   revalidatePath("/users");
   return { error: null };
