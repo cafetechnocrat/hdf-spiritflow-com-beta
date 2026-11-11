@@ -34,7 +34,7 @@ export const PERMISSIONS = {
   },
 } as const satisfies Record<string, Partial<Record<Role, Access>>>;
 
-type Area = keyof typeof PERMISSIONS;
+export type Area = keyof typeof PERMISSIONS;
 
 function accessFor(area: Area, role: Role): Access | undefined {
   return (PERMISSIONS[area] as Partial<Record<Role, Access>>)[role];

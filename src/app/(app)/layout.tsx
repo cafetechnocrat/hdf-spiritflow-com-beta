@@ -1,17 +1,16 @@
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import type { ReactNode } from "react";
-import { AppShell, type NavItem } from "@/components/app-shell";
+import { AppShell } from "@/components/app-shell";
 import { NoAccess } from "@/components/no-access";
 import { getCurrentUser } from "@/lib/auth/current-user";
-import { canView } from "@/lib/auth/permissions";
 import { ROLE_LABELS } from "@/lib/auth/roles";
+import { buildMenu } from "@/lib/nav/menu";
+import { MENU_COOKIE } from "@/lib/nav/menu-cookie";
 
 const text = {
   loading: "Loading...",
-  dashboard: "Dashboard",
-  users: "Users",
-  structure: "Stock Points, Outlets And Counters",
 } as const;
 
 // Everything for signed in users. The session is read at request time, so the
@@ -25,22 +24,13 @@ async function Shell({ children }: { children: ReactNode }) {
   if (user.twoFactor === "setup") redirect("/two-factor/setup");
   if (user.twoFactor === "verify") redirect("/two-factor/verify");
 
-  // Items a role cannot use are hidden.
-  const nav: NavItem[] = [];
-  if (canView("dashboard", user.role)) {
-    nav.push({ href: "/", label: text.dashboard, icon: "home" });
-  }
-  if (canView("users", user.role)) {
-    nav.push({ href: "/users", label: text.users, icon: "users" });
-  }
-  if (canView("structure", user.role)) {
-    nav.push({ href: "/stock-outlets", label: text.structure, icon: "store" });
-  }
+  const collapsed = (await cookies()).get(MENU_COOKIE)?.value === "collapsed";
 
   return (
     <AppShell
       user={{ fullName: user.fullName, roleLabel: ROLE_LABELS[user.role] }}
-      nav={nav}
+      menu={buildMenu(user.role)}
+      initialCollapsed={collapsed}
     >
       {children}
     </AppShell>
