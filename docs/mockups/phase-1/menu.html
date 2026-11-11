@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spirit Flow</title>
+<link rel="icon" type="image/png" href="../../../src/app/icon.png">
+<style>
+  :root {
+    --accent: #0071E3; --accent-soft: #E8F1FC; --link: #0066CC;
+    --background: #F5F5F7; --surface: #FFFFFF; --track: #E8E8ED;
+    --text: #1D1D1F; --text-muted: #6E6E73; --border-soft: #D2D2D7; --divider: #E8E8ED;
+    --shadow: 0 2px 8px rgba(0,0,0,.04), 0 12px 40px rgba(0,0,0,.08);
+    --side-open: 264px; --side-rail: 72px;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 16px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif; background: var(--background); color: var(--text); -webkit-font-smoothing: antialiased; }
+  button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; padding: 0; }
+  a { color: inherit; text-decoration: none; }
+  svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .mock-note { background: #FFF4DB; color: #8A5A00; font-size: .78rem; text-align: center; padding: 6px 12px; }
+  :focus-visible { outline: 3px solid rgba(0,113,227,.55); outline-offset: 2px; }
+
+  /* Sidebar */
+  .sidebar {
+    position: fixed; top: 0; bottom: 0; left: 0; width: var(--side-open); z-index: 30;
+    background: var(--surface); border-right: 1px solid var(--divider);
+    padding: 16px 12px; display: flex; flex-direction: column; overflow: hidden;
+    transform: translateX(-100%); transition: transform .22s ease, width .22s ease;
+  }
+  .sidebar.open { transform: none; box-shadow: var(--shadow); }
+  .scrim { position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: 20; display: none; }
+  .scrim.open { display: block; }
+  .logo { display: block; padding: 0 8px 12px; height: 44px; overflow: hidden; }
+  .logo img { width: 132px; height: auto; display: block; margin: -8px 0; }
+  .nav { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; padding-top: 4px; }
+
+  .item, .group-btn {
+    display: flex; align-items: center; gap: 12px; width: 100%; min-height: 44px; padding: 0 12px;
+    border-radius: 12px; font-size: .92rem; font-weight: 500; text-align: left;
+  }
+  .item:hover, .group-btn:hover { background: var(--background); }
+  .item svg, .group-btn .ico { width: 20px; height: 20px; flex: none; }
+  .item[aria-current="page"] { background: var(--accent-soft); color: var(--link); font-weight: 600; }
+  .group-btn .label { flex: 1; }
+  .group-btn .chev { width: 16px; height: 16px; flex: none; color: var(--text-muted); transition: transform .2s ease; }
+  .group-btn[aria-expanded="true"] .chev { transform: rotate(90deg); }
+  .group.has-current > .group-btn { font-weight: 600; }
+  .group.has-current > .group-btn .ico { color: var(--link); }
+
+  /* Tree: children sit under the group with a guide line and a branch to each item */
+  .tree { list-style: none; margin: 2px 0 6px 21px; padding: 0 0 0 14px; border-left: 2px solid var(--divider); display: none; }
+  .group-btn[aria-expanded="true"] + .tree { display: block; }
+  .tree li { position: relative; }
+  .tree li::before { content: ""; position: absolute; left: -14px; top: 22px; width: 10px; border-top: 2px solid var(--divider); }
+  .tree li:last-child::after { content: ""; position: absolute; left: -16px; top: 23px; bottom: 0; width: 2px; background: var(--surface); }
+  .tree .item { min-height: 40px; font-size: .88rem; padding: 0 10px; }
+  .tree .item.planned { color: var(--text-muted); cursor: default; }
+  .tree .item.planned:hover { background: none; }
+  .tree .soon { margin-left: auto; font-size: .68rem; font-weight: 600; color: var(--text-muted); background: var(--track); border-radius: 999px; padding: 1px 8px; }
+
+  .me { display: flex; align-items: center; gap: 10px; padding: 12px 8px 0; margin-top: 8px; border-top: 1px solid var(--divider); }
+  .avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--accent-soft); color: var(--link); font-weight: 600; font-size: .8rem; display: grid; place-items: center; flex: none; }
+  .who { min-width: 0; line-height: 1.25; }
+  .who strong { display: block; font-size: .86rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .who span { font-size: .76rem; color: var(--text-muted); }
+
+  /* Top bar */
+  .topbar { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 8px; height: 56px; padding: 0 12px; background: rgba(255,255,255,.85); backdrop-filter: blur(12px); border-bottom: 1px solid var(--divider); }
+  .icon-btn { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; color: var(--text); }
+  .icon-btn:hover { background: var(--background); }
+  .icon-btn svg { width: 22px; height: 22px; }
+  .topbar .title { font-weight: 600; }
+  .spacer { flex: 1; }
+  .collapse-btn { display: none; }
+
+  .content { padding: 16px 16px 40px; max-width: 1180px; margin: 0 auto; }
+  h1 { font-size: 1.5rem; letter-spacing: -.02em; margin: 0; }
+  .sub { color: var(--text-muted); font-size: .88rem; margin: 2px 0 16px; }
+  .card { background: var(--surface); border-radius: 16px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.05); font-size: .9rem; }
+  .card p { margin: 0 0 8px; }
+  .card p:last-child { margin: 0; }
+  .toggle { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; font-size: .86rem; }
+  .toggle input { width: 18px; height: 18px; accent-color: var(--accent); }
+
+  /* Desktop: sidebar always shown, and it can be collapsed to an icon rail */
+  @media (min-width: 900px) {
+    .sidebar { transform: none; }
+    .menu-btn { display: none; }
+    .collapse-btn { display: grid; }
+    .shell { padding-left: var(--side-open); transition: padding-left .22s ease; }
+    .content { padding: 24px 32px 48px; }
+    .shell.collapsed { padding-left: var(--side-rail); }
+    .shell.collapsed .sidebar { width: var(--side-rail); }
+    .shell.collapsed .label, .shell.collapsed .chev, .shell.collapsed .tree,
+    .shell.collapsed .who, .shell.collapsed .soon { display: none; }
+    .shell.collapsed .group-btn[aria-expanded="true"] + .tree { display: none; }
+    .shell.collapsed .item, .shell.collapsed .group-btn { justify-content: center; padding: 0; }
+    .shell.collapsed .logo { padding: 0; display: grid; place-items: center; }
+    .shell.collapsed .logo img { width: 56px; margin: -4px 0; object-fit: cover; object-position: left center; }
+    .shell.collapsed .me { justify-content: center; padding-left: 0; padding-right: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="mock-note">Mockup. Sample menu only. The real menu shows only what each role can use.</div>
+<div class="shell" id="shell">
+  <div class="scrim" id="scrim"></div>
+  <aside class="sidebar" id="sidebar" aria-label="Main">
+    <a class="logo" href="#"><img src="../../../public/brand/spiritflow-logo.png" alt="Spirit Flow"></a>
+    <nav class="nav" id="nav"></nav>
+    <div class="me"><div class="avatar" aria-hidden="true">SA</div>
+      <div class="who"><strong>Sample Admin</strong><span>System Admin</span></div></div>
+  </aside>
+
+  <header class="topbar">
+    <button class="icon-btn menu-btn" id="menuBtn" aria-label="Open Menu" aria-expanded="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+    <button class="icon-btn collapse-btn" id="collapseBtn" aria-label="Collapse Menu" aria-expanded="true">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/></svg></button>
+    <span class="title">Stock Points, Outlets And Counters</span>
+    <span class="spacer"></span>
+    <button class="icon-btn" aria-label="Sign Out"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H5v16h4M16 8l4 4-4 4M20 12H9"/></svg></button>
+  </header>
+
+  <main class="content">
+    <h1>Stock Points, Outlets And Counters</h1>
+    <p class="sub">The page content sits here. Try the menu.</p>
+    <div class="card">
+      <p><strong>Menu behaviour</strong></p>
+      <p>Menu groups open like an accordion: opening one closes the others. Items sit under their group as a tree.</p>
+      <p>On a large screen, use the panel button in the top bar to collapse the menu to icons and bring it back. On a phone the menu is a drawer opened with the three-line button.</p>
+      <p>Clicking a group icon while the menu is collapsed opens the menu on that group.</p>
+      <p style="margin-top:12px"><label class="toggle"><input type="checkbox" id="planned"> Show Planned Items (preview of how the tree grows)</label></p>
+    </div>
+  </main>
+</div>
+
+<script>
+  // Mockup behaviour only. The real menu is built from the role permission matrix.
+  (function () {
+    var icon = {
+      home: '<path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10"/>',
+      box: '<path d="M21 8l-9-5-9 5v8l9 5 9-5V8zM3 8l9 5 9-5M12 13v8"/>',
+      book: '<path d="M5 4h11a3 3 0 013 3v13H8a3 3 0 01-3-3V4zM5 17a3 3 0 013-3h11"/>',
+      cart: '<path d="M3 4h2l2 11h11l2-8H6M9 20h.01M17 20h.01"/>',
+      cog: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/>',
+      chev: '<path d="M9 6l6 6-6 6"/>'
+    };
+
+    // Built today.
+    var live = [
+      { id: "dashboard", label: "Dashboard", icon: "home", href: "#" },
+      { id: "inventory", label: "Inventory Management", icon: "box", children: [
+        { id: "structure", label: "Stock Points, Outlets And Counters", href: "#", current: true }
+      ] },
+      { id: "admin", label: "Administration", icon: "cog", children: [
+        { id: "users", label: "Users", href: "#" }
+      ] }
+    ];
+
+    // The same tree with items that arrive in later phases, shown on request.
+    var planned = [
+      { id: "dashboard", label: "Dashboard", icon: "home", href: "#" },
+      { id: "inventory", label: "Inventory Management", icon: "box", children: [
+        { id: "items", label: "Item Master", soon: true },
+        { id: "structure", label: "Stock Points, Outlets And Counters", href: "#", current: true },
+        { id: "purchases", label: "Purchases", soon: true },
+        { id: "transfers", label: "Stock Transfers", soon: true }
+      ] },
+      { id: "accounts", label: "Accounts", icon: "book", children: [
+        { id: "daybook", label: "Day Book", soon: true },
+        { id: "ledgers", label: "Ledgers", soon: true }
+      ] },
+      { id: "sales", label: "Sales", icon: "cart", children: [
+        { id: "pos", label: "Bar POS", soon: true },
+        { id: "salesreports", label: "Sales Reports", soon: true }
+      ] },
+      { id: "admin", label: "Administration", icon: "cog", children: [
+        { id: "users", label: "Users", href: "#" },
+        { id: "roles", label: "Roles And Access", soon: true },
+        { id: "audit", label: "Audit Log", soon: true }
+      ] }
+    ];
+
+    var shell = document.getElementById("shell");
+    var sidebar = document.getElementById("sidebar");
+    var scrim = document.getElementById("scrim");
+    var menuBtn = document.getElementById("menuBtn");
+    var collapseBtn = document.getElementById("collapseBtn");
+    var nav = document.getElementById("nav");
+    var plannedBox = document.getElementById("planned");
+    var openGroup = null;
+
+    function svg(name, cls) {
+      return '<svg class="' + (cls || "") + '" viewBox="0 0 24 24" aria-hidden="true">' + icon[name] + "</svg>";
+    }
+
+    function render() {
+      var tree = plannedBox.checked ? planned : live;
+      // Open the group that holds the current page, unless one was chosen.
+      if (!openGroup || !tree.some(function (g) { return g.id === openGroup; })) {
+        var cur = tree.filter(function (g) { return g.children && g.children.some(function (c) { return c.current; }); })[0];
+        openGroup = cur ? cur.id : null;
+      }
+      nav.innerHTML = tree.map(function (g) {
+        if (!g.children) {
+          return '<a class="item" href="' + g.href + '" title="' + g.label + '">' + svg(g.icon, "ico") + '<span class="label">' + g.label + "</span></a>";
+        }
+        var hasCurrent = g.children.some(function (c) { return c.current; });
+        var open = g.id === openGroup;
+        var kids = g.children.map(function (c) {
+          if (c.soon) return '<li><span class="item planned">' + c.label + '<span class="soon">Later</span></span></li>';
+          return '<li><a class="item" href="' + c.href + '"' + (c.current ? ' aria-current="page"' : "") + ">" + c.label + "</a></li>";
+        }).join("");
+        return '<div class="group' + (hasCurrent ? " has-current" : "") + '">' +
+          '<button class="group-btn" type="button" data-group="' + g.id + '" aria-expanded="' + open + '" aria-controls="tree-' + g.id + '" title="' + g.label + '">' +
+            svg(g.icon, "ico") + '<span class="label">' + g.label + "</span>" + svg("chev", "chev") + "</button>" +
+          '<ul class="tree" id="tree-' + g.id + '">' + kids + "</ul></div>";
+      }).join("");
+    }
+
+    nav.addEventListener("click", function (e) {
+      var btn = e.target.closest("[data-group]");
+      if (!btn) return;
+      var id = btn.getAttribute("data-group");
+      // Collapsed rail: expand the menu and open the chosen group.
+      if (shell.classList.contains("collapsed") && matchMedia("(min-width: 900px)").matches) {
+        setCollapsed(false);
+        openGroup = id;
+      } else {
+        // Accordion: opening one group closes the others.
+        openGroup = openGroup === id ? null : id;
+      }
+      render();
+    });
+
+    plannedBox.addEventListener("change", render);
+
+    function setCollapsed(on) {
+      shell.classList.toggle("collapsed", on);
+      collapseBtn.setAttribute("aria-expanded", String(!on));
+      collapseBtn.setAttribute("aria-label", on ? "Expand Menu" : "Collapse Menu");
+      try { localStorage.setItem("sf-menu-collapsed", on ? "1" : "0"); } catch (err) {}
+    }
+    collapseBtn.addEventListener("click", function () { setCollapsed(!shell.classList.contains("collapsed")); });
+
+    function setOpen(open) {
+      sidebar.classList.toggle("open", open);
+      scrim.classList.toggle("open", open);
+      menuBtn.setAttribute("aria-expanded", String(open));
+    }
+    menuBtn.addEventListener("click", function () { setOpen(!sidebar.classList.contains("open")); });
+    scrim.addEventListener("click", function () { setOpen(false); });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape") setOpen(false); });
+
+    try { if (localStorage.getItem("sf-menu-collapsed") === "1") setCollapsed(true); } catch (err) {}
+    render();
+  })();
+</script>
+</body>
+</html>
