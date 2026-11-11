@@ -4,7 +4,7 @@
   var pages = [
     { id: "dashboard", label: "Dashboard", href: "#", icon: '<path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10"/>' },
     { id: "users", label: "Users", href: "users.html", icon: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5M16 4.8a3.5 3.5 0 010 6.4M18.5 14.8c1.7.7 2.8 2.3 3 5.2"/>' },
-    { id: "outlets", label: "Outlets And Counters", href: "outlets.html", icon: '<path d="M4 9l1.5-5h13L20 9M4 9v11h16V9M4 9c0 1.7 1.3 3 3 3s3-1.3 3-3c0 1.7 1.3 3 3 3s3-1.3 3-3c0 1.7 1.3 3 3 3"/>' },
+    { id: "outlets", label: "Stock Points, Outlets And Counters", href: "stock-points-outlets-counters.html", icon: '<path d="M4 9l1.5-5h13L20 9M4 9v11h16V9M4 9c0 1.7 1.3 3 3 3s3-1.3 3-3c0 1.7 1.3 3 3 3s3-1.3 3-3c0 1.7 1.3 3 3 3"/>' },
     { id: "roles", label: "Roles And Access", href: "#", icon: '<path d="M12 3l8 3v6c0 4.5-3.2 8-8 9-4.8-1-8-4.5-8-9V6l8-3z"/><path d="M9 12l2 2 4-4"/>' },
     { id: "audit", label: "Audit Log", href: "audit-log.html", icon: '<path d="M8 3h8l4 4v14H4V3h4zM8 12h8M8 16h8M8 8h4"/>' },
     { id: "profile", label: "My Profile", href: "#", icon: '<circle cx="12" cy="8" r="4"/><path d="M4 21c.8-4.2 4-6.5 8-6.5s7.2 2.3 8 6.5"/>' }
