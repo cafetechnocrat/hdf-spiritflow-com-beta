@@ -4,7 +4,7 @@ import { getSupabasePublicEnv } from "./env";
 import { KEEP_COOKIE, withSessionLength } from "./session-cookies";
 
 // Pages anyone can open without signing in.
-const PUBLIC_PATHS = ["/login", "/health"];
+const PUBLIC_PATHS = ["/login", "/forgot-password", "/health"];
 
 function isPublic(pathname: string) {
   return PUBLIC_PATHS.some(

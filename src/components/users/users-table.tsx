@@ -3,9 +3,14 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { badge, button, field } from "@/components/ui/styles";
-import { ROLE_LABELS, ROLES, type Role } from "@/lib/auth/roles";
+import { ROLE_LABELS, ROLES, TWO_FACTOR_ROLES, type Role } from "@/lib/auth/roles";
 import type { UserRow } from "@/lib/users/queries";
 import { DeleteDialog, type DeleteTarget } from "./delete-dialog";
+import { ResetPasswordDialog, type ResetTarget } from "./reset-password-dialog";
+import {
+  ResetTwoFactorDialog,
+  type ResetTwoFactorTarget,
+} from "./reset-two-factor-dialog";
 import { StatusDialog, type StatusTarget } from "./status-dialog";
 
 const text = {
@@ -28,6 +33,8 @@ const text = {
   deactivate: "Deactivate",
   activate: "Activate",
   delete: "Delete",
+  resetPassword: "Reset Password",
+  resetTwoFactor: "Reset Two-Factor",
   emailAndPassword: "Email And Password",
   usernameAndPin: "Username And PIN",
   noMatch: "No Users Found",
@@ -60,6 +67,8 @@ export function UsersTable({
   const [status, setStatus] = useState<"" | UserRow["status"]>("");
   const [target, setTarget] = useState<StatusTarget | null>(null);
   const [deleting, setDeleting] = useState<DeleteTarget | null>(null);
+  const [resetting, setResetting] = useState<ResetTarget | null>(null);
+  const [resettingMfa, setResettingMfa] = useState<ResetTwoFactorTarget | null>(null);
 
   const visible = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -94,6 +103,24 @@ export function UsersTable({
         >
           {text.edit}
         </Link>
+        {!isSelf && active ? (
+          <button
+            type="button"
+            onClick={() => setResetting({ id: row.id, name: row.fullName })}
+            className={`${button.secondary} ${button.small}`}
+          >
+            {text.resetPassword}
+          </button>
+        ) : null}
+        {!isSelf && active && TWO_FACTOR_ROLES.includes(row.role) ? (
+          <button
+            type="button"
+            onClick={() => setResettingMfa({ id: row.id, name: row.fullName })}
+            className={`${button.secondary} ${button.small}`}
+          >
+            {text.resetTwoFactor}
+          </button>
+        ) : null}
         {isSelf && active ? null : (
           <button
             type="button"
@@ -287,6 +314,14 @@ export function UsersTable({
         target={target}
         onClose={() => setTarget(null)}
         onDone={() => setTarget(null)}
+      />
+      <ResetPasswordDialog
+        target={resetting}
+        onClose={() => setResetting(null)}
+      />
+      <ResetTwoFactorDialog
+        target={resettingMfa}
+        onClose={() => setResettingMfa(null)}
       />
       <DeleteDialog
         target={deleting}

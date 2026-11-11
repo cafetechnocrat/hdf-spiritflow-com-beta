@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spirit Flow</title>
+<link rel="icon" type="image/png" href="../../../src/app/icon.png">
+<link rel="stylesheet" href="auth.css">
+</head>
+<body>
+<div class="mock-note">Mockup. Sample data only. Not the real app.</div>
+<div class="page">
+  <main class="main">
+    <section class="card" aria-labelledby="title">
+      <div class="brand"><div class="brand-chip"><img class="brand-logo" src="../../../public/brand/spiritflow-logo.png" alt="Spirit Flow"></div></div>
+      <h1 id="title">Two-Factor Code</h1>
+      <p class="sub">Enter the 6-digit code from your authenticator app.</p>
+
+      <div class="alert" id="alert" role="alert">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v5M12 16h.01"/></svg>
+        <div><strong>Could not verify.</strong> <span id="alert-text">That code is not correct. Check the code in your app and try again.</span></div>
+      </div>
+
+      <form id="form" novalidate>
+        <div class="field">
+          <span class="lbl" id="code-label">Six Digit Code</span>
+          <div class="code" role="group" aria-labelledby="code-label">
+            <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="one-time-code" aria-label="Code Digit 1">
+            <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="off" aria-label="Code Digit 2">
+            <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="off" aria-label="Code Digit 3">
+            <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="off" aria-label="Code Digit 4">
+            <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="off" aria-label="Code Digit 5">
+            <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="off" aria-label="Code Digit 6">
+          </div>
+        </div>
+        <div style="height:8px"></div>
+        <button class="btn" type="submit">Verify</button>
+        <a class="btn secondary as-link" href="login.html">Use A Different Account</a>
+        <p class="help">Lost your phone or changed it? Ask the System Admin to reset your two-factor.</p>
+      </form>
+    </section>
+  </main>
+</div>
+<script>
+  // Mockup behaviour only.
+  var boxes = Array.prototype.slice.call(document.querySelectorAll(".code input"));
+  boxes.forEach(function (p, i) {
+    p.addEventListener("input", function () {
+      p.value = p.value.replace(/\D/g, "").slice(0, 1);
+      if (p.value && boxes[i + 1]) boxes[i + 1].focus();
+    });
+    p.addEventListener("keydown", function (e) {
+      if (e.key === "Backspace" && !p.value && boxes[i - 1]) boxes[i - 1].focus();
+    });
+    p.addEventListener("paste", function (e) {
+      var d = (e.clipboardData.getData("text") || "").replace(/\D/g, "").slice(0, 6);
+      if (!d) return;
+      e.preventDefault();
+      d.split("").forEach(function (c, n) { boxes[n].value = c; });
+      boxes[Math.min(d.length, 5)].focus();
+    });
+  });
+  document.getElementById("form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    document.getElementById("alert").classList.add("show");
+  });
+</script>
+</body>
+</html>

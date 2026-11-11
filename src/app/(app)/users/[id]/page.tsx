@@ -44,6 +44,7 @@ async function EditUserContent({
       </div>
       <UserForm
         mode="edit"
+        currentUserId={me.id}
         user={{
           id: user.id,
           fullName: user.fullName,

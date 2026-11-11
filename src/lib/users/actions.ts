@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/current-user";
+import { logAuthEvent } from "@/lib/auth/audit";
 import { canEdit } from "@/lib/auth/permissions";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -24,13 +25,17 @@ const text = {
   ownDelete: "You cannot delete your own account.",
   deactivateFirst: "Deactivate the user before deleting them.",
   nameMismatch: "The name you typed does not match. Nothing was deleted.",
+  ownTwoFactor: "Ask another System Admin to reset your own two-factor.",
+  shortPassword: "The temporary password needs at least 10 characters.",
+  longPassword: "The temporary password is too long.",
 } as const;
 
 // Only the System Admin may change users. The database enforces the same rule
 // through Row Level Security, so this check is the first gate, not the only one.
 async function requireAdmin() {
   const me = await getCurrentUser();
-  return me && canEdit("users", me.role) ? me : null;
+  // An admin still on a temporary password cannot manage users yet.
+  return me && !me.mustChangePassword && canEdit("users", me.role) ? me : null;
 }
 
 async function otherActiveAdmins(excludeId: string) {
@@ -198,6 +203,89 @@ export async function setUserStatus(
   });
 
   revalidatePath("/users");
+  return { error: null };
+}
+
+// Sets a new temporary password. The user must replace it at next sign in.
+// This is also how a forgotten password is handled, since reset emails are not
+// used.
+export async function resetPassword(
+  _previous: StatusResult,
+  formData: FormData,
+): Promise<StatusResult> {
+  const me = await requireAdmin();
+  if (!me) return { error: text.notAllowed };
+
+  const id = String(formData.get("id") ?? "");
+  if (!statusSchema.shape.id.safeParse(id).success) {
+    return { error: text.notFound };
+  }
+  const password = String(formData.get("password") ?? "");
+  if (password.length < 10) return { error: text.shortPassword };
+  if (password.length > 72) return { error: text.longPassword };
+
+  const supabase = await createClient();
+  const { data: target } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("id", id)
+    .maybeSingle();
+  if (!target) return { error: text.notFound };
+
+  const admin = createAdminClient();
+  const { error: authError } = await admin.auth.admin.updateUserById(id, {
+    password,
+  });
+  if (authError) return { error: text.failed };
+
+  // Written as the signed in System Admin so the audit log names who did it.
+  const { error } = await supabase
+    .from("profiles")
+    .update({ must_change_password: true })
+    .eq("id", id);
+  if (error) return { error: text.failed };
+
+  await logAuthEvent("password_reset", { actorId: me.id, recordId: id });
+  revalidatePath("/users");
+  return { error: null };
+}
+
+// Removes a user's authenticator so they set up a new one at next sign in.
+// For a lost or replaced phone. Everything is logged.
+export async function resetTwoFactor(
+  _previous: StatusResult,
+  formData: FormData,
+): Promise<StatusResult> {
+  const me = await requireAdmin();
+  if (!me) return { error: text.notAllowed };
+
+  const id = String(formData.get("id") ?? "");
+  if (!statusSchema.shape.id.safeParse(id).success) {
+    return { error: text.notFound };
+  }
+  if (id === me.id) return { error: text.ownTwoFactor };
+
+  const supabase = await createClient();
+  const { data: target } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("id", id)
+    .maybeSingle();
+  if (!target) return { error: text.notFound };
+
+  const admin = createAdminClient();
+  const { data, error } = await admin.auth.admin.mfa.listFactors({ userId: id });
+  if (error) return { error: text.failed };
+
+  for (const factor of data?.factors ?? []) {
+    const { error: removeError } = await admin.auth.admin.mfa.deleteFactor({
+      id: factor.id,
+      userId: id,
+    });
+    if (removeError) return { error: text.failed };
+  }
+
+  await logAuthEvent("mfa_reset", { actorId: me.id, recordId: id });
   return { error: null };
 }
 
