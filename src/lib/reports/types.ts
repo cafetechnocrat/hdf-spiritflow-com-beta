@@ -5,6 +5,8 @@
 export const REPORT_KEYS = [
   "day-book",
   "ledger-statement",
+  "sales-register",
+  "purchase-register",
   "trial-balance",
   "profit-loss",
   "balance-sheet",
@@ -18,6 +20,8 @@ export function isReportKey(value: string): value is ReportKey {
 export const REPORT_TITLES: Record<ReportKey, string> = {
   "day-book": "Day Book",
   "ledger-statement": "Ledger Statement",
+  "sales-register": "Sales Register",
+  "purchase-register": "Purchase Register",
   "trial-balance": "Trial Balance",
   "profit-loss": "Profit And Loss",
   "balance-sheet": "Balance Sheet",
@@ -60,6 +64,8 @@ export type ReportDocument = {
   emptyTitle: string;
   emptyHint: string;
   blocks?: DayBookBlock[];
+  // Show the two tables next to each other, as the Balance Sheet does.
+  sideBySide?: boolean;
 };
 
 // What a filter bar needs. Values come from the database.

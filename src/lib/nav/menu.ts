@@ -78,6 +78,18 @@ const MENU: MenuDefinition[] = [
             area: "reports",
           },
           {
+            id: "sales-register",
+            label: "Sales Register",
+            href: "/reports/sales-register",
+            area: "reports",
+          },
+          {
+            id: "purchase-register",
+            label: "Purchase Register",
+            href: "/reports/purchase-register",
+            area: "reports",
+          },
+          {
             id: "trial-balance",
             label: "Trial Balance",
             href: "/reports/trial-balance",

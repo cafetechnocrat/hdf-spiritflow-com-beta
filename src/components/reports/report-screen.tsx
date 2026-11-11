@@ -199,7 +199,7 @@ export function ReportScreen({
   const exportHref = (format: "xlsx" | "pdf") =>
     `/reports/export?report=${doc.key}&format=${format}${query ? `&${query}` : ""}`;
 
-  const sideBySide = doc.tables.length === 2 && doc.tables.every((t) => t.heading);
+  const sideBySide = doc.sideBySide === true;
 
   return (
     <div>
@@ -328,11 +328,13 @@ export function ReportScreen({
               </div>
             ) : (
               doc.tables.map((table, index) => (
-                <div
-                  key={index}
-                  className="overflow-hidden rounded-2xl bg-surface shadow-[0_1px_3px_rgba(0,0,0,0.05)]"
-                >
-                  <ReportTable table={table} />
+                <div key={index} className="mb-3 last:mb-0">
+                  {table.heading ? (
+                    <h3 className="mb-1.5 ml-0.5 text-[0.9rem] font-semibold">{table.heading}</h3>
+                  ) : null}
+                  <div className="overflow-hidden rounded-2xl bg-surface shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
+                    <ReportTable table={table} />
+                  </div>
                 </div>
               ))
             )}

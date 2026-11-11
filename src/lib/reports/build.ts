@@ -43,6 +43,7 @@ type GroupRec = {
   nature: Nature;
   sort_order: number;
   pl_section: "trading" | "profit_loss" | null;
+  register_kind: "sales" | "purchase" | null;
 };
 
 type LedgerRec = { id: string; name: string; group_id: string };
@@ -124,7 +125,7 @@ async function loadChart(supabase: Supabase): Promise<Chart> {
   const [groupsResult, ledgersResult] = await Promise.all([
     supabase
       .from("ledger_groups")
-      .select("id, name, parent_id, nature, sort_order, pl_section"),
+      .select("id, name, parent_id, nature, sort_order, pl_section, register_kind"),
     supabase.from("ledgers").select("id, name, group_id").order("name"),
   ]);
   if (groupsResult.error || ledgersResult.error) throw new Error("chart");
@@ -448,6 +449,238 @@ async function buildLedgerStatement(
     "Particulars shows the other ledger of each row. A balance that has gone the other way shows on the opposite side, with no minus sign.",
   ];
   doc.empty = false;
+  return doc;
+}
+
+// ---------------------------------------------------------------------------
+// Sales Register and Purchase Register
+
+type RegisterLeg = {
+  voucher_id: string;
+  voucher_date: string;
+  type_name: string;
+  reference_no: string;
+  ledger_id: string;
+  ledger_name: string;
+  net_text: string;
+};
+
+function monthName(key: string): string {
+  const [year, month] = key.split("-").map(Number);
+  return new Intl.DateTimeFormat("en-GB", { month: "long", year: "numeric", timeZone: "UTC" }).format(
+    new Date(Date.UTC(year, month - 1, 1)),
+  );
+}
+
+async function buildRegister(
+  supabase: Supabase,
+  chart: Chart,
+  kind: "sales" | "purchase",
+  params: ReportParams,
+  ctx: ReportContext,
+): Promise<ReportDocument> {
+  const key: ReportKey = kind === "sales" ? "sales-register" : "purchase-register";
+  const { data, error } = await supabase.rpc("report_register", {
+    p_kind: kind,
+    p_from: params.from,
+    p_to: params.to,
+  });
+  if (error) throw new Error("register");
+  const legs = (data ?? []) as RegisterLeg[];
+
+  // The groups that feed this register, with everything under them.
+  const scope = new Set<string>();
+  const queue = chart.groups.filter((g) => g.register_kind === kind).map((g) => g.id);
+  while (queue.length > 0) {
+    const id = queue.pop() as string;
+    if (scope.has(id)) continue;
+    scope.add(id);
+    for (const child of chart.childrenOf.get(id) ?? []) queue.push(child.id);
+  }
+  const ledgerGroup = new Map(chart.ledgers.map((l) => [l.id, l.group_id]));
+
+  // Columns follow the order of the group tree, then the ledger name.
+  const groupOrder = new Map<string, number>();
+  let counter = 0;
+  const walk = (parent: string | null) => {
+    for (const group of chart.childrenOf.get(parent) ?? []) {
+      groupOrder.set(group.id, counter);
+      counter += 1;
+      walk(group.id);
+    }
+  };
+  walk(null);
+
+  type Voucher = {
+    id: string;
+    date: string;
+    title: string;
+    legs: { ledgerId: string; name: string; net: bigint }[];
+  };
+  const vouchers = new Map<string, Voucher>();
+  for (const leg of legs) {
+    let voucher = vouchers.get(leg.voucher_id);
+    if (!voucher) {
+      voucher = {
+        id: leg.voucher_id,
+        date: leg.voucher_date,
+        title: `${leg.type_name} ${leg.reference_no}`,
+        legs: [],
+      };
+      vouchers.set(leg.voucher_id, voucher);
+    }
+    voucher.legs.push({
+      ledgerId: leg.ledger_id,
+      name: leg.ledger_name,
+      net: parseSignedPaise(leg.net_text),
+    });
+  }
+
+  // Keep the vouchers that touch the chosen ledger, if one was chosen.
+  const chosen = [...vouchers.values()].filter(
+    (v) => !params.ledgerId || v.legs.some((l) => l.ledgerId === params.ledgerId),
+  );
+
+  // For each voucher the register ledgers decide the direction. A normal sale
+  // or purchase has the register side positive. A return is the other way.
+  type Line = { voucher: Voucher; columns: Map<string, bigint>; particulars: string };
+  const columnLedgers = new Map<string, { name: string; order: number }>();
+  const lines: Line[] = chosen.map((voucher) => {
+    let registerNet = ZERO;
+    for (const leg of voucher.legs) {
+      const group = ledgerGroup.get(leg.ledgerId);
+      if (group && scope.has(group)) registerNet += leg.net;
+    }
+    const normal = registerNet >= ZERO;
+    const columns = new Map<string, bigint>();
+    const party: string[] = [];
+    for (const leg of voucher.legs) {
+      const onColumnSide = normal ? leg.net > ZERO : leg.net < ZERO;
+      if (onColumnSide) {
+        columns.set(leg.ledgerId, (columns.get(leg.ledgerId) ?? ZERO) + leg.net);
+        if (!columnLedgers.has(leg.ledgerId)) {
+          const group = ledgerGroup.get(leg.ledgerId);
+          columnLedgers.set(leg.ledgerId, {
+            name: leg.name,
+            order: group ? (groupOrder.get(group) ?? 0) : 0,
+          });
+        }
+      } else {
+        party.push(leg.name);
+      }
+    }
+    return { voucher, columns, particulars: party.join(", ") };
+  });
+
+  const columnList = [...columnLedgers.entries()]
+    .sort((a, b) => a[1].order - b[1].order || a[1].name.localeCompare(b[1].name))
+    .map(([id, info]) => ({ id, name: info.name }));
+
+  const rowTotal = (line: Line) => sumPaise([...line.columns.values()]);
+  const columnTotals = columnList.map((column) =>
+    sumPaise(lines.map((line) => line.columns.get(column.id) ?? ZERO)),
+  );
+  const grand = sumPaise(lines.map(rowTotal));
+
+  const listRows: DocRow[] = lines.map((line) =>
+    row(
+      "normal",
+      text(displayDate(line.voucher.date)),
+      text(line.voucher.title),
+      text(line.particulars),
+      ...columnList.map((column) => {
+        const value = line.columns.get(column.id);
+        return value === undefined ? blank : amount(value);
+      }),
+      amount(rowTotal(line)),
+    ),
+  );
+  if (listRows.length > 0) {
+    listRows.push(
+      row("total", text("Total"), blank, blank, ...columnTotals.map(amount), amount(grand)),
+    );
+  }
+
+  // Month by month with the same columns.
+  const months = new Map<string, Line[]>();
+  for (const line of lines) {
+    const monthKey = line.voucher.date.slice(0, 7);
+    months.set(monthKey, [...(months.get(monthKey) ?? []), line]);
+  }
+  const monthRows: DocRow[] = [...months.entries()].map(([monthKey, monthLines]) =>
+    row(
+      "normal",
+      text(monthName(monthKey)),
+      text(String(monthLines.length)),
+      ...columnList.map((column) =>
+        amount(sumPaise(monthLines.map((line) => line.columns.get(column.id) ?? ZERO))),
+      ),
+      amount(sumPaise(monthLines.map(rowTotal))),
+    ),
+  );
+  if (monthRows.length > 0) {
+    monthRows.push(
+      row("total", text("Total"), text(String(lines.length)), ...columnTotals.map(amount), amount(grand)),
+    );
+  }
+
+  let highest = ZERO;
+  let highestTitle = "";
+  for (const line of lines) {
+    const total = rowTotal(line);
+    if (total > highest || highestTitle === "") {
+      highest = total;
+      highestTitle = line.voucher.title;
+    }
+  }
+  const days = new Set(lines.map((line) => line.voucher.date)).size;
+
+  const side = kind === "sales" ? "credited" : "debited";
+  const otherSide = kind === "sales" ? "debited" : "credited";
+  const doc = baseDocument(
+    key,
+    ctx,
+    range(params.from, params.to),
+    `Ledger: ${chart.ledgers.find((l) => l.id === params.ledgerId)?.name ?? "all"}.`,
+  );
+  doc.kpis = [
+    kpi("Vouchers", String(lines.length), "Posted"),
+    kpi("Gross Total", formatPaise(grand), "All columns"),
+    kpi("Highest Voucher", formatPaise(highest), highestTitle),
+    kpi("Days", String(days), "With entries"),
+  ];
+  doc.tables = [
+    {
+      heading: "Monthly Summary",
+      columns: [
+        { label: "Month", align: "left" },
+        { label: "Vouchers", align: "right" },
+        ...columnList.map((c) => ({ label: c.name, align: "right" as const })),
+        { label: "Total", align: "right" },
+      ],
+      rows: monthRows,
+    },
+    {
+      heading: "Vouchers",
+      columns: [
+        { label: "Date", align: "left" },
+        { label: "Voucher", align: "left" },
+        { label: "Particulars", align: "left" },
+        ...columnList.map((c) => ({ label: c.name, align: "right" as const })),
+        { label: "Total", align: "right" },
+      ],
+      rows: listRows,
+    },
+  ];
+  doc.notes = [
+    `Covers ${range(params.from, params.to)}. A voucher is included when any of its rows touches a ledger under the ${kind} group. Void vouchers are left out.`,
+    `Each column is a ledger ${side} on the voucher. Particulars shows the ledgers ${otherSide}, such as cash, bank or the party. Total is the sum of the columns.`,
+    `A ${kind} return shows as a negative amount in its column. Liquor excise and GST ledgers stay in their own columns and are never added into one.`,
+    `Which groups count as ${kind} comes from the ledger groups.`,
+  ];
+  doc.empty = lines.length === 0;
+  doc.emptyTitle = "No Vouchers In This Range";
+  doc.emptyHint = "Change the dates or the ledger.";
   return doc;
 }
 
@@ -797,6 +1030,7 @@ async function buildBalanceSheet(
     { heading: "Assets", columns: columns("Assets"), rows: assets.rows },
   ];
   doc.tables = tables;
+  doc.sideBySide = true;
   doc.notes = [
     `As on ${displayDate(params.asOn)}. Balances are opening balance plus posted entries up to that date.`,
     "Profit And Loss is the cumulative net profit from the first entry up to the date. There is no year-end closing yet.",
@@ -835,6 +1069,10 @@ export async function buildReport(
   switch (key) {
     case "ledger-statement":
       return buildLedgerStatement(supabase, chart, params, ctx);
+    case "sales-register":
+      return buildRegister(supabase, chart, "sales", params, ctx);
+    case "purchase-register":
+      return buildRegister(supabase, chart, "purchase", params, ctx);
     case "trial-balance":
       return buildTrialBalance(supabase, chart, params, ctx);
     case "profit-loss":

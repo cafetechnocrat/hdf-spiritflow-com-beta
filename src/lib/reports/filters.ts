@@ -40,6 +40,19 @@ export function reportFilterFields(
         { kind: "date", name: "from", label: "From", value: params.from },
         { kind: "date", name: "to", label: "To", value: params.to },
       ];
+    case "sales-register":
+    case "purchase-register":
+      return [
+        { kind: "date", name: "from", label: "From", value: params.from },
+        { kind: "date", name: "to", label: "To", value: params.to },
+        {
+          kind: "select",
+          name: "ledgerId",
+          label: "Ledger",
+          value: params.ledgerId,
+          options: [{ value: "", label: "All Ledgers" }, ...options.ledgers],
+        },
+      ];
     case "trial-balance":
       return [
         { kind: "date", name: "asOn", label: "As On", value: params.asOn },

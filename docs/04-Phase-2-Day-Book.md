@@ -143,6 +143,10 @@ Left out of this slice. When it is added later it will be a restricted form for 
 - The cash and bank book and its group flag were removed on 2026-11-13 (migration `20261113160000_remove_cash_bank_book.sql`).
 - Not built yet: editing the hotel name from a screen, and a year-end closing for the Balance Sheet profit.
 
+### Built So Far (Registers)
+- Sales Register and Purchase Register at `/reports/sales-register` and `/reports/purchase-register`. Migration `20261113170000_registers.sql` adds the group marker `register_kind` (seeded for Sales Accounts and Purchase Accounts, inherited by sub-groups) and the function `report_register`.
+- Each voucher gets the direction of its register ledgers: a normal sale or purchase has the register side positive and a return is the other way, shown as negative amounts in the same columns. There is no screen yet to change which groups feed a register.
+
 ### Voucher Numbers
 - Each voucher gets its type's prefix, the financial year and a running number for that type and year, for example Payment No. 12 of 2026-27. The database assigns the number when the voucher is saved, so two people saving at once never get the same number.
 - The financial year comes from the voucher date, not from today.
