@@ -11,6 +11,7 @@ const text = {
   loading: "Loading...",
   dashboard: "Dashboard",
   users: "Users",
+  structure: "Stock Points, Outlets And Counters",
 } as const;
 
 // Everything for signed in users. The session is read at request time, so the
@@ -31,6 +32,9 @@ async function Shell({ children }: { children: ReactNode }) {
   }
   if (canView("users", user.role)) {
     nav.push({ href: "/users", label: text.users, icon: "users" });
+  }
+  if (canView("structure", user.role)) {
+    nav.push({ href: "/stock-outlets", label: text.structure, icon: "store" });
   }
 
   return (
