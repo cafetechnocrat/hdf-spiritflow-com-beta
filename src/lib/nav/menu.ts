@@ -61,7 +61,12 @@ const MENU: MenuDefinition[] = [
     icon: "book",
     children: [
       { id: "day-book", label: "Day Book", planned: true },
-      { id: "ledgers", label: "Ledgers", planned: true },
+      {
+        id: "ledgers",
+        label: "Ledger Groups And Ledgers",
+        href: "/ledgers",
+        area: "ledgers",
+      },
     ],
   },
   {

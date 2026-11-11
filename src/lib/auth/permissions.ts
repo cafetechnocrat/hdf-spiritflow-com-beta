@@ -32,6 +32,13 @@ export const PERMISSIONS = {
     stock_keeper: "V",
     kitchen_staff: "V",
   },
+  // Ledger groups and ledgers for the Day Book. The Night Accountant gets a
+  // ledger list later, with the entry screens.
+  ledgers: {
+    md: "V",
+    chief_accountant: "E",
+    accounts_staff: "V",
+  },
 } as const satisfies Record<string, Partial<Record<Role, Access>>>;
 
 export type Area = keyof typeof PERMISSIONS;

@@ -23,4 +23,5 @@ export const badge = {
   off: "bg-track text-muted",
   role: "bg-accent-soft text-link",
   warn: "bg-warn-bg text-warn",
+  bad: "bg-error-bg text-error",
 } as const;
