@@ -26,17 +26,19 @@
   .heads { margin: 14px 0 6px; font-size: .74rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--text-muted); padding-left: 2px; }
   .line { margin-bottom: 8px; }
   .line .x { width: 40px; height: 44px; border-radius: 10px; background: var(--track); color: var(--text-muted); font-size: 1.1rem; }
-  @media (max-width: 640px) {
+  .cell { display: block; min-width: 0; }
+  .cell .cl { display: none; }
+  @media (max-width: 760px) {
     .heads { display: none; }
-    .line { grid-template-columns: 1fr 1fr; padding: 10px; border-radius: 12px; background: var(--background); }
-    .line input { grid-column: 1; }
-    .line .x { grid-column: 2; justify-self: end; }
+    .line { grid-template-columns: 1fr; gap: 10px; padding: 12px; border-radius: 12px; background: var(--background); }
+    .cell .cl { display: block; margin: 0 0 4px 2px; font-size: .78rem; font-weight: 500; color: var(--text-muted); }
+    .line .x { width: 100%; height: 40px; }
   }
   .totals { display: flex; gap: 22px; padding: 10px 12px; margin-top: 6px; border-radius: 12px; background: var(--background); font-size: .88rem; }
   .assigned { display: block; padding: 11px 12px; border-radius: 12px; background: var(--background); color: var(--text-muted); font-size: .9rem; }
   .void-row td { color: var(--text-muted); }
   .void-row .cell-main { text-decoration: line-through; }
-  .modal.wide { max-width: 760px; }
+  .modal.wide { max-width: 980px; }
 </style>
 </head>
 <body data-page="transactions" data-title="Transactions">
@@ -143,7 +145,7 @@
     <section class="vpanel" data-panel="pay">
       <div class="heads"><span>Paid To (Debit)</span><span>Paid From (Credit)</span><span>Amount</span><span></span></div>
       <div class="lines">
-        <div class="line"><select data-pick="any" aria-label="Paid to"></select><select data-pick="cashbank" aria-label="Paid from"></select><input type="text" inputmode="decimal" placeholder="0.00" aria-label="Amount"><button class="x" type="button" aria-label="Remove line">&times;</button></div>
+        <div class="line"><label class="cell"><span class="cl">Paid To (Debit)</span><select data-pick="any" aria-label="Paid to"></select></label><label class="cell"><span class="cl">Paid From (Credit)</span><select data-pick="cashbank" aria-label="Paid from"></select></label><label class="cell"><span class="cl">Amount</span><input type="text" inputmode="decimal" placeholder="0.00" aria-label="Amount"></label><button class="x" type="button" aria-label="Remove line">&times;</button></div>
       </div>
       <button class="btn secondary small" type="button" data-add>Add Line</button>
       <div class="totals"><span>Total <span class="num">0.00</span></span></div>
@@ -153,7 +155,7 @@
     <section class="vpanel" data-panel="rec" hidden>
       <div class="heads"><span>Received In (Debit)</span><span>Received From (Credit)</span><span>Amount</span><span></span></div>
       <div class="lines">
-        <div class="line"><select data-pick="cashbank" aria-label="Received in"></select><select data-pick="any" aria-label="Received from"></select><input type="text" inputmode="decimal" placeholder="0.00" aria-label="Amount"><button class="x" type="button" aria-label="Remove line">&times;</button></div>
+        <div class="line"><label class="cell"><span class="cl">Received In (Debit)</span><select data-pick="cashbank" aria-label="Received in"></select></label><label class="cell"><span class="cl">Received From (Credit)</span><select data-pick="any" aria-label="Received from"></select></label><label class="cell"><span class="cl">Amount</span><input type="text" inputmode="decimal" placeholder="0.00" aria-label="Amount"></label><button class="x" type="button" aria-label="Remove line">&times;</button></div>
       </div>
       <button class="btn secondary small" type="button" data-add>Add Line</button>
       <div class="totals"><span>Total <span class="num">0.00</span></span></div>
@@ -163,7 +165,7 @@
     <section class="vpanel" data-panel="con" hidden>
       <div class="heads"><span>To (Debit)</span><span>From (Credit)</span><span>Amount</span><span></span></div>
       <div class="lines">
-        <div class="line"><select data-pick="cashbank" aria-label="To"></select><select data-pick="cashbank2" aria-label="From"></select><input type="text" inputmode="decimal" placeholder="0.00" aria-label="Amount"><button class="x" type="button" aria-label="Remove line">&times;</button></div>
+        <div class="line"><label class="cell"><span class="cl">To (Debit)</span><select data-pick="cashbank" aria-label="To"></select></label><label class="cell"><span class="cl">From (Credit)</span><select data-pick="cashbank2" aria-label="From"></select></label><label class="cell"><span class="cl">Amount</span><input type="text" inputmode="decimal" placeholder="0.00" aria-label="Amount"></label><button class="x" type="button" aria-label="Remove line">&times;</button></div>
       </div>
       <button class="btn secondary small" type="button" data-add>Add Line</button>
       <div class="totals"><span>Total <span class="num">0.00</span></span></div>
@@ -173,7 +175,7 @@
     <section class="vpanel" data-panel="jou" hidden>
       <div class="heads"><span>Debit</span><span>Credit</span><span>Amount</span><span></span></div>
       <div class="lines">
-        <div class="line"><select data-pick="any" aria-label="Debit"></select><select data-pick="any" aria-label="Credit"></select><input type="text" inputmode="decimal" placeholder="0.00" aria-label="Amount"><button class="x" type="button" aria-label="Remove line">&times;</button></div>
+        <div class="line"><label class="cell"><span class="cl">Debit</span><select data-pick="any" aria-label="Debit"></select></label><label class="cell"><span class="cl">Credit</span><select data-pick="any" aria-label="Credit"></select></label><label class="cell"><span class="cl">Amount</span><input type="text" inputmode="decimal" placeholder="0.00" aria-label="Amount"></label><button class="x" type="button" aria-label="Remove line">&times;</button></div>
       </div>
       <button class="btn secondary small" type="button" data-add>Add Line</button>
       <div class="totals"><span>Total <span class="num">0.00</span></span></div>
@@ -183,7 +185,7 @@
     <section class="vpanel" data-panel="sal" hidden>
       <div class="heads"><span>Received In Or Due From (Debit)</span><span>Sales Or Tax (Credit)</span><span>Amount</span><span></span></div>
       <div class="lines">
-        <div class="line"><select data-pick="saldr" aria-label="Received in or due from"></select><select data-pick="salcr" aria-label="Sales or tax"></select><input type="text" inputmode="decimal" placeholder="0.00" aria-label="Amount"><button class="x" type="button" aria-label="Remove line">&times;</button></div>
+        <div class="line"><label class="cell"><span class="cl">Received In Or Due From (Debit)</span><select data-pick="saldr" aria-label="Received in or due from"></select></label><label class="cell"><span class="cl">Sales Or Tax (Credit)</span><select data-pick="salcr" aria-label="Sales or tax"></select></label><label class="cell"><span class="cl">Amount</span><input type="text" inputmode="decimal" placeholder="0.00" aria-label="Amount"></label><button class="x" type="button" aria-label="Remove line">&times;</button></div>
       </div>
       <button class="btn secondary small" type="button" data-add>Add Line</button>
       <div class="totals"><span>Total <span class="num">0.00</span></span></div>
@@ -193,7 +195,7 @@
     <section class="vpanel" data-panel="pur" hidden>
       <div class="heads"><span>Purchase, Expense Or Tax (Debit)</span><span>Paid From Or Due To (Credit)</span><span>Amount</span><span></span></div>
       <div class="lines">
-        <div class="line"><select data-pick="purdr" aria-label="Purchase, expense or tax"></select><select data-pick="purcr" aria-label="Paid from or due to"></select><input type="text" inputmode="decimal" placeholder="0.00" aria-label="Amount"><button class="x" type="button" aria-label="Remove line">&times;</button></div>
+        <div class="line"><label class="cell"><span class="cl">Purchase, Expense Or Tax (Debit)</span><select data-pick="purdr" aria-label="Purchase, expense or tax"></select></label><label class="cell"><span class="cl">Paid From Or Due To (Credit)</span><select data-pick="purcr" aria-label="Paid from or due to"></select></label><label class="cell"><span class="cl">Amount</span><input type="text" inputmode="decimal" placeholder="0.00" aria-label="Amount"></label><button class="x" type="button" aria-label="Remove line">&times;</button></div>
       </div>
       <button class="btn secondary small" type="button" data-add>Add Line</button>
       <div class="totals"><span>Total <span class="num">0.00</span></span></div>
