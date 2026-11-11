@@ -28,8 +28,8 @@ Anything marked **Proposed** is a starting suggestion. Anything marked **Open** 
 | --- | --- | --- | --- | --- | --- |
 | Create and edit ledger groups and ledgers | Yes | No | No | No | Open |
 | View ledgers | Yes | Yes | Limited | View only | Open |
-| Enter transactions | Yes | Yes | Restricted | No | Open |
-| Edit or void a transaction | Yes | Open | No | No | No |
+| Enter transactions | Yes | Yes | Restricted (section 4) | No | Yes |
+| Edit or void a transaction | Yes | No | No | No | No |
 | View Day Book and reports | Yes | Yes | No reports | View only | Open |
 
 Rules already fixed elsewhere:
@@ -84,15 +84,46 @@ Prefix style with a plain hyphen and a space on each side, Title Case: **Sales -
 ### Examples From The Tally Plan (For The Chief Accountant To Create, Not Seeded)
 Cash, SBI, Federal Bank, BoI, Sales - Liquor, Sales - Food, KSBC (vendor), TCS Receivable, Liquor Cess, plus expense heads. Liquor is Kerala excise (non-GST); food and rooms are GST. Never mix them in one tax ledger.
 
-## 4. Transactions (Proposed)
+## 4. Transactions (Agreed Direction, Details To Confirm)
 
-- Fields: date, voucher type, voucher number, debit and credit lines, narration, optional outlet tag.
-- Proposed voucher types: Receipt, Payment, Journal, Contra. Sales and Purchase vouchers are **Open**.
-- **Double-entry underneath, simple on screen.** Every transaction must have total debit equal to total credit, enforced in the database. The entry screens stay simple for non-professional staff. For example, a Payment screen asks: paid from (cash or bank ledger), paid to (ledger), amount, narration, and the system posts both sides.
-- Voucher numbering per type, by financial year (April to March). Numbering rule is **Open**.
-- Posted transactions are never deleted. A mistake is corrected by edit or void with a reason, and the audit log keeps old and new values. Who may edit and whether edits need approval is **Open**.
-- Amounts are stored as `numeric(14,2)`, shown in Indian format (lakh and crore).
+Owner decisions, 2026-11-12:
+- Voucher types in the first release: **Receipt, Payment, Journal, Contra, Sales, Purchase**. All value only.
+- Numbering: **per voucher type, per financial year** (April to March). Each type counts from 1 every April. A number is never reused, even after a void.
+- Edit and void: **Chief Accountant only**, a reason is required for both. Accounts Staff, Night Accountant and System Admin cannot change a posted voucher.
+- Who enters: Chief Accountant, Accounts Staff, System Admin, and the Night Accountant through a restricted form.
+
+Nothing is hardcoded. Voucher types, their numbering prefix and which ledger groups each side may pick from are rows in the database, not lists in code.
+
+### Voucher Fields
+- Header: voucher type, date (from a calendar), voucher number (assigned on save), optional outlet tag (from the outlets table), optional reference (bill or cheque number), narration.
+- Lines: ledger, debit or credit, amount. **Double-entry underneath, simple on screen.** Total debit must equal total credit, enforced in the database. A voucher has at least two lines and every amount is above zero.
+- Amounts are `numeric(14,2)` and shown in Indian format. Back-dated entry is allowed.
 - Complimentary and cancelled bills are not transactions. They are reporting figures only.
+
+### Entry Screens (Simple Per Type)
+- **Payment:** paid from (a cash or bank ledger), then one or more paid-to lines (ledger and amount). The system posts debit to the paid-to ledgers and credit to the paid-from ledger.
+- **Receipt:** received in (a cash or bank ledger), then one or more received-from lines.
+- **Contra:** from and to, both cash or bank ledgers, and an amount. Covers cash deposits, withdrawals and bank transfers.
+- **Journal:** free lines with Dr or Cr, ledger and amount. Shows running debit, credit and difference. Cannot be saved until they match.
+- **Sales:** debit lines (received in cash or bank, or due from a debtor) and credit lines (sales ledgers and tax ledgers). Debit total must equal credit total. Liquor excise and GST ledgers are never mixed in one voucher line.
+- **Purchase:** debit lines (purchase and expense ledgers and tax ledgers) and credit lines (paid from cash or bank, or due to a creditor).
+- Which ledger groups each side of each type may pick from is held in the database (`voucher_type_rules`) and set up by migration. **Proposed starting rules:** cash and bank sides pick under Cash-in-Hand and Bank Accounts; paid-to and received-from pick any ledger; Sales credit picks under Sales Accounts and Duties And Taxes; Sales debit picks under Cash-in-Hand, Bank Accounts and Sundry Debtors; Purchase debit picks under Purchase Accounts, Direct Expenses, Indirect Expenses and Duties And Taxes; Purchase credit picks under Cash-in-Hand, Bank Accounts and Sundry Creditors. **Open:** confirm these.
+
+### Night Accountant (Restricted Entry)
+- One form only: **Expense Already Paid or Incurred**. Fields: date, expense ledger (only ledgers under expense groups), amount, paid by, narration.
+- No payment can be made from here, no receipt, no journal. The entry cannot be edited after saving. No reports.
+- **Open:** which ledger does it credit? Proposed: the Chief Accountant sets a short list of allowed "paid by" ledgers (for example Cash), and the Night Accountant picks from that list.
+
+### Voucher Numbers
+- Each voucher gets its type's prefix, the financial year and a running number for that type and year, for example Payment No. 12 of 2026-27. The database assigns the number when the voucher is saved, so two people saving at once never get the same number.
+- The financial year comes from the voucher date, not from today.
+- **Open:** exact display format of the number. Proposed: type prefix, financial year, number, like PAY/2026-27/0012.
+
+### Edit And Void
+- Posted vouchers are never deleted. The Chief Accountant can edit a voucher (it keeps its number) or void it. Both need a reason. A voided voucher stays in the list, is marked Void, and is left out of every balance and report total.
+- The audit log keeps old and new values for every edit and void.
+- **Open:** may the Chief Accountant edit the date of a voucher into a different financial year? Proposed: no, void and re-enter instead, so numbering stays clean.
+- Month locking by the Chief Accountant stays **Proposed** and is not part of this first slice.
 
 ## 5. Opening Balances And Back-Fill (From The Tally Setup)
 
@@ -109,7 +140,7 @@ This follows the plan agreed for the new Tally company. Confirm it applies to th
 ## 6. Database And Security Rules
 
 - Tables follow the conventions in `CLAUDE.md`: Row Level Security on every table, audit columns, no hard deletes, audit log on every change.
-- Proposed tables: `ledger_groups`, `ledgers`, `vouchers` (header), `voucher_lines` (debit and credit lines). Names to confirm.
+- Tables: `ledger_groups` and `ledgers` (built). For transactions: `voucher_types`, `voucher_type_rules`, `voucher_counters`, `vouchers` (header) and `voucher_lines` (debit and credit lines). Names to confirm.
 - A database check (constraint or trigger) rejects any voucher whose debits and credits differ.
 - Ledger balances and the Day Book come from database views or functions, so every report shows the same numbers.
 - Permission checks in the UI and in database policies, from one typed permission matrix. Phase 2 adds Ledgers and Transactions rows to the matrix from Phase 1.
