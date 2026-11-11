@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spirit Flow</title>
+<link rel="icon" type="image/png" href="../../../src/app/icon.png">
+<link rel="stylesheet" href="shared.css">
+<style>
+  .tabs { display: flex; gap: 2px; padding: 2px; background: var(--track); border-radius: 10px; margin-bottom: 14px; max-width: 520px; }
+  .tabs button { flex: 1; min-height: 40px; border-radius: 8px; font-size: .86rem; font-weight: 500; color: var(--text-muted); white-space: nowrap; }
+  .tabs button[aria-selected="true"] { background: var(--surface); color: var(--text); font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,.2), 0 0 0 .5px rgba(0,0,0,.04); }
+  .panel[hidden] { display: none; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 999px; font-size: .78rem; font-weight: 600; background: var(--accent-soft); color: var(--link); }
+  .chip.none { background: var(--track); color: var(--text-muted); font-weight: 500; }
+  .group-head { padding: 12px 16px 6px; font-size: .78rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--text-muted); }
+  .map { list-style: none; margin: 0; padding: 4px 16px 16px; }
+  .map > li { padding: 10px 0; border-top: 1px solid var(--divider); }
+  .map > li:first-child { border-top: 0; }
+  .map .sp { font-weight: 600; }
+  .map ul { list-style: none; margin: 6px 0 0 14px; padding: 0 0 0 12px; border-left: 2px solid var(--divider); display: grid; gap: 4px; font-size: .88rem; }
+  .map .co { color: var(--text-muted); font-size: .8rem; }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; align-items: center; justify-content: space-between; }
+</style>
+</head>
+<body data-page="outlets" data-title="Stock Points, Outlets And Counters">
+<div class="mock-note">Mockup. Sample data only. Not the real app.</div>
+<div class="shell">
+  <main class="content">
+    <div class="page-head">
+      <div>
+        <h1>Stock Points, Outlets And Counters</h1>
+        <p>Stock points hold the stock. Outlets sell, at their own rates. Counters are the billing points of an outlet.</p>
+      </div>
+    </div>
+
+    <div class="tabs" role="tablist" aria-label="Section">
+      <button type="button" role="tab" id="t-sp" aria-selected="true" aria-controls="p-sp">Stock Points</button>
+      <button type="button" role="tab" id="t-ou" aria-selected="false" aria-controls="p-ou">Outlets</button>
+      <button type="button" role="tab" id="t-co" aria-selected="false" aria-controls="p-co">Counters</button>
+    </div>
+
+    <!-- STOCK POINTS -->
+    <section class="panel" id="p-sp" role="tabpanel" aria-labelledby="t-sp">
+      <div class="toolbar">
+        <p class="hint" style="margin:0">Stock moves between stock points. It never moves between outlets. A stock point can be deleted only when it is inactive and no outlet is linked to it.</p>
+        <button class="btn" data-open="spModal">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add Stock Point
+        </button>
+      </div>
+      <div class="card table-wrap">
+        <table class="data">
+          <thead><tr><th>Stock Point</th><th>Type</th><th>Outlets Selling From It</th><th>Status</th><th><span class="sr-only">Actions</span></th></tr></thead>
+          <tbody>
+            <tr>
+              <td class="first"><div class="cell-main">Liquor Store</div><div class="cell-sub">LST</div></td>
+              <td data-label="Type">Warehouse</td>
+              <td data-label="Outlets"><div class="chips"><span class="chip none">None</span></div></td>
+              <td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td>
+              <td class="act"><div class="actions"><button class="btn secondary small" data-open="spModal">Edit</button></div></td>
+            </tr>
+            <tr>
+              <td class="first"><div class="cell-main">Spadikam</div><div class="cell-sub">SPA</div></td>
+              <td data-label="Type">Bar</td>
+              <td data-label="Outlets"><div class="chips"><span class="chip">Spadikam</span></div></td>
+              <td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td>
+              <td class="act"><div class="actions"><button class="btn secondary small" data-open="spModal">Edit</button></div></td>
+            </tr>
+            <tr>
+              <td class="first"><div class="cell-main">Dhruvam</div><div class="cell-sub">DHR</div></td>
+              <td data-label="Type">Bar</td>
+              <td data-label="Outlets"><div class="chips"><span class="chip">Dhruvam</span><span class="chip">No 20</span></div></td>
+              <td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td>
+              <td class="act"><div class="actions"><button class="btn secondary small" data-open="spModal">Edit</button><button class="btn danger small" data-open="spBlockedModal">Deactivate</button></div></td>
+            </tr>
+            <tr>
+              <td class="first"><div class="cell-main">Kitchen Store</div><div class="cell-sub">KIT</div></td>
+              <td data-label="Type">Kitchen</td>
+              <td data-label="Outlets"><div class="chips"><span class="chip none">None</span></div></td>
+              <td data-label="Status"><span class="badge off"><span class="dot"></span>Inactive</span></td>
+              <td class="act"><div class="actions"><button class="btn secondary small" data-open="spModal">Edit</button><button class="btn secondary small" data-close>Activate</button><button class="btn danger small" data-open="delSpModal">Delete</button></div></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- OUTLETS -->
+    <section class="panel" id="p-ou" role="tabpanel" aria-labelledby="t-ou" hidden>
+      <div class="toolbar">
+        <p class="hint" style="margin:0">An outlet has one stock point, or none. An outlet can be deleted only when it is inactive and has no counters or assigned cashiers.</p>
+        <button class="btn" data-open="ouModal">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add Outlet
+        </button>
+      </div>
+      <div class="card table-wrap">
+        <table class="data">
+          <thead><tr><th>Outlet</th><th>Type</th><th>Stock Point</th><th>Counters</th><th>Status</th><th><span class="sr-only">Actions</span></th></tr></thead>
+          <tbody>
+            <tr>
+              <td class="first"><div class="cell-main">Spadikam</div><div class="cell-sub">SPA</div></td>
+              <td data-label="Type"><span class="badge warn">Not Set</span></td>
+              <td data-label="Stock Point">Spadikam</td>
+              <td data-label="Counters">2</td>
+              <td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td>
+              <td class="act"><div class="actions"><button class="btn secondary small" data-open="ouModal">Edit</button></div></td>
+            </tr>
+            <tr>
+              <td class="first"><div class="cell-main">Dhruvam</div><div class="cell-sub">DHR</div></td>
+              <td data-label="Type"><span class="badge warn">Not Set</span></td>
+              <td data-label="Stock Point">Dhruvam</td>
+              <td data-label="Counters">1</td>
+              <td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td>
+              <td class="act"><div class="actions"><button class="btn secondary small" data-open="ouModal">Edit</button></div></td>
+            </tr>
+            <tr>
+              <td class="first"><div class="cell-main">No 20</div><div class="cell-sub">N20</div></td>
+              <td data-label="Type"><span class="badge warn">Not Set</span></td>
+              <td data-label="Stock Point">Dhruvam <span class="cell-sub">(shared)</span></td>
+              <td data-label="Counters"><span class="cell-sub">None</span></td>
+              <td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td>
+              <td class="act"><div class="actions"><button class="btn secondary small" data-open="ouModal">Edit</button></div></td>
+            </tr>
+            <tr>
+              <td class="first"><div class="cell-main">Malarvadi</div><div class="cell-sub">MAL</div></td>
+              <td data-label="Type"><span class="badge warn">Not Set</span></td>
+              <td data-label="Stock Point"><span class="chip none">No Stock Point</span></td>
+              <td data-label="Counters"><span class="cell-sub">None</span></td>
+              <td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td>
+              <td class="act"><div class="actions"><button class="btn secondary small" data-open="ouModal">Edit</button></div></td>
+            </tr>
+            <tr>
+              <td class="first"><div class="cell-main">Front Office</div><div class="cell-sub">FRO</div></td>
+              <td data-label="Type"><span class="badge warn">Not Set</span></td>
+              <td data-label="Stock Point"><span class="chip none">No Stock Point</span></td>
+              <td data-label="Counters"><span class="cell-sub">None</span></td>
+              <td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td>
+              <td class="act"><div class="actions"><button class="btn secondary small" data-open="ouModal">Edit</button></div></td>
+            </tr>
+            <tr>
+              <td class="first"><div class="cell-main">Touchings</div><div class="cell-sub">TOU</div></td>
+              <td data-label="Type"><span class="badge warn">Not Set</span></td>
+              <td data-label="Stock Point"><span class="chip none">No Stock Point</span></td>
+              <td data-label="Counters"><span class="cell-sub">None</span></td>
+              <td data-label="Status"><span class="badge off"><span class="dot"></span>Inactive</span></td>
+              <td class="act"><div class="actions"><button class="btn secondary small" data-open="ouModal">Edit</button><button class="btn secondary small" data-close>Activate</button><button class="btn danger small" data-open="delOuModal">Delete</button></div></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="notice warn" style="margin-top:12px">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 9v4M12 17h.01M10.3 3.9L2.4 18a2 2 0 001.7 3h15.8a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>
+        <span>Outlet types show Not Set because they are not decided yet. Choose each type when you edit the outlet.</span>
+      </div>
+    </section>
+
+    <!-- COUNTERS -->
+    <section class="panel" id="p-co" role="tabpanel" aria-labelledby="t-co" hidden>
+      <div class="toolbar">
+        <p class="hint" style="margin:0">A counter belongs to one outlet. An outlet can have several counters. A counter can be deleted only when it is inactive and has no cashier assigned.</p>
+        <button class="btn" data-open="coModal">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add Counter
+        </button>
+      </div>
+      <div class="card table-wrap">
+        <div class="group-head">Spadikam</div>
+        <table class="data">
+          <thead><tr><th>Counter</th><th>Assigned Cashiers</th><th>Status</th><th><span class="sr-only">Actions</span></th></tr></thead>
+          <tbody>
+            <tr>
+              <td class="first"><div class="cell-main">Counter 1</div></td>
+              <td data-label="Cashiers">Sample Cashier One</td>
+              <td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td>
+              <td class="act"><div class="actions"><button class="btn secondary small" data-open="coModal">Edit</button></div></td>
+            </tr>
+            <tr>
+              <td class="first"><div class="cell-main">Counter 2</div></td>
+              <td data-label="Cashiers"><span class="cell-sub">None Assigned</span></td>
+              <td data-label="Status"><span class="badge off"><span class="dot"></span>Inactive</span></td>
+              <td class="act"><div class="actions"><button class="btn secondary small" data-open="coModal">Edit</button><button class="btn secondary small" data-close>Activate</button><button class="btn danger small" data-open="delCoModal">Delete</button></div></td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="group-head" style="border-top:1px solid var(--divider)">Dhruvam</div>
+        <table class="data">
+          <thead><tr><th>Counter</th><th>Assigned Cashiers</th><th>Status</th><th><span class="sr-only">Actions</span></th></tr></thead>
+          <tbody>
+            <tr>
+              <td class="first"><div class="cell-main">Counter 1</div></td>
+              <td data-label="Cashiers"><span class="cell-sub">None Assigned</span></td>
+              <td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td>
+              <td class="act"><div class="actions"><button class="btn secondary small" data-open="coModal">Edit</button></div></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="hint" style="margin-top:8px">Cashiers are assigned to an outlet and counter on the user form. Outlets with no counters are not listed here.</p>
+    </section>
+
+    <!-- HOW THEY CONNECT -->
+    <section class="card" style="margin-top:16px" aria-label="How they connect">
+      <div class="group-head">How They Connect</div>
+      <ul class="map">
+        <li><span class="sp">Liquor Store</span> <span class="co">stock point</span>
+          <ul><li><span class="co">No outlet sells from it. Stock is only transferred out.</span></li></ul></li>
+        <li><span class="sp">Spadikam</span> <span class="co">stock point</span>
+          <ul><li>Spadikam <span class="co">outlet · 2 counters</span></li></ul></li>
+        <li><span class="sp">Dhruvam</span> <span class="co">stock point</span>
+          <ul><li>Dhruvam <span class="co">outlet · 1 counter</span></li><li>No 20 <span class="co">outlet · no counters</span></li></ul></li>
+        <li><span class="sp">No Stock Point</span>
+          <ul><li>Malarvadi <span class="co">outlet</span></li><li>Front Office <span class="co">outlet</span></li><li>Touchings <span class="co">outlet</span></li></ul></li>
+      </ul>
+    </section>
+  </main>
+</div>
+
+<!-- Stock point -->
+<div class="modal-scrim" id="spModal" role="dialog" aria-modal="true" aria-labelledby="spTitle">
+  <div class="modal">
+    <h2 id="spTitle">Stock Point</h2>
+    <p class="sub">A place where stock is kept.</p>
+    <div class="field"><label class="lbl" for="sp1">Stock Point Name <span class="req">*</span></label><input id="sp1" type="text" placeholder="For example Liquor Store"></div>
+    <div class="grid-2">
+      <div class="field"><label class="lbl" for="sp2">Code <span class="req">*</span></label><input id="sp2" type="text" placeholder="LST"><p class="hint">Letters and numbers only.</p></div>
+      <div class="field"><label class="lbl" for="sp3">Type <span class="req">*</span></label>
+        <select id="sp3"><option>Select A Type</option><option>Warehouse</option><option>Bar</option><option>Kitchen</option><option>Restaurant</option></select></div>
+    </div>
+    <div class="field"><label class="lbl" for="sp4">Status</label><select id="sp4"><option>Active</option><option>Inactive</option></select></div>
+    <div class="modal-actions"><button class="btn secondary" data-close>Cancel</button><button class="btn" data-close>Save Stock Point</button></div>
+  </div>
+</div>
+
+<!-- Stock point cannot be deactivated -->
+<div class="modal-scrim" id="spBlockedModal" role="dialog" aria-modal="true" aria-labelledby="sbTitle">
+  <div class="modal">
+    <h2 id="sbTitle">Cannot Deactivate Dhruvam</h2>
+    <p class="sub">Two active outlets still sell from this stock point: Dhruvam and No 20. Move them to another stock point, or to none, first. Stock must also be zero or transferred out.</p>
+    <div class="modal-actions"><button class="btn" data-close>OK</button></div>
+  </div>
+</div>
+
+<!-- Outlet -->
+<div class="modal-scrim" id="ouModal" role="dialog" aria-modal="true" aria-labelledby="ouTitle">
+  <div class="modal">
+    <h2 id="ouTitle">Outlet</h2>
+    <p class="sub">A place that sells.</p>
+    <div class="field"><label class="lbl" for="ou1">Outlet Name <span class="req">*</span></label><input id="ou1" type="text" placeholder="For example Spadikam"></div>
+    <div class="grid-2">
+      <div class="field"><label class="lbl" for="ou2">Code <span class="req">*</span></label><input id="ou2" type="text" placeholder="SPA"></div>
+      <div class="field"><label class="lbl" for="ou3">Type <span class="req">*</span></label>
+        <select id="ou3"><option>Select A Type</option><option>Bar</option><option>Restaurant</option><option>Front Office</option></select></div>
+    </div>
+    <div class="field">
+      <label class="lbl" for="ou4">Stock Point</label>
+      <select id="ou4"><option>No Stock Point</option><option>Liquor Store</option><option>Spadikam</option><option>Dhruvam</option></select>
+      <p class="hint">Only one. Choose where this outlet's stock comes from. Several outlets may share a stock point and still keep their own selling rates. Leave as No Stock Point for an outlet that sells nothing from stock.</p>
+      <p class="hint" style="color:var(--warn)">Once stock or sales exist for this outlet, the stock point is locked and cannot be changed.</p>
+    </div>
+    <div class="field"><label class="lbl" for="ou5">Status</label><select id="ou5"><option>Active</option><option>Inactive</option></select></div>
+    <div class="modal-actions"><button class="btn secondary" data-close>Cancel</button><button class="btn" data-close>Save Outlet</button></div>
+  </div>
+</div>
+
+<!-- Counter -->
+<div class="modal-scrim" id="coModal" role="dialog" aria-modal="true" aria-labelledby="coTitle">
+  <div class="modal">
+    <h2 id="coTitle">Counter</h2>
+    <p class="sub">A billing point inside an outlet.</p>
+    <div class="field"><label class="lbl" for="co1">Outlet <span class="req">*</span></label>
+      <select id="co1"><option>Select An Outlet</option><option>Spadikam</option><option>Dhruvam</option><option>No 20</option><option>Malarvadi</option><option>Front Office</option><option>Touchings</option></select></div>
+    <div class="field"><label class="lbl" for="co2">Counter Name <span class="req">*</span></label><input id="co2" type="text" placeholder="For example Counter 3"></div>
+    <div class="field"><label class="lbl" for="co3">Status</label><select id="co3"><option>Active</option><option>Inactive</option></select></div>
+    <div class="modal-actions"><button class="btn secondary" data-close>Cancel</button><button class="btn" data-close>Save Counter</button></div>
+  </div>
+</div>
+
+<!-- Delete confirmations: type the name, as on the Users screen -->
+<div class="modal-scrim" id="delSpModal" role="dialog" aria-modal="true" aria-labelledby="dsTitle">
+  <div class="modal">
+    <h2 id="dsTitle">Delete Stock Point?</h2>
+    <p class="sub"><strong>Kitchen Store</strong> will be deleted permanently. This cannot be undone. The audit log keeps a record of it.</p>
+    <div class="field"><label class="lbl" for="ds1">Type The Name To Confirm</label><input id="ds1" type="text" placeholder="Kitchen Store"></div>
+    <div class="modal-actions"><button class="btn secondary" data-close>Cancel</button><button class="btn danger" data-close>Delete Stock Point</button></div>
+  </div>
+</div>
+<div class="modal-scrim" id="delOuModal" role="dialog" aria-modal="true" aria-labelledby="doTitle">
+  <div class="modal">
+    <h2 id="doTitle">Delete Outlet?</h2>
+    <p class="sub"><strong>Touchings</strong> will be deleted permanently. This cannot be undone. The audit log keeps a record of it.</p>
+    <div class="field"><label class="lbl" for="do1">Type The Name To Confirm</label><input id="do1" type="text" placeholder="Touchings"></div>
+    <div class="modal-actions"><button class="btn secondary" data-close>Cancel</button><button class="btn danger" data-close>Delete Outlet</button></div>
+  </div>
+</div>
+<div class="modal-scrim" id="delCoModal" role="dialog" aria-modal="true" aria-labelledby="dcTitle">
+  <div class="modal">
+    <h2 id="dcTitle">Delete Counter?</h2>
+    <p class="sub"><strong>Spadikam, Counter 2</strong> will be deleted permanently. This cannot be undone. The audit log keeps a record of it.</p>
+    <div class="modal-actions"><button class="btn secondary" data-close>Cancel</button><button class="btn danger" data-close>Delete Counter</button></div>
+  </div>
+</div>
+
+<script src="shell.js"></script>
+<script>
+  // Mockup behaviour only: switches the three sections.
+  (function () {
+    var tabs = [["t-sp", "p-sp"], ["t-ou", "p-ou"], ["t-co", "p-co"]];
+    tabs.forEach(function (pair) {
+      document.getElementById(pair[0]).addEventListener("click", function () {
+        tabs.forEach(function (p) {
+          var on = p[0] === pair[0];
+          document.getElementById(p[0]).setAttribute("aria-selected", String(on));
+          document.getElementById(p[1]).hidden = !on;
+        });
+      });
+    });
+  })();
+</script>
+</body>
+</html>

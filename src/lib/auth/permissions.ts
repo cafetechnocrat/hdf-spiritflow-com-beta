@@ -22,6 +22,16 @@ export const PERMISSIONS = {
     system_admin: "E",
     chief_accountant: "V",
   },
+  // Stock points, outlets and counters. Cashiers get their own outlet later.
+  structure: {
+    md: "V",
+    system_admin: "E",
+    chief_accountant: "V",
+    accounts_staff: "V",
+    night_accountant: "V",
+    stock_keeper: "V",
+    kitchen_staff: "V",
+  },
 } as const satisfies Record<string, Partial<Record<Role, Access>>>;
 
 type Area = keyof typeof PERMISSIONS;

@@ -15,7 +15,7 @@ const text = {
   logoAlt: "Spirit Flow",
 } as const;
 
-export type NavIcon = "home" | "users";
+export type NavIcon = "home" | "users" | "store";
 
 export type NavItem = {
   href: string;
@@ -25,6 +25,9 @@ export type NavItem = {
 
 const icons: Record<NavIcon, ReactNode> = {
   home: <path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10" />,
+  store: (
+    <path d="M4 9l1.5-5h13L20 9M4 9v11h16V9M4 9c0 1.7 1.3 3 3 3s3-1.3 3-3c0 1.7 1.3 3 3 3s3-1.3 3-3c0 1.7 1.3 3 3 3" />
+  ),
   users: (
     <>
       <circle cx="9" cy="8" r="3.5" />
