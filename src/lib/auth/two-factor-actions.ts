@@ -39,10 +39,16 @@ export async function beginTwoFactorSetup(): Promise<SetupInfo> {
   });
   if (error || !data) return { ok: false, error: text.setupFailed };
 
+  // Supabase returns the SVG as an unencoded data URI with a trailing newline,
+  // which the image component rejects. Encode it properly.
+  const svg = data.totp.qr_code
+    .replace(/^data:image\/svg\+xml;(charset=)?utf-8,/i, "")
+    .trim();
+
   return {
     ok: true,
     factorId: data.id,
-    qr: data.totp.qr_code,
+    qr: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`,
     secret: data.totp.secret,
   };
 }
