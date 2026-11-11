@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spirit Flow</title>
+<link rel="icon" type="image/png" href="../../../src/app/icon.png">
+<link rel="stylesheet" href="shared.css">
+<style>
+  .form-card { max-width: 720px; }
+  .section { padding: 18px 18px 6px; border-bottom: 1px solid var(--divider); }
+  .section:last-of-type { border-bottom: 0; }
+  .section h2 { font-size: 1rem; font-weight: 600; letter-spacing: -.01em; margin-bottom: 12px; }
+  .form-actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; padding: 16px 18px; background: #FAFAFB; border-radius: 0 0 16px 16px; border-top: 1px solid var(--divider); }
+  .only-cashier, .only-office { display: none; }
+  body[data-kind="cashier"] .only-cashier { display: block; }
+  body[data-kind="office"] .only-office { display: block; }
+  .pin-row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; max-width: 320px; }
+  .pin-row input { padding: 0; text-align: center; font-size: 1.1rem; font-weight: 600; border-radius: 10px; }
+  .view-note { display: none; }
+  body[data-mode="edit"] .create-only { display: none !important; }
+  body[data-mode="new"] .edit-only { display: none !important; }
+  .danger-zone { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+</style>
+</head>
+<body data-page="users" data-title="Users" data-kind="office" data-mode="new">
+<div class="mock-note">Mockup. Sample data only. Not the real app.</div>
+<div class="shell">
+  <main class="content">
+    <a class="crumb" href="users.html">&larr; Users</a>
+    <div class="page-head">
+      <div>
+        <h1 id="pageTitle">Add User</h1>
+        <p id="pageSub">The user must change the temporary password when they first sign in.</p>
+      </div>
+    </div>
+
+    <form class="card form-card" onsubmit="return false">
+      <div class="section">
+        <h2>Details</h2>
+        <div class="grid-2">
+          <div class="field">
+            <label class="lbl" for="name">Full Name <span class="req">*</span></label>
+            <input id="name" type="text" placeholder="Enter full name" autocomplete="off">
+          </div>
+          <div class="field">
+            <label class="lbl" for="phone">Phone Number</label>
+            <input id="phone" type="text" inputmode="tel" placeholder="Optional">
+          </div>
+        </div>
+        <div class="field">
+          <label class="lbl" for="roleSel">Role <span class="req">*</span></label>
+          <select id="roleSel">
+            <option value="office">Accounts Staff</option>
+            <option value="office">MD</option>
+            <option value="office">System Admin</option>
+            <option value="office">Chief Accountant</option>
+            <option value="office">Night Accountant</option>
+            <option value="cashier">Cashier</option>
+            <option value="office">Stock Keeper</option>
+            <option value="office">Security</option>
+            <option value="office">Kitchen Staff</option>
+          </select>
+          <p class="hint" id="roleHint">Accounts Staff enter transactions and cannot create ledgers.</p>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Sign In</h2>
+
+        <div class="only-office">
+          <div class="field">
+            <label class="lbl" for="email">Email Address <span class="req">*</span></label>
+            <input id="email" type="email" placeholder="username@spiritflowhdf.com" autocomplete="off">
+            <p class="hint">Used to sign in. Use the format username@spiritflowhdf.com.</p>
+          </div>
+          <div class="field create-only">
+            <label class="lbl" for="tmp">Temporary Password <span class="req">*</span></label>
+            <input id="tmp" type="text" placeholder="At least 10 characters" autocomplete="off">
+            <p class="hint">Share it with the user in person or by phone. They must change it at first sign in.</p>
+          </div>
+          <div class="notice" style="margin-bottom:14px" id="mfaNote">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8h.01M11 12h1v4h1"/></svg>
+            <span>This role signs in with an authenticator app as well. They set it up the first time they sign in.</span>
+          </div>
+        </div>
+
+        <div class="only-cashier">
+          <div class="field">
+            <label class="lbl" for="username">Username <span class="req">*</span></label>
+            <input id="username" type="text" placeholder="For example cashier3" autocapitalize="none" autocomplete="off">
+            <p class="hint">Lowercase letters and numbers only. Cashiers sign in with this username and a PIN.</p>
+          </div>
+          <div class="field create-only">
+            <span class="lbl" id="pinLbl">Temporary PIN <span class="req">*</span></span>
+            <div class="pin-row" role="group" aria-labelledby="pinLbl">
+              <input type="text" inputmode="numeric" maxlength="1" aria-label="PIN Digit 1">
+              <input type="text" inputmode="numeric" maxlength="1" aria-label="PIN Digit 2">
+              <input type="text" inputmode="numeric" maxlength="1" aria-label="PIN Digit 3">
+              <input type="text" inputmode="numeric" maxlength="1" aria-label="PIN Digit 4">
+              <input type="text" inputmode="numeric" maxlength="1" aria-label="PIN Digit 5">
+              <input type="text" inputmode="numeric" maxlength="1" aria-label="PIN Digit 6">
+            </div>
+            <p class="hint">6 digits. Tell the cashier in person. They change it at first sign in.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="section only-cashier">
+        <h2>Outlet And Counter</h2>
+        <div class="grid-2">
+          <div class="field">
+            <label class="lbl" for="outlet">Outlet <span class="req">*</span></label>
+            <select id="outlet"><option>Select An Outlet</option><option>Spadikam</option><option>Dhruvam</option><option>No 20</option><option>Malarvadi</option><option>Front Office</option><option>Touchings</option></select>
+          </div>
+          <div class="field">
+            <label class="lbl" for="counter">Counter <span class="req">*</span></label>
+            <select id="counter"><option>Select A Counter</option><option>Counter 1</option><option>Counter 2</option></select>
+          </div>
+        </div>
+        <p class="hint" style="margin:-6px 2px 14px">This cashier can only sign in on, and see data for, this outlet and counter.</p>
+      </div>
+
+      <div class="section only-office">
+        <h2>Outlet Access</h2>
+        <div class="field">
+          <p style="font-size:.9rem" id="accessText">Can see all outlets.</p>
+          <p class="hint">Cashiers are the only role limited to one outlet and counter in this release.</p>
+        </div>
+      </div>
+
+      <div class="section edit-only">
+        <h2>Status And Security</h2>
+        <div class="field">
+          <span class="lbl">Status</span>
+          <span class="badge ok"><span class="dot"></span>Active</span>
+        </div>
+        <div class="danger-zone">
+          <button type="button" class="btn secondary small" data-open="resetModal">Reset Password Or PIN</button>
+          <button type="button" class="btn danger small" data-open="deactivateModal">Deactivate User</button>
+        </div>
+        <p class="hint" style="margin-bottom:14px">Deactivating signs the user out at once and blocks sign in. Records and history are kept.</p>
+      </div>
+
+      <div class="form-actions">
+        <a class="btn secondary" href="users.html">Cancel</a>
+        <button class="btn" type="submit" id="saveBtn">Create User</button>
+      </div>
+    </form>
+  </main>
+</div>
+
+<div class="modal-scrim" id="resetModal" role="dialog" aria-modal="true" aria-labelledby="resetTitle">
+  <div class="modal">
+    <h2 id="resetTitle">Reset Password</h2>
+    <p class="sub">Set a temporary password. The user must change it the next time they sign in.</p>
+    <div class="field">
+      <label class="lbl" for="tmp2">Temporary Password</label>
+      <input id="tmp2" type="text" placeholder="At least 10 characters">
+    </div>
+    <div class="modal-actions">
+      <button class="btn secondary" data-close>Cancel</button>
+      <button class="btn" data-close>Reset Password</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-scrim" id="deactivateModal" role="dialog" aria-modal="true" aria-labelledby="deactTitle">
+  <div class="modal">
+    <h2 id="deactTitle">Deactivate User?</h2>
+    <p class="sub">They will be signed out and will not be able to sign in. Their history stays in the records. You can activate them again later.</p>
+    <div class="modal-actions">
+      <button class="btn secondary" data-close>Cancel</button>
+      <button class="btn danger" data-close>Deactivate</button>
+    </div>
+  </div>
+</div>
+
+<script src="shell.js"></script>
+<script>
+  // Mockup behaviour only: the form changes with the role, and the page
+  // opens as Add User or Edit User from the link used to reach it.
+  var hints = {
+    "Accounts Staff": "Accounts Staff enter transactions and cannot create ledgers.",
+    "MD": "MD can view everything and change nothing.",
+    "System Admin": "System Admin manages users, outlets and counters.",
+    "Chief Accountant": "Chief Accountant creates ledgers and sees all accounts.",
+    "Night Accountant": "Night Accountant has entry-only rights and no payments.",
+    "Cashier": "Cashiers are limited to one outlet and counter.",
+    "Stock Keeper": "Stock Keeper manages stock in later releases.",
+    "Security": "Security uses attendance in a later release.",
+    "Kitchen Staff": "Kitchen Staff see kitchen screens in a later release."
+  };
+  var twoFactor = { "MD": 1, "System Admin": 1, "Chief Accountant": 1, "Accounts Staff": 1 };
+  var sel = document.getElementById("roleSel");
+  function apply() {
+    var label = sel.options[sel.selectedIndex].text;
+    document.body.setAttribute("data-kind", sel.value);
+    document.getElementById("roleHint").textContent = hints[label];
+    document.getElementById("mfaNote").style.display = twoFactor[label] ? "flex" : "none";
+  }
+  sel.addEventListener("change", apply);
+  apply();
+
+  var q = location.search;
+  if (q === "?new" || q === "") {
+    document.body.setAttribute("data-mode", "new");
+  } else {
+    document.body.setAttribute("data-mode", "edit");
+    document.getElementById("pageTitle").textContent = "Edit User";
+    document.getElementById("pageSub").textContent = "Change the name, role or outlet access. Sign in details are changed with Reset Password.";
+    document.getElementById("saveBtn").textContent = "Save Changes";
+    document.getElementById("name").value = q === "?cashier" ? "Sample Cashier One" : "Sample Accounts One";
+    document.getElementById("email").value = "accounts1@spiritflowhdf.com";
+    if (q === "?cashier") {
+      sel.selectedIndex = 5; apply();
+      document.getElementById("username").value = "cashier1";
+      document.getElementById("outlet").selectedIndex = 1;
+      document.getElementById("counter").selectedIndex = 1;
+      document.getElementById("email").closest(".only-office");
+    } else {
+      document.getElementById("email").readOnly = true;
+    }
+  }
+</script>
+</body>
+</html>
