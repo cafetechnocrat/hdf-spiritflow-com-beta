@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spirit Flow</title>
+<link rel="icon" type="image/png" href="../../../src/app/icon.png">
+<link rel="stylesheet" href="../phase-1/shared.css">
+<style>
+  .date-card { max-width: 520px; }
+  .date-card h2 { font-size: 1.05rem; font-weight: 600; letter-spacing: -.02em; margin-bottom: 2px; }
+  .date-card .sub { color: var(--text-muted); font-size: .85rem; margin-bottom: 14px; }
+  .current { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 12px; background: var(--accent-soft); margin-bottom: 14px; }
+  .current strong { font-size: 1.15rem; letter-spacing: -.02em; }
+  .backdated { display: inline-flex; padding: 2px 10px; border-radius: 999px; background: var(--warn-bg); color: var(--warn); font-size: .75rem; font-weight: 600; }
+  .btn-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+  .saved { display: none; margin-top: 12px; padding: 9px 12px; border-radius: 10px; background: var(--success-bg); color: var(--success); font-size: .85rem; }
+  .saved.show { display: block; }
+</style>
+</head>
+<body data-page="dashboard" data-title="Dashboard">
+<div class="mock-note">Mockup. Sample data only. Not the real app. Only the Transaction Date card is new. The rest of the dashboard is built in a later phase.</div>
+<div class="shell">
+  <main class="content">
+    <div class="page-head">
+      <div>
+        <h1>Dashboard</h1>
+        <p>Welcome back.</p>
+      </div>
+    </div>
+
+    <section class="card card-pad date-card" aria-labelledby="dtTitle">
+      <h2 id="dtTitle">Transaction Date</h2>
+      <p class="sub">New vouchers start on this date. Pick an earlier date to enter older months. It stays until you change it.</p>
+
+      <div class="current">
+        <span>Current</span><strong>05/11/2026</strong><span class="backdated">Back-dated</span>
+      </div>
+
+      <div class="field">
+        <label class="lbl" for="dt1">Set Transaction Date</label>
+        <input id="dt1" type="date" value="2026-11-05">
+        <p class="hint">Today is 12/11/2026.</p>
+      </div>
+      <div class="btn-row">
+        <button class="btn" type="button" id="setBtn">Set Date</button>
+        <button class="btn secondary" type="button" id="todayBtn">Use Today</button>
+      </div>
+      <p class="saved" id="saved" role="status">Transaction date saved. New vouchers start on this date.</p>
+    </section>
+  </main>
+</div>
+<script src="../phase-1/shell.js"></script>
+<script>
+  // Mockup behaviour only.
+  document.getElementById("setBtn").addEventListener("click", function () {
+    document.getElementById("saved").classList.add("show");
+  });
+  document.getElementById("todayBtn").addEventListener("click", function () {
+    document.getElementById("dt1").value = "2026-11-12";
+    document.getElementById("saved").classList.add("show");
+  });
+</script>
+</body>
+</html>

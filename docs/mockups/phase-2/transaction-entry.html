@@ -12,29 +12,31 @@
   .filters select, .filters input { max-width: 200px; }
   .right { text-align: right; }
   .num { font-variant-numeric: tabular-nums; font-weight: 600; }
-  .section-title { font-size: 1.05rem; font-weight: 600; letter-spacing: -.02em; margin: 26px 0 4px; }
-  .section-sub { color: var(--text-muted); font-size: .85rem; margin-bottom: 12px; }
+  .datechip { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; background: var(--accent-soft); color: var(--link); font-size: .85rem; font-weight: 600; margin-bottom: 12px; }
+  .datechip span { font-weight: 500; color: var(--text-muted); }
   .vtabs { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 14px; }
   .vtabs button { min-height: 38px; padding: 0 14px; border-radius: 999px; font-size: .84rem; font-weight: 500; background: var(--track); color: var(--text-muted); }
   .vtabs button[aria-selected="true"] { background: var(--accent); color: #fff; font-weight: 600; }
   .vpanel[hidden] { display: none; }
-  .block-title { font-size: .78rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--text-muted); margin: 14px 0 8px; }
-  .line { display: grid; grid-template-columns: 1fr 130px 40px; gap: 8px; margin-bottom: 8px; align-items: center; }
-  .line.dc { grid-template-columns: 84px 1fr 130px 40px; }
-  @media (max-width: 560px) {
-    .line { grid-template-columns: 1fr 100px 36px; }
-    .line.dc { grid-template-columns: 70px 1fr 90px 36px; }
+  .datebox { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .datebox input { max-width: 200px; }
+  .backdated { display: inline-flex; padding: 2px 10px; border-radius: 999px; background: var(--warn-bg); color: var(--warn); font-size: .75rem; font-weight: 600; }
+  /* One line per row: debit, credit, amount, remove. */
+  .heads, .line { display: grid; grid-template-columns: 1fr 1fr 130px 40px; gap: 8px; align-items: center; }
+  .heads { margin: 14px 0 6px; font-size: .74rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--text-muted); padding-left: 2px; }
+  .line { margin-bottom: 8px; }
+  .line .x { width: 40px; height: 44px; border-radius: 10px; background: var(--track); color: var(--text-muted); font-size: 1.1rem; }
+  @media (max-width: 640px) {
+    .heads { display: none; }
+    .line { grid-template-columns: 1fr 1fr; padding: 10px; border-radius: 12px; background: var(--background); }
+    .line input { grid-column: 1; }
+    .line .x { grid-column: 2; justify-self: end; }
   }
-  .line .x { width: 36px; height: 44px; border-radius: 10px; background: var(--track); color: var(--text-muted); font-size: 1.1rem; }
-  .totals { display: flex; flex-wrap: wrap; gap: 6px 22px; padding: 10px 12px; margin-top: 6px; border-radius: 12px; background: var(--background); font-size: .88rem; }
-  .totals .ok { color: var(--success); font-weight: 600; }
-  .totals .bad { color: var(--error); font-weight: 600; }
-  .btn-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
-  .note-box { padding: 10px 12px; border-radius: 12px; background: var(--warn-bg); color: var(--warn); font-size: .84rem; margin-bottom: 12px; }
+  .totals { display: flex; gap: 22px; padding: 10px 12px; margin-top: 6px; border-radius: 12px; background: var(--background); font-size: .88rem; }
   .assigned { display: block; padding: 11px 12px; border-radius: 12px; background: var(--background); color: var(--text-muted); font-size: .9rem; }
-  .modal.wide { max-width: 720px; }
   .void-row td { color: var(--text-muted); }
   .void-row .cell-main { text-decoration: line-through; }
+  .modal.wide { max-width: 760px; }
 </style>
 </head>
 <body data-page="transactions" data-title="Transactions">
@@ -48,8 +50,10 @@
       </div>
     </div>
 
+    <div class="datechip">Transaction Date <span>12/11/2026. Change it on the Dashboard.</span></div>
+
     <div class="toolbar">
-      <p class="hint" style="margin:0">Posted vouchers are never deleted. Void one with a reason if it was entered wrongly.</p>
+      <p class="hint" style="margin:0">Void a voucher with a reason if it was entered wrongly.</p>
       <button class="btn" data-open="entryModal"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>New Voucher</button>
     </div>
 
@@ -108,7 +112,6 @@
         </tbody>
       </table>
     </div>
-
   </main>
 </div>
 
@@ -116,100 +119,92 @@
 <div class="modal-scrim" id="entryModal" role="dialog" aria-modal="true" aria-labelledby="enTitle">
   <div class="modal wide">
     <h2 id="enTitle">New Voucher</h2>
-    <p class="sub">Choose the type. Debit always equals credit underneath, and the database refuses a voucher that does not balance.</p>
+    <p class="sub">Choose the type. Each row holds the debit ledger, the credit ledger and the amount, so a voucher always balances.</p>
 
-      <div class="vtabs" role="tablist" aria-label="Voucher type">
-        <button type="button" role="tab" data-tab="pay" aria-selected="true">Payment</button>
-        <button type="button" role="tab" data-tab="rec" aria-selected="false">Receipt</button>
-        <button type="button" role="tab" data-tab="con" aria-selected="false">Contra</button>
-        <button type="button" role="tab" data-tab="jou" aria-selected="false">Journal</button>
-        <button type="button" role="tab" data-tab="sal" aria-selected="false">Sales</button>
-        <button type="button" role="tab" data-tab="pur" aria-selected="false">Purchase</button>
-      </div>
+    <div class="vtabs" role="tablist" aria-label="Voucher type">
+      <button type="button" role="tab" data-tab="pay" aria-selected="true">Payment</button>
+      <button type="button" role="tab" data-tab="rec" aria-selected="false">Receipt</button>
+      <button type="button" role="tab" data-tab="con" aria-selected="false">Contra</button>
+      <button type="button" role="tab" data-tab="jou" aria-selected="false">Journal</button>
+      <button type="button" role="tab" data-tab="sal" aria-selected="false">Sales</button>
+      <button type="button" role="tab" data-tab="pur" aria-selected="false">Purchase</button>
+    </div>
 
-      <!-- Same header on every type -->
-      <div class="grid-2">
-        <div class="field"><label class="lbl" for="h1">Date <span class="req">*</span></label><input id="h1" type="date"><p class="hint">Back-dated entry is allowed.</p></div>
-        <div class="field"><label class="lbl">Voucher Number</label><span class="assigned">Assigned when you save</span></div>
+    <div class="grid-2">
+      <div class="field">
+        <label class="lbl" for="h1">Transaction Date <span class="req">*</span></label>
+        <div class="datebox"><input id="h1" type="date" value="2026-11-05"><span class="backdated">Back-dated</span></div>
+        <p class="hint">Starts on the transaction date set on the Dashboard. You can change it for this voucher.</p>
       </div>
+      <div class="field"><label class="lbl">Voucher Number</label><span class="assigned">Assigned when you save</span></div>
+    </div>
+
+    <!-- PAYMENT -->
+    <section class="vpanel" data-panel="pay">
+      <div class="heads"><span>Paid To (Debit)</span><span>Paid From (Credit)</span><span>Amount</span><span></span></div>
+      <div class="lines">
+        <div class="line"><select data-pick="any" aria-label="Paid to"></select><select data-pick="cashbank" aria-label="Paid from"></select><input type="text" inputmode="decimal" placeholder="0.00" aria-label="Amount"><button class="x" type="button" aria-label="Remove line">&times;</button></div>
+      </div>
+      <button class="btn secondary small" type="button" data-add>Add Line</button>
+      <div class="totals"><span>Total <span class="num">0.00</span></span></div>
+    </section>
+
+    <!-- RECEIPT -->
+    <section class="vpanel" data-panel="rec" hidden>
+      <div class="heads"><span>Received In (Debit)</span><span>Received From (Credit)</span><span>Amount</span><span></span></div>
+      <div class="lines">
+        <div class="line"><select data-pick="cashbank" aria-label="Received in"></select><select data-pick="any" aria-label="Received from"></select><input type="text" inputmode="decimal" placeholder="0.00" aria-label="Amount"><button class="x" type="button" aria-label="Remove line">&times;</button></div>
+      </div>
+      <button class="btn secondary small" type="button" data-add>Add Line</button>
+      <div class="totals"><span>Total <span class="num">0.00</span></span></div>
+    </section>
+
+    <!-- CONTRA -->
+    <section class="vpanel" data-panel="con" hidden>
+      <div class="heads"><span>To (Debit)</span><span>From (Credit)</span><span>Amount</span><span></span></div>
+      <div class="lines">
+        <div class="line"><select data-pick="cashbank" aria-label="To"></select><select data-pick="cashbank2" aria-label="From"></select><input type="text" inputmode="decimal" placeholder="0.00" aria-label="Amount"><button class="x" type="button" aria-label="Remove line">&times;</button></div>
+      </div>
+      <button class="btn secondary small" type="button" data-add>Add Line</button>
+      <div class="totals"><span>Total <span class="num">0.00</span></span></div>
+    </section>
+
+    <!-- JOURNAL -->
+    <section class="vpanel" data-panel="jou" hidden>
+      <div class="heads"><span>Debit</span><span>Credit</span><span>Amount</span><span></span></div>
+      <div class="lines">
+        <div class="line"><select data-pick="any" aria-label="Debit"></select><select data-pick="any" aria-label="Credit"></select><input type="text" inputmode="decimal" placeholder="0.00" aria-label="Amount"><button class="x" type="button" aria-label="Remove line">&times;</button></div>
+      </div>
+      <button class="btn secondary small" type="button" data-add>Add Line</button>
+      <div class="totals"><span>Total <span class="num">0.00</span></span></div>
+    </section>
+
+    <!-- SALES -->
+    <section class="vpanel" data-panel="sal" hidden>
+      <div class="heads"><span>Received In Or Due From (Debit)</span><span>Sales Or Tax (Credit)</span><span>Amount</span><span></span></div>
+      <div class="lines">
+        <div class="line"><select data-pick="saldr" aria-label="Received in or due from"></select><select data-pick="salcr" aria-label="Sales or tax"></select><input type="text" inputmode="decimal" placeholder="0.00" aria-label="Amount"><button class="x" type="button" aria-label="Remove line">&times;</button></div>
+      </div>
+      <button class="btn secondary small" type="button" data-add>Add Line</button>
+      <div class="totals"><span>Total <span class="num">0.00</span></span></div>
+    </section>
+
+    <!-- PURCHASE -->
+    <section class="vpanel" data-panel="pur" hidden>
+      <div class="heads"><span>Purchase, Expense Or Tax (Debit)</span><span>Paid From Or Due To (Credit)</span><span>Amount</span><span></span></div>
+      <div class="lines">
+        <div class="line"><select data-pick="purdr" aria-label="Purchase, expense or tax"></select><select data-pick="purcr" aria-label="Paid from or due to"></select><input type="text" inputmode="decimal" placeholder="0.00" aria-label="Amount"><button class="x" type="button" aria-label="Remove line">&times;</button></div>
+      </div>
+      <button class="btn secondary small" type="button" data-add>Add Line</button>
+      <div class="totals"><span>Total <span class="num">0.00</span></span></div>
+    </section>
+
+    <div class="grid-2" style="margin-top:14px">
       <div class="field"><label class="lbl" for="h3">Reference</label><input id="h3" type="text" placeholder="Bill or cheque number"></div>
-
-      <!-- PAYMENT -->
-      <section class="vpanel" data-panel="pay">
-        <div class="field"><label class="lbl">Paid From <span class="req">*</span></label><select data-pick="cashbank"></select><p class="hint">Cash and bank ledgers only.</p></div>
-        <div class="block-title">Paid To</div>
-        <div class="lines" data-lines="any">
-          <div class="line"><select data-pick="any" aria-label="Ledger"></select><input type="text" inputmode="decimal" placeholder="0.00" aria-label="Amount"><button class="x" type="button" aria-label="Remove line">&times;</button></div>
-          <div class="line"><select data-pick="any" aria-label="Ledger"></select><input type="text" inputmode="decimal" placeholder="0.00" aria-label="Amount"><button class="x" type="button" aria-label="Remove line">&times;</button></div>
-        </div>
-        <button class="btn secondary small" type="button" data-add>Add Line</button>
-        <div class="totals"><span>Total <span class="num">12,450.00</span></span></div>
-      </section>
-
-      <!-- RECEIPT -->
-      <section class="vpanel" data-panel="rec" hidden>
-        <div class="field"><label class="lbl">Received In <span class="req">*</span></label><select data-pick="cashbank"></select><p class="hint">Cash and bank ledgers only.</p></div>
-        <div class="block-title">Received From</div>
-        <div class="lines" data-lines="any">
-          <div class="line"><select data-pick="any" aria-label="Ledger"></select><input type="text" inputmode="decimal" placeholder="0.00" aria-label="Amount"><button class="x" type="button" aria-label="Remove line">&times;</button></div>
-        </div>
-        <button class="btn secondary small" type="button" data-add>Add Line</button>
-        <div class="totals"><span>Total <span class="num">0.00</span></span></div>
-      </section>
-
-      <!-- CONTRA -->
-      <section class="vpanel" data-panel="con" hidden>
-        <div class="grid-2">
-          <div class="field"><label class="lbl">From <span class="req">*</span></label><select data-pick="cashbank"></select></div>
-          <div class="field"><label class="lbl">To <span class="req">*</span></label><select data-pick="cashbank"></select></div>
-        </div>
-        <div class="field"><label class="lbl">Amount <span class="req">*</span></label><input type="text" inputmode="decimal" placeholder="0.00"><p class="hint">Cash deposit, withdrawal or a transfer between banks.</p></div>
-      </section>
-
-      <!-- JOURNAL -->
-      <section class="vpanel" data-panel="jou" hidden>
-        <div class="block-title">Lines</div>
-        <div class="lines" data-lines="any">
-          <div class="line dc"><select aria-label="Debit or credit"><option>Dr</option><option>Cr</option></select><select data-pick="any" aria-label="Ledger"></select><input type="text" inputmode="decimal" placeholder="0.00" aria-label="Amount"><button class="x" type="button" aria-label="Remove line">&times;</button></div>
-          <div class="line dc"><select aria-label="Debit or credit"><option>Cr</option><option>Dr</option></select><select data-pick="any" aria-label="Ledger"></select><input type="text" inputmode="decimal" placeholder="0.00" aria-label="Amount"><button class="x" type="button" aria-label="Remove line">&times;</button></div>
-        </div>
-        <button class="btn secondary small" type="button" data-add>Add Line</button>
-        <div class="totals"><span>Debit <span class="num">5,000.00</span></span><span>Credit <span class="num">4,000.00</span></span><span class="bad">Difference 1,000.00. Cannot save until it is zero.</span></div>
-      </section>
-
-      <!-- SALES -->
-      <section class="vpanel" data-panel="sal" hidden>
-        <div class="block-title">Received In Or Due From (Debit)</div>
-        <div class="lines" data-lines="saldr">
-          <div class="line"><select data-pick="saldr" aria-label="Ledger"></select><input type="text" inputmode="decimal" placeholder="0.00" aria-label="Amount"><button class="x" type="button" aria-label="Remove line">&times;</button></div>
-        </div>
-        <button class="btn secondary small" type="button" data-add>Add Line</button>
-        <div class="block-title">Sales And Taxes (Credit)</div>
-        <div class="lines" data-lines="salcr">
-          <div class="line"><select data-pick="salcr" aria-label="Ledger"></select><input type="text" inputmode="decimal" placeholder="0.00" aria-label="Amount"><button class="x" type="button" aria-label="Remove line">&times;</button></div>
-        </div>
-        <button class="btn secondary small" type="button" data-add>Add Line</button>
-        <div class="totals"><span>Debit <span class="num">0.00</span></span><span>Credit <span class="num">0.00</span></span><span class="ok">Balanced</span></div>
-      </section>
-
-      <!-- PURCHASE -->
-      <section class="vpanel" data-panel="pur" hidden>
-        <div class="block-title">Purchases, Expenses And Taxes (Debit)</div>
-        <div class="lines" data-lines="purdr">
-          <div class="line"><select data-pick="purdr" aria-label="Ledger"></select><input type="text" inputmode="decimal" placeholder="0.00" aria-label="Amount"><button class="x" type="button" aria-label="Remove line">&times;</button></div>
-        </div>
-        <button class="btn secondary small" type="button" data-add>Add Line</button>
-        <div class="block-title">Paid From Or Due To (Credit)</div>
-        <div class="lines" data-lines="purcr">
-          <div class="line"><select data-pick="purcr" aria-label="Ledger"></select><input type="text" inputmode="decimal" placeholder="0.00" aria-label="Amount"><button class="x" type="button" aria-label="Remove line">&times;</button></div>
-        </div>
-        <button class="btn secondary small" type="button" data-add>Add Line</button>
-        <div class="totals"><span>Debit <span class="num">0.00</span></span><span>Credit <span class="num">0.00</span></span><span class="ok">Balanced</span></div>
-      </section>
-
-      <div class="field" style="margin-top:14px"><label class="lbl" for="h4">Narration</label><input id="h4" type="text" placeholder="What this entry is for"></div>
-      <div class="modal-actions"><button class="btn secondary" type="button" data-close>Cancel</button><button class="btn" type="button" data-close>Save Voucher</button></div>
-      </div>
+      <div class="field"><label class="lbl" for="h4">Narration</label><input id="h4" type="text" placeholder="What this entry is for"></div>
+    </div>
+    <div class="modal-actions"><button class="btn secondary" type="button" data-close>Cancel</button><button class="btn" type="button" data-close>Save Voucher</button></div>
+  </div>
 </div>
 
 <!-- View voucher -->
@@ -218,11 +213,10 @@
     <h2 id="vwTitle">Payment No. 12</h2>
     <p class="sub">PAY/2026-27/0012. 12/11/2026. Entered by Sample Accountant.</p>
     <table class="data" style="width:100%">
-      <thead><tr><th>Ledger</th><th class="right">Debit</th><th class="right">Credit</th></tr></thead>
+      <thead><tr><th>Debit</th><th>Credit</th><th class="right">Amount</th></tr></thead>
       <tbody>
-        <tr><td class="first">Electricity Charges</td><td class="right"><span class="num">12,450.00</span></td><td class="right"></td></tr>
-        <tr><td class="first">Cash</td><td class="right"></td><td class="right"><span class="num">12,450.00</span></td></tr>
-        <tr><td class="first"><strong>Total</strong></td><td class="right"><span class="num">12,450.00</span></td><td class="right"><span class="num">12,450.00</span></td></tr>
+        <tr><td class="first">Electricity Charges</td><td>Cash</td><td class="right"><span class="num">12,450.00</span></td></tr>
+        <tr><td class="first"><strong>Total</strong></td><td></td><td class="right"><span class="num">12,450.00</span></td></tr>
       </tbody>
     </table>
     <p class="hint" style="margin:10px 0 0">Narration: Electricity bill for October. Reference: Bill 4471.</p>
@@ -246,13 +240,12 @@
   (function () {
     var lists = {
       cashbank: ["Cash", "SBI", "Federal Bank", "Bank Of India"],
+      cashbank2: ["SBI", "Cash", "Federal Bank", "Bank Of India"],
       any: ["Select A Ledger", "Electricity Charges", "Salaries", "KSBC", "Banquet Advance", "Cash", "SBI"],
       saldr: ["Select A Ledger", "Cash", "SBI", "Federal Bank", "Corporate Client"],
       salcr: ["Select A Ledger", "Sales - Liquor", "Sales - Food", "Liquor Cess", "GST Output"],
       purdr: ["Select A Ledger", "Purchase - Liquor", "Purchase - Food", "Repairs", "GST Input"],
-      purcr: ["Select A Ledger", "Cash", "SBI", "KSBC", "Food Vendor"],
-      expense: ["Select An Expense", "Electricity Charges", "Repairs", "Staff Welfare", "Printing"],
-      paidby: ["Cash"]
+      purcr: ["Select A Ledger", "Cash", "SBI", "KSBC", "Food Vendor"]
     };
     function fill(select) {
       var key = select.getAttribute("data-pick");

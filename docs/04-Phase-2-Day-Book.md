@@ -98,17 +98,28 @@ Nothing is hardcoded. Voucher types, their numbering prefix and which ledger gro
 
 ### Voucher Fields
 - Header: voucher type, date (from a calendar), voucher number (assigned on save), optional reference (bill or cheque number), narration.
-- Lines: ledger, debit or credit, amount. **Double-entry underneath, simple on screen.** Total debit must equal total credit, enforced in the database. A voucher has at least two lines and every amount is above zero.
+- Rows: every entry is a list of rows, and **each row is one line holding the debit ledger, the credit ledger and the amount** (owner, 2026-11-12). Each row posts that amount to the debit ledger and the same amount to the credit ledger, so a voucher always balances by construction. The two ledgers of a row must differ and the amount is above zero. A voucher has at least one row.
+- A new voucher starts with **one row**. The user adds more rows with Add Line and can remove them.
+- **Double-entry underneath, simple on screen.** The database stores each row as one pair, so debit equals credit is guaranteed and enforced there.
 - Amounts are `numeric(14,2)` and shown in Indian format. Back-dated entry is allowed.
 - Complimentary and cancelled bills are not transactions. They are reporting figures only.
 
-### Entry Screens (Simple Per Type)
-- **Payment:** paid from (a cash or bank ledger), then one or more paid-to lines (ledger and amount). The system posts debit to the paid-to ledgers and credit to the paid-from ledger.
-- **Receipt:** received in (a cash or bank ledger), then one or more received-from lines.
-- **Contra:** from and to, both cash or bank ledgers, and an amount. Covers cash deposits, withdrawals and bank transfers.
-- **Journal:** free lines with Dr or Cr, ledger and amount. Shows running debit, credit and difference. Cannot be saved until they match.
-- **Sales:** debit lines (received in cash or bank, or due from a debtor) and credit lines (sales ledgers and tax ledgers). Debit total must equal credit total. Liquor excise and GST ledgers are never mixed in one voucher line.
-- **Purchase:** debit lines (purchase and expense ledgers and tax ledgers) and credit lines (paid from cash or bank, or due to a creditor).
+### Entry Screens (One Line Per Row)
+Every type uses the same row: debit ledger, credit ledger, amount, on one line. The type decides the labels and which ledgers each side may pick.
+- **Payment:** Paid To (debit, any ledger), Paid From (credit, a cash or bank ledger), Amount.
+- **Receipt:** Received In (debit, a cash or bank ledger), Received From (credit, any ledger), Amount.
+- **Contra:** To (debit, cash or bank), From (credit, cash or bank), Amount. Covers cash deposits, withdrawals and bank transfers.
+- **Journal:** Debit (any ledger), Credit (any ledger), Amount.
+- **Sales:** Received In Or Due From (debit: cash, bank or a debtor), Sales Or Tax (credit: sales and tax ledgers), Amount. A sale with tax is two rows, for example cash to sales and cash to tax. Liquor excise and GST ledgers are never mixed in one row.
+- **Purchase:** Purchase, Expense Or Tax (debit), Paid From Or Due To (credit: cash, bank or a creditor), Amount.
+- On a phone the row wraps to two lines to stay readable.
+
+### Transaction Date
+- The system keeps a **transaction date** for each user: the date new vouchers start on. If none has been set, it is today's date in Asia/Kolkata. It is stored in the database, not in code.
+- The **Dashboard** has a Transaction Date card with a calendar to pick the date, a Set Date button, and a Use Today button. This is how the accountant sets the date once and then enters many vouchers, including back-fill of earlier months in any order.
+- The voucher popup **always shows the date in a calendar field**, filled with the transaction date. The user can still change it for one voucher. A date that is not today shows a "Back-dated" note beside the field.
+- The Transactions page shows the current transaction date at the top.
+- **Open:** should the transaction date reset to today at the start of each day? Proposed: no, it stays until changed, with the Back-dated note as the reminder.
 - Which ledger groups each side of each type may pick from is held in the database (`voucher_type_rules`) and set up by migration. **Proposed starting rules:** cash and bank sides pick under Cash-in-Hand and Bank Accounts; paid-to and received-from pick any ledger; Sales credit picks under Sales Accounts and Duties And Taxes; Sales debit picks under Cash-in-Hand, Bank Accounts and Sundry Debtors; Purchase debit picks under Purchase Accounts, Direct Expenses, Indirect Expenses and Duties And Taxes; Purchase credit picks under Cash-in-Hand, Bank Accounts and Sundry Creditors. **Open:** confirm these.
 
 ### Night Accountant
@@ -140,7 +151,7 @@ This follows the plan agreed for the new Tally company. Confirm it applies to th
 ## 6. Database And Security Rules
 
 - Tables follow the conventions in `CLAUDE.md`: Row Level Security on every table, audit columns, no hard deletes, audit log on every change.
-- Tables: `ledger_groups` and `ledgers` (built). For transactions: `voucher_types`, `voucher_type_rules`, `voucher_counters`, `vouchers` (header) and `voucher_lines` (debit and credit lines). Names to confirm.
+- Tables: `ledger_groups` and `ledgers` (built). For transactions: `voucher_types`, `voucher_type_rules`, `voucher_counters`, `vouchers` (header) and `voucher_entries` (one row per debit ledger, credit ledger and amount), plus the user's transaction date. Names to confirm.
 - A database check (constraint or trigger) rejects any voucher whose debits and credits differ.
 - Ledger balances and the Day Book come from database views or functions, so every report shows the same numbers.
 - Permission checks in the UI and in database policies, from one typed permission matrix. Phase 2 adds Ledgers and Transactions rows to the matrix from Phase 1.
