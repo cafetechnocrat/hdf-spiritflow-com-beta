@@ -359,24 +359,14 @@ function VoucherForm({
           </div>
         </div>
 
-        <div
-          aria-hidden="true"
-          className="mb-1.5 mt-3.5 hidden gap-2 pl-0.5 text-[0.74rem] font-semibold uppercase tracking-[0.04em] text-muted lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_140px_40px]"
-        >
-          <span>{type.debitLabel}</span>
-          <span>{type.creditLabel}</span>
-          <span>{text.amount}</span>
-          <span />
-        </div>
-
-        <div>
+        <div className="mt-3.5">
           {rows.map((row) => (
             <div
               key={row.key}
-              className="mb-2 grid gap-2.5 rounded-xl bg-background p-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_140px_40px] lg:items-start lg:gap-2 lg:bg-transparent lg:p-0"
+              className="mb-2.5 flex flex-wrap items-start gap-x-3 gap-y-2.5 rounded-xl bg-background p-3"
             >
-              <label className="block min-w-0">
-                <span className={`${field.label} lg:sr-only`}>{type.debitLabel}</span>
+              <label className="block min-w-0 flex-[1_1_300px]">
+                <span className={field.label}>{type.debitLabel}</span>
                 <select
                   value={row.debit}
                   onChange={(event) => pickLedger(row.key, "debit", event.target.value)}
@@ -391,8 +381,8 @@ function VoucherForm({
                 </select>
                 <BalanceNote balance={row.debit ? balances[row.debit] : undefined} />
               </label>
-              <label className="block min-w-0">
-                <span className={`${field.label} lg:sr-only`}>{type.creditLabel}</span>
+              <label className="block min-w-0 flex-[1_1_300px]">
+                <span className={field.label}>{type.creditLabel}</span>
                 <select
                   value={row.credit}
                   onChange={(event) => pickLedger(row.key, "credit", event.target.value)}
@@ -407,8 +397,8 @@ function VoucherForm({
                 </select>
                 <BalanceNote balance={row.credit ? balances[row.credit] : undefined} />
               </label>
-              <label className="block min-w-0">
-                <span className={`${field.label} lg:sr-only`}>{text.amount}</span>
+              <label className="block min-w-0 flex-[1_1_140px] sm:max-w-[170px]">
+                <span className={field.label}>{text.amount}</span>
                 <input
                   type="text"
                   inputMode="decimal"
@@ -424,7 +414,7 @@ function VoucherForm({
                 onClick={() => removeRow(row.key)}
                 disabled={rows.length === 1}
                 aria-label={text.removeLine}
-                className="h-10 rounded-[10px] bg-track text-[1.1rem] text-muted hover:text-text disabled:opacity-50 lg:h-11"
+                className="mt-[22px] h-11 w-11 flex-none rounded-[10px] bg-track text-[1.1rem] text-muted hover:text-text disabled:opacity-50"
               >
                 <span aria-hidden="true">&times;</span>
               </button>
@@ -839,7 +829,7 @@ export function VoucherManager({
           value={statusFilter}
           onChange={(event) => setStatusFilter(event.target.value as "posted" | "void" | "all")}
           aria-label={text.statusFilter}
-          className={`${field.input} sm:max-w-[140px]`}
+          className={`${field.input} !w-auto min-w-[120px] max-w-full`}
         >
           <option value="posted">{text.statusPosted}</option>
           <option value="void">{text.statusVoid}</option>
