@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spirit Flow</title>
+<link rel="icon" type="image/png" href="../../../src/app/icon.png">
+<link rel="stylesheet" href="../phase-1/shared.css">
+<style>
+  /* Mockup-only switchers */
+  .mockbar { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; padding: 10px 12px; margin-bottom: 14px; border-radius: 12px; background: #1D1D1F; color: #fff; font-size: .78rem; }
+  .mockbar b { font-weight: 600; }
+  .mockbar button { min-height: 30px; padding: 0 12px; border: 0; border-radius: 999px; background: #3A3A3C; color: #fff; font: inherit; font-size: .78rem; cursor: pointer; }
+  .mockbar button[aria-pressed="true"] { background: var(--accent); }
+  .rpt[hidden] { display: none; }
+
+  /* Report template */
+  .rhead { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+  .rhead h2 { font-size: 1.35rem; font-weight: 600; letter-spacing: -.02em; }
+  .rhead .meta { color: var(--text-muted); font-size: .85rem; margin-top: 2px; }
+  .export { display: flex; flex-wrap: wrap; gap: 6px; }
+  .export .btn svg { width: 16px; height: 16px; }
+  .filterbar { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: flex-end; padding: 12px; margin-bottom: 12px; }
+  .filterbar .f { display: grid; gap: 3px; min-width: 0; }
+  .filterbar .f label { font-size: .72rem; font-weight: 500; color: var(--text-muted); margin-left: 2px; }
+  .filterbar select, .filterbar input { max-width: 200px; }
+  .seg2 { display: inline-flex; gap: 2px; padding: 2px; border-radius: 10px; background: var(--track); }
+  .seg2 button { min-height: 36px; padding: 0 12px; border: 0; border-radius: 8px; background: transparent; color: var(--text-muted); font: inherit; font-size: .82rem; font-weight: 500; cursor: pointer; }
+  .seg2 button[aria-pressed="true"] { background: var(--surface); color: var(--text); font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+  .check { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; font-size: .85rem; }
+  .check input { width: 18px; height: 18px; }
+  .kpis { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 12px; }
+  @media (min-width: 900px) { .kpis { grid-template-columns: repeat(4, 1fr); } }
+  .kpi { padding: 12px 14px; }
+  .kpi .k { font-size: .74rem; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em; }
+  .kpi .v { font-size: 1.25rem; font-weight: 600; letter-spacing: -.02em; font-variant-numeric: tabular-nums; margin-top: 2px; }
+  .kpi .s { font-size: .75rem; color: var(--text-muted); margin-top: 1px; }
+  .scroll { overflow-x: auto; }
+  table.rt { width: 100%; border-collapse: collapse; font-size: .88rem; }
+  table.rt th { padding: 10px 14px; text-align: left; font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--text-muted); background: #fafafb; border-bottom: 1px solid var(--divider); white-space: nowrap; }
+  table.rt td { padding: 10px 14px; border-bottom: 1px solid var(--divider); vertical-align: top; }
+  table.rt .r { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  table.rt tr.total td { font-weight: 600; background: #fafafb; border-top: 1px solid var(--border-soft); }
+  table.rt tr.group td { font-weight: 600; background: #f3f3f6; }
+  table.rt tr.sub td:first-child { padding-left: 32px; }
+  table.rt tr.led td:first-child { padding-left: 50px; }
+  table.rt tr.subtotal td { font-weight: 600; }
+  table.rt tr.void td { color: var(--text-muted); text-decoration: line-through; }
+  .muted { color: var(--text-muted); }
+  .blocks { display: grid; gap: 10px; padding: 12px; }
+  .vblock { border: 1px solid var(--divider); border-radius: 12px; overflow: hidden; }
+  .vblock .vh { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; padding: 9px 12px; background: #fafafb; font-size: .86rem; }
+  .vblock .vh strong { font-weight: 600; }
+  .vblock .vl { display: grid; grid-template-columns: 34px 1fr auto; gap: 8px; padding: 7px 12px; font-size: .88rem; border-top: 1px solid var(--divider); }
+  .vblock .vl .dc { color: var(--text-muted); font-weight: 600; }
+  .vblock .vl .a { font-variant-numeric: tabular-nums; }
+  .vblock .vn { padding: 7px 12px; font-size: .8rem; color: var(--text-muted); border-top: 1px solid var(--divider); }
+  .two { display: grid; gap: 12px; }
+  @media (min-width: 900px) { .two { grid-template-columns: 1fr 1fr; } }
+  .notes { padding: 12px 14px; margin-top: 12px; font-size: .8rem; color: var(--text-muted); }
+  .notes b { color: var(--text); font-weight: 600; }
+  .notes ul { margin: 6px 0 0; padding-left: 18px; }
+  .state { display: none; padding: 44px 16px; text-align: center; color: var(--text-muted); font-size: .9rem; }
+  .state strong { display: block; margin-bottom: 2px; color: var(--text); font-size: 1rem; }
+  .state.err strong { color: var(--error); }
+  .spin { width: 26px; height: 26px; margin: 0 auto 10px; border: 3px solid var(--track); border-top-color: var(--accent); border-radius: 50%; animation: sp .8s linear infinite; }
+  @keyframes sp { to { transform: rotate(360deg); } }
+  [data-state="loading"] .rdata, [data-state="empty"] .rdata, [data-state="error"] .rdata { display: none; }
+  [data-state="loading"] .state.loading, [data-state="empty"] .state.empty, [data-state="error"] .state.err { display: block; }
+
+  @media print {
+    .sidebar, .topbar, .scrim, .mockbar, .filterbar, .export, .mock-note, .seg2 { display: none !important; }
+    .shell { padding-left: 0 !important; }
+    body { background: #fff; }
+    .card { box-shadow: none; border: 1px solid #ccc; }
+    .content { max-width: none; padding: 0; }
+  }
+</style>
+</head>
+<body data-page="reports" data-title="Reports" data-txdate>
+<div class="mock-note">Mockup. Sample data only. Not the real app. Every figure, group heading and the hotel name come from the database in the real screens.</div>
+<div class="shell">
+  <main class="content">
+
+    <!-- Mockup switchers. In the real app each report is its own menu item under Accounts, Reports. -->
+    <div class="mockbar">
+      <b>Report</b>
+      <span id="reportBtns"></span>
+      <b>Preview</b>
+      <span id="stateBtns"></span>
+    </div>
+
+    <!-- ===================== DAY BOOK ===================== -->
+    <section class="rpt" id="r-day" data-state="data">
+      <div class="rhead">
+        <div><h2>Day Book</h2><p class="meta">Hotel Diamond Fort. 11/11/2026 to 12/11/2026. Generated by Sample Admin on 12/11/2026 at 14:35 IST.</p></div>
+        <div class="export"><button class="btn secondary small" onclick="window.print()">Print</button><button class="btn secondary small">Excel</button><button class="btn secondary small">PDF</button></div>
+      </div>
+      <div class="card filterbar">
+        <div class="f"><label for="d1">From</label><input id="d1" type="date" value="2026-11-11"></div>
+        <div class="f"><label for="d2">To</label><input id="d2" type="date" value="2026-11-12"></div>
+        <div class="f"><label for="d3">Voucher Type</label><select id="d3"><option>All Types</option><option>Payment</option><option>Receipt</option><option>Contra</option><option>Journal</option><option>Sales</option><option>Purchase</option></select></div>
+        <div class="f"><label for="d4">Ledger</label><select id="d4"><option>All Ledgers</option><option>Cash</option><option>SBI</option><option>Sales - Liquor</option></select></div>
+        <label class="check"><input type="checkbox"> Show Void</label>
+        <div class="f"><label>Layout</label><span class="seg2" id="dayLayout"><button type="button" aria-pressed="true" data-layout="rows">Rows</button><button type="button" aria-pressed="false" data-layout="blocks">Voucher Blocks</button></span></div>
+      </div>
+      <div class="rdata">
+        <div class="kpis">
+          <div class="card kpi"><div class="k">Vouchers</div><div class="v">4</div><div class="s">Posted</div></div>
+          <div class="card kpi"><div class="k">Total Amount</div><div class="v">3,46,750.00</div><div class="s">Debit equals credit</div></div>
+          <div class="card kpi"><div class="k">Void Left Out</div><div class="v">1</div><div class="s">Not counted</div></div>
+          <div class="card kpi"><div class="k">Days</div><div class="v">2</div><div class="s">With entries</div></div>
+        </div>
+        <div class="card" id="dayRows">
+          <div class="scroll"><table class="rt">
+            <thead><tr><th>Date</th><th>Voucher</th><th>Debit</th><th>Credit</th><th class="r">Amount</th></tr></thead>
+            <tbody>
+              <tr><td>12/11/2026</td><td>Payment No. 12<div class="muted">PAY/2026-27/0012</div></td><td>Electricity Charges</td><td>Cash</td><td class="r">12,450.00</td></tr>
+              <tr><td>12/11/2026</td><td>Receipt No. 8<div class="muted">RCT/2026-27/0008</div></td><td>SBI</td><td>Banquet Advance</td><td class="r">50,000.00</td></tr>
+              <tr><td>11/11/2026</td><td>Sales No. 31<div class="muted">SAL/2026-27/0031</div></td><td>Cash</td><td>Sales - Liquor</td><td class="r">1,20,000.00</td></tr>
+              <tr><td>11/11/2026</td><td>Sales No. 31<div class="muted">SAL/2026-27/0031</div></td><td>SBI</td><td>Sales - Food</td><td class="r">64,300.00</td></tr>
+              <tr><td>11/11/2026</td><td>Contra No. 4<div class="muted">CON/2026-27/0004</div></td><td>Federal Bank</td><td>Cash</td><td class="r">1,00,000.00</td></tr>
+              <tr class="total"><td colspan="4">Total</td><td class="r">3,46,750.00</td></tr>
+            </tbody>
+          </table></div>
+        </div>
+        <div class="card blocks" id="dayBlocks" hidden>
+          <div class="vblock"><div class="vh"><span><strong>Payment No. 12</strong> PAY/2026-27/0012</span><span>12/11/2026</span></div>
+            <div class="vl"><span class="dc">Dr</span><span>Electricity Charges</span><span class="a">12,450.00</span></div>
+            <div class="vl"><span class="dc">Cr</span><span>Cash</span><span class="a">12,450.00</span></div>
+            <div class="vn">Electricity bill for October. Bill 4471.</div></div>
+          <div class="vblock"><div class="vh"><span><strong>Receipt No. 8</strong> RCT/2026-27/0008</span><span>12/11/2026</span></div>
+            <div class="vl"><span class="dc">Dr</span><span>SBI</span><span class="a">50,000.00</span></div>
+            <div class="vl"><span class="dc">Cr</span><span>Banquet Advance</span><span class="a">50,000.00</span></div></div>
+          <div class="vblock"><div class="vh"><span><strong>Sales No. 31</strong> SAL/2026-27/0031</span><span>11/11/2026</span></div>
+            <div class="vl"><span class="dc">Dr</span><span>Cash</span><span class="a">1,20,000.00</span></div>
+            <div class="vl"><span class="dc">Cr</span><span>Sales - Liquor</span><span class="a">1,20,000.00</span></div>
+            <div class="vl"><span class="dc">Dr</span><span>SBI</span><span class="a">64,300.00</span></div>
+            <div class="vl"><span class="dc">Cr</span><span>Sales - Food</span><span class="a">64,300.00</span></div></div>
+          <div class="vblock"><div class="vh"><span><strong>Contra No. 4</strong> CON/2026-27/0004</span><span>11/11/2026</span></div>
+            <div class="vl"><span class="dc">Dr</span><span>Federal Bank</span><span class="a">1,00,000.00</span></div>
+            <div class="vl"><span class="dc">Cr</span><span>Cash</span><span class="a">1,00,000.00</span></div></div>
+        </div>
+        <div class="card notes"><b>Notes</b><ul><li>Covers 11/11/2026 to 12/11/2026. Void vouchers are left out of the total.</li><li>Total amount is the sum of every row. Each row is one debit and one credit of the same amount.</li></ul></div>
+      </div>
+      <div class="card state loading"><div class="spin"></div><strong>Loading The Report</strong>Please wait.</div>
+      <div class="card state empty"><strong>No Vouchers In This Range</strong>Change the dates or the filters.</div>
+      <div class="card state err"><strong>The Report Could Not Be Loaded</strong>Nothing was changed. Try again.</div>
+    </section>
+
+    <!-- ===================== LEDGER STATEMENT ===================== -->
+    <section class="rpt" id="r-led" data-state="data" hidden>
+      <div class="rhead">
+        <div><h2>Ledger Statement</h2><p class="meta">Hotel Diamond Fort. Cash. 11/11/2026 to 12/11/2026. Generated by Sample Admin on 12/11/2026 at 14:35 IST.</p></div>
+        <div class="export"><button class="btn secondary small" onclick="window.print()">Print</button><button class="btn secondary small">Excel</button><button class="btn secondary small">PDF</button></div>
+      </div>
+      <div class="card filterbar">
+        <div class="f"><label for="l1">Ledger</label><select id="l1"><option>Cash</option><option>SBI</option><option>Federal Bank</option><option>KSBC</option><option>Sales - Liquor</option></select></div>
+        <div class="f"><label for="l2">From</label><input id="l2" type="date" value="2026-11-11"></div>
+        <div class="f"><label for="l3">To</label><input id="l3" type="date" value="2026-11-12"></div>
+      </div>
+      <div class="rdata">
+        <div class="kpis">
+          <div class="card kpi"><div class="k">Opening</div><div class="v">2,50,000.00 Dr</div><div class="s">On 11/11/2026</div></div>
+          <div class="card kpi"><div class="k">Debit</div><div class="v">1,20,000.00</div></div>
+          <div class="card kpi"><div class="k">Credit</div><div class="v">1,12,450.00</div></div>
+          <div class="card kpi"><div class="k">Closing</div><div class="v">2,57,550.00 Dr</div><div class="s">On 12/11/2026</div></div>
+        </div>
+        <div class="card"><div class="scroll"><table class="rt">
+          <thead><tr><th>Date</th><th>Particulars</th><th>Voucher</th><th class="r">Debit</th><th class="r">Credit</th><th class="r">Balance</th></tr></thead>
+          <tbody>
+            <tr><td></td><td><strong>Opening Balance</strong></td><td></td><td class="r"></td><td class="r"></td><td class="r">2,50,000.00 Dr</td></tr>
+            <tr><td>11/11/2026</td><td>Sales - Liquor</td><td>Sales No. 31</td><td class="r">1,20,000.00</td><td class="r"></td><td class="r">3,70,000.00 Dr</td></tr>
+            <tr><td>11/11/2026</td><td>Federal Bank</td><td>Contra No. 4</td><td class="r"></td><td class="r">1,00,000.00</td><td class="r">2,70,000.00 Dr</td></tr>
+            <tr><td>12/11/2026</td><td>Electricity Charges</td><td>Payment No. 12</td><td class="r"></td><td class="r">12,450.00</td><td class="r">2,57,550.00 Dr</td></tr>
+            <tr class="total"><td></td><td>Total</td><td></td><td class="r">1,20,000.00</td><td class="r">1,12,450.00</td><td class="r"></td></tr>
+            <tr class="total"><td></td><td>Closing Balance</td><td></td><td class="r"></td><td class="r"></td><td class="r">2,57,550.00 Dr</td></tr>
+          </tbody>
+        </table></div></div>
+        <div class="card notes"><b>Notes</b><ul><li>Covers 11/11/2026 to 12/11/2026. Opening balance is the ledger's opening balance plus every entry before 11/11/2026.</li><li>Particulars shows the other ledger of each row. A balance that has gone the other way shows on the opposite side, with no minus sign.</li></ul></div>
+      </div>
+      <div class="card state loading"><div class="spin"></div><strong>Loading The Report</strong>Please wait.</div>
+      <div class="card state empty"><strong>No Entries For This Ledger</strong>Change the dates or pick another ledger.</div>
+      <div class="card state err"><strong>The Report Could Not Be Loaded</strong>Nothing was changed. Try again.</div>
+    </section>
+
+    <!-- ===================== CASH AND BANK BOOK ===================== -->
+    <section class="rpt" id="r-cb" data-state="data" hidden>
+      <div class="rhead">
+        <div><h2>Cash And Bank Book</h2><p class="meta">Hotel Diamond Fort. All cash and bank ledgers. 11/11/2026 to 12/11/2026. Generated by Sample Admin on 12/11/2026 at 14:35 IST.</p></div>
+        <div class="export"><button class="btn secondary small" onclick="window.print()">Print</button><button class="btn secondary small">Excel</button><button class="btn secondary small">PDF</button></div>
+      </div>
+      <div class="card filterbar">
+        <div class="f"><label for="c1">Ledger</label><select id="c1"><option>All Cash And Bank</option><option>Cash</option><option>SBI</option><option>Federal Bank</option></select></div>
+        <div class="f"><label for="c2">From</label><input id="c2" type="date" value="2026-11-11"></div>
+        <div class="f"><label for="c3">To</label><input id="c3" type="date" value="2026-11-12"></div>
+      </div>
+      <div class="rdata">
+        <div class="kpis">
+          <div class="card kpi"><div class="k">Opening</div><div class="v">6,50,000.00</div><div class="s">On 11/11/2026</div></div>
+          <div class="card kpi"><div class="k">Receipts</div><div class="v">3,34,300.00</div></div>
+          <div class="card kpi"><div class="k">Payments</div><div class="v">1,12,450.00</div></div>
+          <div class="card kpi"><div class="k">Closing</div><div class="v">8,71,850.00</div><div class="s">On 12/11/2026</div></div>
+        </div>
+        <div class="card"><div class="scroll"><table class="rt">
+          <thead><tr><th>Date</th><th class="r">Opening</th><th class="r">Receipts</th><th class="r">Payments</th><th class="r">Closing</th></tr></thead>
+          <tbody>
+            <tr><td>11/11/2026</td><td class="r">6,50,000.00</td><td class="r">2,84,300.00</td><td class="r">1,00,000.00</td><td class="r">8,34,300.00</td></tr>
+            <tr><td>12/11/2026</td><td class="r">8,34,300.00</td><td class="r">50,000.00</td><td class="r">12,450.00</td><td class="r">8,71,850.00</td></tr>
+            <tr class="total"><td>Total</td><td class="r">6,50,000.00</td><td class="r">3,34,300.00</td><td class="r">1,12,450.00</td><td class="r">8,71,850.00</td></tr>
+          </tbody>
+        </table></div></div>
+        <div class="card notes"><b>Notes</b><ul><li>Covers 11/11/2026 to 12/11/2026. Receipts are debits to the cash and bank ledgers. Payments are credits.</li><li>When all ledgers are shown together, a transfer between two of them counts as a receipt and a payment on the same day. Pick one ledger to see it on its own.</li><li>Which groups count as cash or bank comes from the ledger groups.</li></ul></div>
+      </div>
+      <div class="card state loading"><div class="spin"></div><strong>Loading The Report</strong>Please wait.</div>
+      <div class="card state empty"><strong>No Cash Or Bank Entries</strong>Change the dates or pick another ledger.</div>
+      <div class="card state err"><strong>The Report Could Not Be Loaded</strong>Nothing was changed. Try again.</div>
+    </section>
+
+    <!-- ===================== TRIAL BALANCE ===================== -->
+    <section class="rpt" id="r-tb" data-state="data" hidden>
+      <div class="rhead">
+        <div><h2>Trial Balance</h2><p class="meta">Hotel Diamond Fort. As on 12/11/2026. Generated by Sample Admin on 12/11/2026 at 14:35 IST.</p></div>
+        <div class="export"><button class="btn secondary small" onclick="window.print()">Print</button><button class="btn secondary small">Excel</button><button class="btn secondary small">PDF</button></div>
+      </div>
+      <div class="card filterbar">
+        <div class="f"><label for="t1">As On</label><input id="t1" type="date" value="2026-11-12"></div>
+        <label class="check"><input type="checkbox"> Show Ledgers With Zero Balance</label>
+      </div>
+      <div class="rdata">
+        <div class="kpis">
+          <div class="card kpi"><div class="k">Total Debit</div><div class="v">7,84,300.00</div></div>
+          <div class="card kpi"><div class="k">Total Credit</div><div class="v">7,84,300.00</div></div>
+          <div class="card kpi"><div class="k">Difference</div><div class="v">0.00</div><div class="s">Matches</div></div>
+          <div class="card kpi"><div class="k">Ledgers</div><div class="v">8</div><div class="s">With a balance</div></div>
+        </div>
+        <div class="card"><div class="scroll"><table class="rt">
+          <thead><tr><th>Particulars</th><th class="r">Debit</th><th class="r">Credit</th></tr></thead>
+          <tbody>
+            <tr class="group"><td>Capital Account</td><td class="r"></td><td class="r">4,25,000.00</td></tr>
+            <tr class="led"><td>Capital - Opening Adjustment</td><td class="r"></td><td class="r">4,25,000.00</td></tr>
+            <tr class="group"><td>Current Assets</td><td class="r">7,71,850.00</td><td class="r"></td></tr>
+            <tr class="sub"><td>Bank Accounts</td><td class="r">5,14,300.00</td><td class="r"></td></tr>
+            <tr class="led"><td>SBI</td><td class="r">4,14,300.00</td><td class="r"></td></tr>
+            <tr class="led"><td>Federal Bank</td><td class="r">1,00,000.00</td><td class="r"></td></tr>
+            <tr class="sub"><td>Cash-in-Hand</td><td class="r">2,57,550.00</td><td class="r"></td></tr>
+            <tr class="led"><td>Cash</td><td class="r">2,57,550.00</td><td class="r"></td></tr>
+            <tr class="group"><td>Current Liabilities</td><td class="r"></td><td class="r">1,75,000.00</td></tr>
+            <tr class="sub"><td>Sundry Creditors</td><td class="r"></td><td class="r">1,25,000.00</td></tr>
+            <tr class="led"><td>KSBC</td><td class="r"></td><td class="r">1,25,000.00</td></tr>
+            <tr class="led"><td>Banquet Advance</td><td class="r"></td><td class="r">50,000.00</td></tr>
+            <tr class="group"><td>Sales Accounts</td><td class="r"></td><td class="r">1,84,300.00</td></tr>
+            <tr class="led"><td>Sales - Liquor</td><td class="r"></td><td class="r">1,20,000.00</td></tr>
+            <tr class="led"><td>Sales - Food</td><td class="r"></td><td class="r">64,300.00</td></tr>
+            <tr class="group"><td>Indirect Expenses</td><td class="r">12,450.00</td><td class="r"></td></tr>
+            <tr class="led"><td>Electricity Charges</td><td class="r">12,450.00</td><td class="r"></td></tr>
+            <tr class="total"><td>Grand Total</td><td class="r">7,84,300.00</td><td class="r">7,84,300.00</td></tr>
+          </tbody>
+        </table></div></div>
+        <div class="card notes"><b>Notes</b><ul><li>As on 12/11/2026. Each ledger shows its opening balance plus posted debits and credits up to that date. Group rows are subtotals of what sits under them.</li><li>A balance that has gone the other way shows on the opposite side, with no minus sign. Void vouchers are left out.</li><li>Group order and headings come from the ledger groups.</li></ul></div>
+      </div>
+      <div class="card state loading"><div class="spin"></div><strong>Loading The Report</strong>Please wait.</div>
+      <div class="card state empty"><strong>No Balances Yet</strong>No ledger has a balance on this date.</div>
+      <div class="card state err"><strong>The Report Could Not Be Loaded</strong>Nothing was changed. Try again.</div>
+    </section>
+
+    <!-- ===================== PROFIT AND LOSS ===================== -->
+    <section class="rpt" id="r-pl" data-state="data" hidden>
+      <div class="rhead">
+        <div><h2>Profit And Loss</h2><p class="meta">Hotel Diamond Fort. 01/11/2026 to 12/11/2026. Generated by Sample Admin on 12/11/2026 at 14:35 IST.</p></div>
+        <div class="export"><button class="btn secondary small" onclick="window.print()">Print</button><button class="btn secondary small">Excel</button><button class="btn secondary small">PDF</button></div>
+      </div>
+      <div class="card filterbar">
+        <div class="f"><label for="p1">From</label><input id="p1" type="date" value="2026-11-01"></div>
+        <div class="f"><label for="p2">To</label><input id="p2" type="date" value="2026-11-12"></div>
+      </div>
+      <div class="rdata">
+        <div class="kpis">
+          <div class="card kpi"><div class="k">Income</div><div class="v">1,84,300.00</div></div>
+          <div class="card kpi"><div class="k">Expenses</div><div class="v">12,450.00</div></div>
+          <div class="card kpi"><div class="k">Gross Profit</div><div class="v">1,84,300.00</div></div>
+          <div class="card kpi"><div class="k">Net Profit</div><div class="v">1,71,850.00</div></div>
+        </div>
+        <div class="card"><div class="scroll"><table class="rt">
+          <thead><tr><th>Particulars</th><th class="r">Amount</th></tr></thead>
+          <tbody>
+            <tr class="group"><td>Trading</td><td class="r"></td></tr>
+            <tr class="sub subtotal"><td>Sales Accounts</td><td class="r">1,84,300.00</td></tr>
+            <tr class="led"><td>Sales - Liquor</td><td class="r">1,20,000.00</td></tr>
+            <tr class="led"><td>Sales - Food</td><td class="r">64,300.00</td></tr>
+            <tr class="sub subtotal"><td>Purchase Accounts</td><td class="r">0.00</td></tr>
+            <tr class="sub subtotal"><td>Direct Expenses</td><td class="r">0.00</td></tr>
+            <tr class="total"><td>Gross Profit</td><td class="r">1,84,300.00</td></tr>
+            <tr class="group"><td>Profit And Loss</td><td class="r"></td></tr>
+            <tr class="sub subtotal"><td>Indirect Incomes</td><td class="r">0.00</td></tr>
+            <tr class="sub subtotal"><td>Indirect Expenses</td><td class="r">12,450.00</td></tr>
+            <tr class="led"><td>Electricity Charges</td><td class="r">12,450.00</td></tr>
+            <tr class="total"><td>Net Profit</td><td class="r">1,71,850.00</td></tr>
+          </tbody>
+        </table></div></div>
+        <div class="card notes"><b>Notes</b><ul><li>Covers 01/11/2026 to 12/11/2026. Income and expenses are posted debits and credits to ledgers in the income and expense groups.</li><li>Gross profit is trading income minus trading expenses. Net profit is gross profit plus indirect income minus indirect expenses.</li><li>There is no inventory, so stock is not counted automatically. A stock value journalled to a trading ledger flows in. A loss shows as Loss with no minus sign.</li></ul></div>
+      </div>
+      <div class="card state loading"><div class="spin"></div><strong>Loading The Report</strong>Please wait.</div>
+      <div class="card state empty"><strong>No Income Or Expenses</strong>Nothing was posted in this range.</div>
+      <div class="card state err"><strong>The Report Could Not Be Loaded</strong>Nothing was changed. Try again.</div>
+    </section>
+
+    <!-- ===================== BALANCE SHEET ===================== -->
+    <section class="rpt" id="r-bs" data-state="data" hidden>
+      <div class="rhead">
+        <div><h2>Balance Sheet</h2><p class="meta">Hotel Diamond Fort. As on 12/11/2026. Generated by Sample Admin on 12/11/2026 at 14:35 IST.</p></div>
+        <div class="export"><button class="btn secondary small" onclick="window.print()">Print</button><button class="btn secondary small">Excel</button><button class="btn secondary small">PDF</button></div>
+      </div>
+      <div class="card filterbar">
+        <div class="f"><label for="b1">As On</label><input id="b1" type="date" value="2026-11-12"></div>
+      </div>
+      <div class="rdata">
+        <div class="kpis">
+          <div class="card kpi"><div class="k">Total Liabilities</div><div class="v">7,71,850.00</div></div>
+          <div class="card kpi"><div class="k">Total Assets</div><div class="v">7,71,850.00</div></div>
+          <div class="card kpi"><div class="k">Profit Carried In</div><div class="v">1,71,850.00</div><div class="s">Cumulative</div></div>
+          <div class="card kpi"><div class="k">Difference</div><div class="v">0.00</div><div class="s">Balanced</div></div>
+        </div>
+        <div class="two">
+          <div class="card"><div class="scroll"><table class="rt">
+            <thead><tr><th>Liabilities</th><th class="r">Amount</th></tr></thead>
+            <tbody>
+              <tr class="group"><td>Capital Account</td><td class="r">4,25,000.00</td></tr>
+              <tr class="led"><td>Capital - Opening Adjustment</td><td class="r">4,25,000.00</td></tr>
+              <tr class="group"><td>Current Liabilities</td><td class="r">1,75,000.00</td></tr>
+              <tr class="sub"><td>Sundry Creditors</td><td class="r">1,25,000.00</td></tr>
+              <tr class="led"><td>KSBC</td><td class="r">1,25,000.00</td></tr>
+              <tr class="led"><td>Banquet Advance</td><td class="r">50,000.00</td></tr>
+              <tr class="group"><td>Profit And Loss</td><td class="r">1,71,850.00</td></tr>
+              <tr class="total"><td>Total</td><td class="r">7,71,850.00</td></tr>
+            </tbody>
+          </table></div></div>
+          <div class="card"><div class="scroll"><table class="rt">
+            <thead><tr><th>Assets</th><th class="r">Amount</th></tr></thead>
+            <tbody>
+              <tr class="group"><td>Current Assets</td><td class="r">7,71,850.00</td></tr>
+              <tr class="sub"><td>Bank Accounts</td><td class="r">5,14,300.00</td></tr>
+              <tr class="led"><td>SBI</td><td class="r">4,14,300.00</td></tr>
+              <tr class="led"><td>Federal Bank</td><td class="r">1,00,000.00</td></tr>
+              <tr class="sub"><td>Cash-in-Hand</td><td class="r">2,57,550.00</td></tr>
+              <tr class="led"><td>Cash</td><td class="r">2,57,550.00</td></tr>
+              <tr class="total"><td>Total</td><td class="r">7,71,850.00</td></tr>
+            </tbody>
+          </table></div></div>
+        </div>
+        <div class="card notes"><b>Notes</b><ul><li>As on 12/11/2026. Balances are opening balance plus posted entries up to that date.</li><li>Profit And Loss is the cumulative net profit from the first entry up to the date. There is no year-end closing yet.</li><li>If the two sides differ, a Difference line shows the gap. A common cause is opening balances that were not entered through the Capital - Opening Adjustment ledger.</li></ul></div>
+      </div>
+      <div class="card state loading"><div class="spin"></div><strong>Loading The Report</strong>Please wait.</div>
+      <div class="card state empty"><strong>No Balances Yet</strong>No ledger has a balance on this date.</div>
+      <div class="card state err"><strong>The Report Could Not Be Loaded</strong>Nothing was changed. Try again.</div>
+    </section>
+
+  </main>
+</div>
+
+<script src="../phase-1/shell.js"></script>
+<script>
+  // Mockup behaviour only: switches the report, the preview state and the Day Book layout.
+  (function () {
+    var reports = [["r-day", "Day Book"], ["r-led", "Ledger Statement"], ["r-cb", "Cash And Bank Book"], ["r-tb", "Trial Balance"], ["r-pl", "Profit And Loss"], ["r-bs", "Balance Sheet"]];
+    var states = [["data", "Data"], ["loading", "Loading"], ["empty", "Empty"], ["error", "Error"]];
+    var current = "r-day", state = "data";
+
+    function paint() {
+      reports.forEach(function (r) {
+        var el = document.getElementById(r[0]);
+        el.hidden = r[0] !== current;
+        el.setAttribute("data-state", state);
+      });
+      document.querySelectorAll("#reportBtns button").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.id === current)); });
+      document.querySelectorAll("#stateBtns button").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.id === state)); });
+    }
+    function mk(list, hostId, onPick) {
+      var host = document.getElementById(hostId);
+      list.forEach(function (item) {
+        var b = document.createElement("button");
+        b.type = "button"; b.textContent = item[1]; b.dataset.id = item[0];
+        b.addEventListener("click", function () { onPick(item[0]); paint(); });
+        host.appendChild(b); host.appendChild(document.createTextNode(" "));
+      });
+    }
+    mk(reports, "reportBtns", function (id) { current = id; });
+    mk(states, "stateBtns", function (id) { state = id; });
+    paint();
+
+    document.querySelectorAll("#dayLayout button").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var rows = b.dataset.layout === "rows";
+        document.querySelectorAll("#dayLayout button").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); });
+        document.getElementById("dayRows").hidden = !rows;
+        document.getElementById("dayBlocks").hidden = rows;
+      });
+    });
+  })();
+</script>
+</body>
+</html>
