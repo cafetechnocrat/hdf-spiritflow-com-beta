@@ -11,8 +11,15 @@ import {
   parseAmountToPaise,
   sumPaise,
 } from "@/lib/format/money";
-import { loadVoucherEntries, saveVoucher, voidVoucher } from "@/lib/vouchers/actions";
+import {
+  deleteVoucher,
+  getLedgerBalances,
+  loadVoucherEntries,
+  saveVoucher,
+  voidVoucher,
+} from "@/lib/vouchers/actions";
 import type {
+  LedgerBalance,
   LedgerChoice,
   VoucherData,
   VoucherEntryRow,
@@ -23,7 +30,7 @@ import type {
 // All visible text sits here so it can be translated later.
 const text = {
   newVoucher: "New Voucher",
-  hint: "Posted vouchers are never deleted. Void one with a reason if it was entered wrongly.",
+  hint: "Void a voucher with a reason if it was entered wrongly. A balance shows beside each ledger you pick, as on the voucher date.",
   truncated: "Showing the newest vouchers only. The Day Book report will cover the full history.",
   fromDate: "From Date",
   toDate: "To Date",
@@ -92,6 +99,17 @@ const text = {
   voidReasonPlaceholder: "Why is this voucher being voided?",
   voiding: "Voiding...",
   voidAction: "Void Voucher",
+  // Delete
+  delete: "Delete",
+  deleteTitle: "Delete Voucher?",
+  deleteBody:
+    "and all its rows will be deleted permanently. This cannot be undone. The audit log keeps a record of it. Use Void if you only want it left out of the books.",
+  typePrompt: "Type the voucher number to confirm",
+  deleting: "Deleting...",
+  // Balance
+  balance: "Balance",
+  dr: "Dr",
+  cr: "Cr",
 } as const;
 
 type Row = { key: number; debit: string; credit: string; amount: string };
@@ -130,15 +148,32 @@ function ledgerChoices(
   return list;
 }
 
+// The balance of a picked ledger. A balance that went the other way shows on the
+// opposite side with no minus sign, as in Tally.
+function BalanceNote({ balance }: { balance: LedgerBalance | undefined }) {
+  if (!balance) return null;
+  return (
+    <span className="ml-0.5 mt-1 block text-[0.78rem] text-muted">
+      {text.balance}{" "}
+      <span className="font-semibold tabular-nums text-text">
+        {formatAmountText(balance.amountText)}
+      </span>
+      {balance.side ? ` ${balance.side === "dr" ? text.dr : text.cr}` : ""}
+    </span>
+  );
+}
+
 function VoucherForm({
   data,
   voucher,
   initialEntries,
+  initialBalances,
   onClose,
 }: {
   data: VoucherData;
   voucher: VoucherRow | null;
   initialEntries: VoucherEntryRow[] | null;
+  initialBalances: Record<string, LedgerBalance>;
   onClose: () => void;
 }) {
   const editing = voucher !== null;
@@ -160,6 +195,8 @@ function VoucherForm({
   const [nextKey, setNextKey] = useState(initialEntries?.length ?? 1);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const [balances, setBalances] = useState<Record<string, LedgerBalance>>(initialBalances);
+  const [, startBalance] = useTransition();
   const dateId = useId();
   const referenceId = useId();
   const narrationId = useId();
@@ -180,6 +217,29 @@ function VoucherForm({
   const totalPaise = sumPaise(
     rows.map((row) => parseAmountToPaise(row.amount) ?? BigInt(0)),
   );
+
+  // Fetches balances as on the voucher date for the given ledgers.
+  function fetchBalances(asOn: string, ledgerIds: string[]) {
+    const ids = [...new Set(ledgerIds.filter(Boolean))];
+    if (ids.length === 0 || !asOn) return;
+    startBalance(async () => {
+      const result = await getLedgerBalances(asOn, ids, voucher?.id ?? "");
+      if (result.error === null) setBalances((current) => ({ ...current, ...result.balances }));
+    });
+  }
+
+  function changeDate(next: string) {
+    setDate(next);
+    fetchBalances(
+      next,
+      rows.flatMap((row) => [row.debit, row.credit]),
+    );
+  }
+
+  function pickLedger(key: number, side: "debit" | "credit", ledgerId: string) {
+    updateRow(key, side === "debit" ? { debit: ledgerId } : { credit: ledgerId });
+    fetchBalances(date, [ledgerId]);
+  }
 
   function changeType(nextId: string) {
     setTypeId(nextId);
@@ -282,7 +342,7 @@ function VoucherForm({
                 id={dateId}
                 type="date"
                 value={date}
-                onChange={(event) => setDate(event.target.value)}
+                onChange={(event) => changeDate(event.target.value)}
                 className={`${field.input} max-w-[200px]`}
               />
               {date !== data.today ? (
@@ -313,13 +373,13 @@ function VoucherForm({
           {rows.map((row) => (
             <div
               key={row.key}
-              className="mb-2 grid gap-2.5 rounded-xl bg-background p-3 md:grid-cols-[1fr_1fr_130px_40px] md:items-center md:gap-2 md:bg-transparent md:p-0"
+              className="mb-2 grid gap-2.5 rounded-xl bg-background p-3 md:grid-cols-[1fr_1fr_130px_40px] md:items-start md:gap-2 md:bg-transparent md:p-0"
             >
               <label className="block min-w-0">
                 <span className={`${field.label} md:sr-only`}>{type.debitLabel}</span>
                 <select
                   value={row.debit}
-                  onChange={(event) => updateRow(row.key, { debit: event.target.value })}
+                  onChange={(event) => pickLedger(row.key, "debit", event.target.value)}
                   className={field.input}
                 >
                   <option value="">{text.selectLedger}</option>
@@ -329,12 +389,13 @@ function VoucherForm({
                     </option>
                   ))}
                 </select>
+                <BalanceNote balance={row.debit ? balances[row.debit] : undefined} />
               </label>
               <label className="block min-w-0">
                 <span className={`${field.label} md:sr-only`}>{type.creditLabel}</span>
                 <select
                   value={row.credit}
-                  onChange={(event) => updateRow(row.key, { credit: event.target.value })}
+                  onChange={(event) => pickLedger(row.key, "credit", event.target.value)}
                   className={field.input}
                 >
                   <option value="">{text.selectLedger}</option>
@@ -344,6 +405,7 @@ function VoucherForm({
                     </option>
                   ))}
                 </select>
+                <BalanceNote balance={row.credit ? balances[row.credit] : undefined} />
               </label>
               <label className="block min-w-0">
                 <span className={`${field.label} md:sr-only`}>{text.amount}</span>
@@ -583,21 +645,93 @@ function VoidDialog({ voucher, onClose }: { voucher: VoucherRow; onClose: () => 
   );
 }
 
-type FormTarget = { voucher: VoucherRow | null; entries: VoucherEntryRow[] | null };
+function DeleteDialog({ voucher, onClose }: { voucher: VoucherRow; onClose: () => void }) {
+  const [typed, setTyped] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+  const inputId = useId();
+
+  const matches = typed.trim() === voucher.referenceNo;
+
+  function confirm() {
+    startTransition(async () => {
+      const formData = new FormData();
+      formData.set("id", voucher.id);
+      formData.set("confirmReference", typed);
+      const result = await deleteVoucher({ error: null }, formData);
+      if (result.error) setError(result.error);
+      else onClose();
+    });
+  }
+
+  return (
+    <Modal
+      title={text.deleteTitle}
+      subtitle={
+        <>
+          <strong className="font-semibold text-text">
+            {voucher.typeName} {voucher.referenceNo}
+          </strong>{" "}
+          {text.deleteBody}
+        </>
+      }
+      onClose={onClose}
+    >
+      <div className="mb-3">
+        <label htmlFor={inputId} className={field.label}>
+          {text.typePrompt}
+        </label>
+        <input
+          id={inputId}
+          type="text"
+          value={typed}
+          onChange={(event) => setTyped(event.target.value)}
+          autoComplete="off"
+          spellCheck={false}
+          placeholder={voucher.referenceNo}
+          className={field.input}
+        />
+      </div>
+      <ErrorLine message={error} />
+      <div className="flex flex-wrap justify-end gap-2">
+        <button type="button" onClick={onClose} disabled={pending} className={button.secondary}>
+          {text.cancel}
+        </button>
+        <button
+          type="button"
+          onClick={confirm}
+          disabled={pending || !matches}
+          className={button.danger}
+        >
+          {pending ? text.deleting : text.delete}
+        </button>
+      </div>
+    </Modal>
+  );
+}
+
+type FormTarget = {
+  voucher: VoucherRow | null;
+  entries: VoucherEntryRow[] | null;
+  balances: Record<string, LedgerBalance>;
+};
 type ViewTarget = { voucher: VoucherRow; entries: VoucherEntryRow[] };
 
 export function VoucherManager({
   data,
   canEnter,
   canChange,
+  canDelete,
 }: {
   data: VoucherData;
   canEnter: boolean;
   canChange: boolean;
+  canDelete: boolean;
 }) {
   const [form, setForm] = useState<FormTarget | null>(null);
   const [viewing, setViewing] = useState<ViewTarget | null>(null);
   const [voiding, setVoiding] = useState<VoucherRow | null>(null);
+  const [deleting, setDeleting] = useState<VoucherRow | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
@@ -619,8 +753,18 @@ export function VoucherManager({
         setMessage(result.error);
         return;
       }
-      if (mode === "view") setViewing({ voucher, entries: result.entries });
-      else setForm({ voucher, entries: result.entries });
+      if (mode === "view") {
+        setViewing({ voucher, entries: result.entries });
+        return;
+      }
+      // The balances of the ledgers already on the voucher, leaving it out.
+      const ids = result.entries.flatMap((e) => [e.debitLedgerId, e.creditLedgerId]);
+      const balanceResult = await getLedgerBalances(voucher.date, [...new Set(ids)], voucher.id);
+      setForm({
+        voucher,
+        entries: result.entries,
+        balances: balanceResult.error === null ? balanceResult.balances : {},
+      });
     });
   }
 
@@ -644,7 +788,7 @@ export function VoucherManager({
         {canEnter ? (
           <button
             type="button"
-            onClick={() => setForm({ voucher: null, entries: null })}
+            onClick={() => setForm({ voucher: null, entries: null, balances: {} })}
             className={button.primary}
           >
             <svg
@@ -772,6 +916,15 @@ export function VoucherManager({
             >
               {busyId === row.id ? text.loading : text.view}
             </button>
+            {canDelete ? (
+              <button
+                type="button"
+                onClick={() => setDeleting(row)}
+                className={`${button.danger} ${button.small}`}
+              >
+                {text.delete}
+              </button>
+            ) : null}
             {canChange && row.status === "posted" ? (
               <>
                 <button
@@ -805,6 +958,7 @@ export function VoucherManager({
           data={data}
           voucher={form.voucher}
           initialEntries={form.entries}
+          initialBalances={form.balances}
           onClose={() => setForm(null)}
         />
       ) : null}
@@ -818,6 +972,9 @@ export function VoucherManager({
       ) : null}
       {voiding ? (
         <VoidDialog key={voiding.id} voucher={voiding} onClose={() => setVoiding(null)} />
+      ) : null}
+      {deleting ? (
+        <DeleteDialog key={deleting.id} voucher={deleting} onClose={() => setDeleting(null)} />
       ) : null}
     </>
   );

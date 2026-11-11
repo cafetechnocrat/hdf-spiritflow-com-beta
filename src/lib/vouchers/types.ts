@@ -44,6 +44,13 @@ export type VoucherEntryRow = {
   amountText: string;
 };
 
+// A ledger balance as on a date. side is null when the balance is zero. A
+// balance that has gone the other way shows on the opposite side, with no sign.
+export type LedgerBalance = {
+  amountText: string;
+  side: "dr" | "cr" | null;
+};
+
 export type VoucherData = {
   types: VoucherTypeRow[];
   ledgers: LedgerChoice[];

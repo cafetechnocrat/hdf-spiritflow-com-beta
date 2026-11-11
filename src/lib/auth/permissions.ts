@@ -47,9 +47,16 @@ export const PERMISSIONS = {
     chief_accountant: "E",
     accounts_staff: "E",
   },
-  // Editing or voiding a posted voucher is the Chief Accountant only.
+  // Editing or voiding a posted voucher. While the system is being built the
+  // System Admin has every right, so it is allowed here too.
   voucher_changes: {
+    system_admin: "E",
     chief_accountant: "E",
+  },
+  // Deleting a voucher for real. System Admin only, for development. Review
+  // before the system goes live.
+  voucher_delete: {
+    system_admin: "E",
   },
 } as const satisfies Record<string, Partial<Record<Role, Access>>>;
 

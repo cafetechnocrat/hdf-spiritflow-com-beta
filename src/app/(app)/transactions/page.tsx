@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 const text = {
   title: "Transactions",
   subtitle:
-    "Vouchers entered against ledgers. Posted vouchers are never deleted. Only the Chief Accountant can edit or void one, with a reason.",
+    "Vouchers entered against ledgers. Only the Chief Accountant or System Admin can edit or void one, with a reason.",
 } as const;
 
 async function TransactionsContent() {
@@ -36,6 +36,7 @@ async function TransactionsContent() {
         data={data}
         canEnter={canEdit("transactions", me.role)}
         canChange={canEdit("voucher_changes", me.role)}
+        canDelete={canEdit("voucher_delete", me.role)}
       />
     </div>
   );

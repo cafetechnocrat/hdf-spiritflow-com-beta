@@ -133,6 +133,10 @@ Left out of this slice. When it is added later it will be a restricted form for 
 - The transaction date selector in the top bar saves to `user_preferences` for roles that enter transactions. The list shows the newest 500 vouchers with filters; the Day Book report will cover full history.
 - Night Accountant entry, month locking and a screen to manage voucher types and rules are not built yet.
 
+### Development Rights And Balances (Owner Decisions, 2026-11-12)
+- While the system is being built, **System Admin has every right** on vouchers: enter, edit, void and delete. Delete is a real delete (typed voucher number to confirm), kept in the audit log. This is an exception to "posted vouchers are never deleted" and **must be reviewed before the system goes live**. Migration `20261113140000_voucher_admin_rights_and_balances.sql`.
+- When a ledger is picked on a voucher row, its **balance shows beside it as Dr or Cr**, as on the voucher date. Balance is the opening balance plus posted debits minus posted credits up to that date (the voucher being edited is left out). A balance that has gone the other way shows on the opposite side **with no minus sign**, as in Tally. A zero balance shows no side.
+
 ### Voucher Numbers
 - Each voucher gets its type's prefix, the financial year and a running number for that type and year, for example Payment No. 12 of 2026-27. The database assigns the number when the voucher is saved, so two people saving at once never get the same number.
 - The financial year comes from the voucher date, not from today.

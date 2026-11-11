@@ -53,7 +53,21 @@ export const voidSchema = z.object({
 
 export const transactionDateSchema = date;
 
+export const balanceRequestSchema = z.object({
+  date,
+  ledgerIds: z.array(z.uuid()).min(1).max(50),
+  excludeVoucherId: z
+    .string()
+    .trim()
+    .transform(blankToNull)
+    .pipe(z.uuid().nullable()),
+});
+
 export type VoucherResult = { error: string | null };
+
+export type BalancesResult =
+  | { error: null; balances: Record<string, { amountText: string; side: "dr" | "cr" | null }> }
+  | { error: string };
 
 export type EntriesResult =
   | {

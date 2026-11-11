@@ -5,10 +5,12 @@ import { getCurrentUser } from "@/lib/auth/current-user";
 import { canEdit, canView } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
 import {
+  balanceRequestSchema,
   idSchema,
   transactionDateSchema,
   voidSchema,
   voucherSchema,
+  type BalancesResult,
   type EntriesResult,
   type VoucherResult,
 } from "./schemas";
@@ -19,6 +21,7 @@ const text = {
   notFound: "That voucher was not found.",
   badRows: "Check the rows. Each needs a debit ledger, a credit ledger and an amount.",
   needReason: "Enter the reason for the edit.",
+  referenceMismatch: "The voucher number you typed does not match. Nothing was deleted.",
 } as const;
 
 const PATH = "/transactions";
@@ -31,6 +34,11 @@ async function requireEntry() {
 async function requireChanger() {
   const me = await getCurrentUser();
   return me && !me.mustChangePassword && canEdit("voucher_changes", me.role) ? me : null;
+}
+
+async function requireDeleter() {
+  const me = await getCurrentUser();
+  return me && !me.mustChangePassword && canEdit("voucher_delete", me.role) ? me : null;
 }
 
 type DbError = { code?: string; message?: string } | null;
@@ -121,6 +129,67 @@ export async function voidVoucher(
 
   revalidatePath(PATH);
   return { error: null };
+}
+
+// Permanent delete, System Admin only, for development. The audit log keeps
+// the old values. The typed reference must match.
+export async function deleteVoucher(
+  _previous: VoucherResult,
+  formData: FormData,
+): Promise<VoucherResult> {
+  if (!(await requireDeleter())) return { error: text.notAllowed };
+
+  const id = field(formData, "id");
+  if (!idSchema.safeParse(id).success) return { error: text.notFound };
+
+  const supabase = await createClient();
+  const { data: summary } = await supabase
+    .from("voucher_summaries")
+    .select("reference_no")
+    .eq("id", id)
+    .maybeSingle();
+  if (!summary) return { error: text.notFound };
+  if (field(formData, "confirmReference").trim() !== String(summary.reference_no)) {
+    return { error: text.referenceMismatch };
+  }
+
+  const { error } = await supabase.rpc("delete_voucher", { p_id: id });
+  if (error) return { error: explain(error) };
+
+  revalidatePath(PATH);
+  return { error: null };
+}
+
+// Balances of the picked ledgers as on the voucher date. The voucher being
+// edited is left out so its own rows do not count twice.
+export async function getLedgerBalances(
+  date: string,
+  ledgerIds: string[],
+  excludeVoucherId: string,
+): Promise<BalancesResult> {
+  const me = await getCurrentUser();
+  if (!me || !canView("transactions", me.role)) return { error: text.notAllowed };
+
+  const parsed = balanceRequestSchema.safeParse({ date, ledgerIds, excludeVoucherId });
+  if (!parsed.success) return { error: text.failed };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("ledger_balances", {
+    p_date: parsed.data.date,
+    p_ledger_ids: parsed.data.ledgerIds,
+    p_exclude: parsed.data.excludeVoucherId,
+  });
+  if (error) return { error: text.failed };
+
+  const balances: Record<string, { amountText: string; side: "dr" | "cr" | null }> = {};
+  for (const row of (data ?? []) as {
+    ledger_id: string;
+    amount_text: string;
+    side: "dr" | "cr" | null;
+  }[]) {
+    balances[row.ledger_id] = { amountText: row.amount_text, side: row.side };
+  }
+  return { error: null, balances };
 }
 
 // The rows of one voucher, for the View and Edit dialogs.
