@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spirit Flow</title>
+<link rel="icon" type="image/png" href="../../../src/app/icon.png">
+<link rel="stylesheet" href="shared.css">
+<style>
+  .filters { display: grid; gap: 0 12px; grid-template-columns: 1fr; padding: 16px 16px 0; margin-bottom: 12px; }
+  @media (min-width: 640px) { .filters { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 1100px) { .filters { grid-template-columns: repeat(5, 1fr) auto; align-items: end; } }
+  .filters .btn-row { display: flex; gap: 8px; margin-bottom: 14px; }
+  .diff { width: 100%; border-collapse: collapse; font-size: .85rem; }
+  .diff th { text-align: left; font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; color: var(--text-muted); padding: 8px 10px; border-bottom: 1px solid var(--divider); }
+  .diff td { padding: 8px 10px; border-bottom: 1px solid var(--divider); vertical-align: top; word-break: break-word; }
+  .diff td.k { color: var(--text-muted); font-weight: 500; width: 34%; }
+  .diff tr.changed td.o { background: var(--error-bg); color: var(--error); }
+  .diff tr.changed td.n { background: var(--success-bg); color: var(--success); font-weight: 600; }
+  .diff .none { color: var(--text-muted); }
+  .meta-grid { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; font-size: .88rem; margin-bottom: 14px; }
+  .meta-grid dt { color: var(--text-muted); }
+  .meta-grid dd { margin: 0; font-weight: 500; }
+  .modal.wide { max-width: 640px; }
+</style>
+</head>
+<body data-page="audit" data-title="Audit Log">
+<div class="mock-note">Mockup. Sample data only. Not the real app.</div>
+<div class="shell">
+  <main class="content">
+    <div class="page-head">
+      <div>
+        <h1>Audit Log</h1>
+        <p>A permanent record of who did what and when. It cannot be edited or deleted.</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <form class="filters" onsubmit="return false">
+        <div class="field"><label class="lbl" for="from">From Date</label><input id="from" type="text" placeholder="DD/MM/YYYY" inputmode="numeric" value="01/11/2026"></div>
+        <div class="field"><label class="lbl" for="to">To Date</label><input id="to" type="text" placeholder="DD/MM/YYYY" inputmode="numeric" value="11/11/2026"></div>
+        <div class="field"><label class="lbl" for="user">User</label>
+          <select id="user"><option>All Users</option><option>Sample Admin</option><option>Sample Accounts One</option><option>Sample Cashier One</option></select></div>
+        <div class="field"><label class="lbl" for="table">Table</label>
+          <select id="table"><option>All Tables</option><option>Profiles</option><option>Outlets</option><option>Counters</option><option>Outlet Access</option><option>Sign In</option></select></div>
+        <div class="field"><label class="lbl" for="action">Action</label>
+          <select id="action"><option>All Actions</option><option>Insert</option><option>Update</option><option>Void</option><option>Login</option><option>Logout</option><option>Failed Login</option></select></div>
+        <div class="btn-row"><button class="btn" type="submit">Apply</button><button class="btn secondary" type="reset">Clear</button></div>
+      </form>
+    </div>
+
+    <div class="card table-wrap">
+      <table class="data">
+        <thead><tr><th>When</th><th>User</th><th>Action</th><th>Area</th><th>Record</th><th><span class="sr-only">Details</span></th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="first"><div class="cell-main">11/11/2026</div><div class="cell-sub">02:41 PM</div></td>
+            <td data-label="User">Sample Admin</td>
+            <td data-label="Action"><span class="badge role">Update</span></td>
+            <td data-label="Area">Profiles</td>
+            <td data-label="Record">Sample Accounts One</td>
+            <td class="act"><div class="actions"><button class="btn secondary small" data-detail="update">View</button></div></td>
+          </tr>
+          <tr>
+            <td class="first"><div class="cell-main">11/11/2026</div><div class="cell-sub">02:38 PM</div></td>
+            <td data-label="User">Sample Admin</td>
+            <td data-label="Action"><span class="badge ok">Insert</span></td>
+            <td data-label="Area">Profiles</td>
+            <td data-label="Record">Sample Cashier Two</td>
+            <td class="act"><div class="actions"><button class="btn secondary small" data-detail="insert">View</button></div></td>
+          </tr>
+          <tr>
+            <td class="first"><div class="cell-main">11/11/2026</div><div class="cell-sub">02:31 PM</div></td>
+            <td data-label="User">Sample Cashier One</td>
+            <td data-label="Action"><span class="badge off">Login</span></td>
+            <td data-label="Area">Sign In</td>
+            <td data-label="Record"><span class="cell-sub">Not Applicable</span></td>
+            <td class="act"><div class="actions"><button class="btn secondary small" data-detail="login">View</button></div></td>
+          </tr>
+          <tr>
+            <td class="first"><div class="cell-main">11/11/2026</div><div class="cell-sub">02:29 PM</div></td>
+            <td data-label="User"><span class="cell-sub">Unknown</span></td>
+            <td data-label="Action"><span class="badge bad">Failed Login</span></td>
+            <td data-label="Area">Sign In</td>
+            <td data-label="Record">cashier1</td>
+            <td class="act"><div class="actions"><button class="btn secondary small" data-detail="failed">View</button></div></td>
+          </tr>
+          <tr>
+            <td class="first"><div class="cell-main">11/11/2026</div><div class="cell-sub">02:12 PM</div></td>
+            <td data-label="User">Sample Admin</td>
+            <td data-label="Action"><span class="badge role">Update</span></td>
+            <td data-label="Area">Counters</td>
+            <td data-label="Record">Spadikam · Counter 2</td>
+            <td class="act"><div class="actions"><button class="btn secondary small" data-detail="update">View</button></div></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="pager"><span>Showing 1 To 5 Of 5 Entries</span><span>Page 1 Of 1</span></div>
+    </div>
+  </main>
+</div>
+
+<div class="modal-scrim" id="detailModal" role="dialog" aria-modal="true" aria-labelledby="dTitle">
+  <div class="modal wide">
+    <h2 id="dTitle">Entry Details</h2>
+    <p class="sub" id="dSub"></p>
+    <dl class="meta-grid" id="dMeta"></dl>
+    <table class="diff" id="dDiff"></table>
+    <div class="modal-actions"><button class="btn secondary" data-close>Close</button></div>
+  </div>
+</div>
+
+<script src="shell.js"></script>
+<script>
+  // Mockup behaviour only: fills the detail view from sample entries.
+  var entries = {
+    update: {
+      sub: "Profiles · Update",
+      meta: [["When", "11/11/2026 02:41 PM"], ["User", "Sample Admin"], ["Record", "Sample Accounts One"]],
+      rows: [["Role", "Accounts Staff", "Chief Accountant"], ["Full Name", "Sample Accounts One", "Sample Accounts One"], ["Phone", "None", "None"], ["Status", "Active", "Active"]]
+    },
+    insert: {
+      sub: "Profiles · Insert",
+      meta: [["When", "11/11/2026 02:38 PM"], ["User", "Sample Admin"], ["Record", "Sample Cashier Two"]],
+      rows: [["Role", null, "Cashier"], ["Full Name", null, "Sample Cashier Two"], ["Username", null, "cashier2"], ["Status", null, "Active"]]
+    },
+    login: {
+      sub: "Sign In · Login",
+      meta: [["When", "11/11/2026 02:31 PM"], ["User", "Sample Cashier One"]],
+      rows: []
+    },
+    failed: {
+      sub: "Sign In · Failed Login",
+      meta: [["When", "11/11/2026 02:29 PM"], ["Attempted As", "cashier1"], ["Reason", "Wrong password or PIN"]],
+      rows: []
+    }
+  };
+  function esc(s) { return String(s).replace(/[&<>]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]; }); }
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest("[data-detail]");
+    if (!b) return;
+    var d = entries[b.getAttribute("data-detail")];
+    document.getElementById("dSub").textContent = d.sub;
+    document.getElementById("dMeta").innerHTML = d.meta.map(function (m) { return "<dt>" + m[0] + "</dt><dd>" + esc(m[1]) + "</dd>"; }).join("");
+    var t = document.getElementById("dDiff");
+    t.innerHTML = d.rows.length
+      ? "<thead><tr><th>Field</th><th>Before</th><th>After</th></tr></thead><tbody>" + d.rows.map(function (r) {
+          var changed = r[1] !== r[2];
+          return '<tr class="' + (changed ? "changed" : "") + '"><td class="k">' + r[0] + '</td><td class="o">' +
+            (r[1] === null ? '<span class="none">Not Set</span>' : esc(r[1])) + '</td><td class="n">' + esc(r[2]) + "</td></tr>";
+        }).join("") + "</tbody>"
+      : "";
+    document.getElementById("detailModal").classList.add("open");
+  });
+</script>
+</body>
+</html>

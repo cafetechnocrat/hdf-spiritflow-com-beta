@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spirit Flow</title>
+<link rel="icon" type="image/png" href="../../../src/app/icon.png">
+<link rel="stylesheet" href="shared.css">
+</head>
+<body data-page="users" data-title="Users">
+<div class="mock-note">Mockup. Sample data only. Not the real app.</div>
+<div class="shell">
+  <main class="content">
+    <div class="page-head">
+      <div>
+        <h1>Users</h1>
+        <p>Add staff, set their role and outlet access, and deactivate leavers. Users are never deleted.</p>
+      </div>
+      <a class="btn" href="user-form.html?new">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add User
+      </a>
+    </div>
+
+    <div class="toolbar">
+      <div class="search grow">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <label class="sr-only" for="q">Search Users</label>
+        <input id="q" type="search" placeholder="Search By Name, Email Or Username">
+      </div>
+      <div style="flex:0 1 190px;min-width:150px">
+        <label class="sr-only" for="role">Role</label>
+        <select id="role"><option>All Roles</option><option>MD</option><option>System Admin</option><option>Chief Accountant</option><option>Accounts Staff</option><option>Night Accountant</option><option>Cashier</option><option>Stock Keeper</option><option>Security</option><option>Kitchen Staff</option></select>
+      </div>
+      <div style="flex:0 1 150px;min-width:130px">
+        <label class="sr-only" for="status">Status</label>
+        <select id="status"><option>All Statuses</option><option>Active</option><option>Inactive</option></select>
+      </div>
+    </div>
+
+    <div class="card table-wrap">
+      <table class="data">
+        <thead><tr><th>Name</th><th>Role</th><th>Sign In</th><th>Outlet Access</th><th>Status</th><th><span class="sr-only">Actions</span></th></tr></thead>
+        <tbody>
+        <tr>
+          <td class="first"><div class="cell-main">Sample Admin</div><div class="cell-sub">Email And Password</div></td>
+          <td data-label="Role"><span class="badge role">System Admin</span></td>
+          <td data-label="Sign In">admin@spiritflowhdf.com</td>
+          <td data-label="Outlet Access">All Outlets</td>
+          <td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td>
+          <td class="act"><div class="actions">
+            <a class="btn secondary small" href="user-form.html">Edit</a>
+            <div class="menu-wrap">
+              <button class="icon-btn" style="width:36px;height:36px" data-menu="m0" aria-label="More Actions For Sample Admin"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></svg></button>
+              <div class="menu" id="m0">
+                <button data-open="resetModal">Reset Password</button>
+                <button class="danger" data-open="deactivateModal">Deactivate User</button>
+              </div>
+            </div>
+          </div></td>
+        </tr>
+        <tr>
+          <td class="first"><div class="cell-main">Sample Director</div><div class="cell-sub">Email And Password</div></td>
+          <td data-label="Role"><span class="badge role">MD</span></td>
+          <td data-label="Sign In">md@spiritflowhdf.com</td>
+          <td data-label="Outlet Access">All Outlets</td>
+          <td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td>
+          <td class="act"><div class="actions">
+            <a class="btn secondary small" href="user-form.html">Edit</a>
+            <div class="menu-wrap">
+              <button class="icon-btn" style="width:36px;height:36px" data-menu="m1" aria-label="More Actions For Sample Director"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></svg></button>
+              <div class="menu" id="m1">
+                <button data-open="resetModal">Reset Password</button>
+                <button class="danger" data-open="deactivateModal">Deactivate User</button>
+              </div>
+            </div>
+          </div></td>
+        </tr>
+        <tr>
+          <td class="first"><div class="cell-main">Sample Chief Accountant</div><div class="cell-sub">Email And Password</div></td>
+          <td data-label="Role"><span class="badge role">Chief Accountant</span></td>
+          <td data-label="Sign In">chief@spiritflowhdf.com</td>
+          <td data-label="Outlet Access">All Outlets</td>
+          <td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td>
+          <td class="act"><div class="actions">
+            <a class="btn secondary small" href="user-form.html">Edit</a>
+            <div class="menu-wrap">
+              <button class="icon-btn" style="width:36px;height:36px" data-menu="m2" aria-label="More Actions For Sample Chief Accountant"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></svg></button>
+              <div class="menu" id="m2">
+                <button data-open="resetModal">Reset Password</button>
+                <button class="danger" data-open="deactivateModal">Deactivate User</button>
+              </div>
+            </div>
+          </div></td>
+        </tr>
+        <tr>
+          <td class="first"><div class="cell-main">Sample Accounts One</div><div class="cell-sub">Email And Password</div></td>
+          <td data-label="Role"><span class="badge role">Accounts Staff</span></td>
+          <td data-label="Sign In">accounts1@spiritflowhdf.com</td>
+          <td data-label="Outlet Access">All Outlets</td>
+          <td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td>
+          <td class="act"><div class="actions">
+            <a class="btn secondary small" href="user-form.html">Edit</a>
+            <div class="menu-wrap">
+              <button class="icon-btn" style="width:36px;height:36px" data-menu="m3" aria-label="More Actions For Sample Accounts One"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></svg></button>
+              <div class="menu" id="m3">
+                <button data-open="resetModal">Reset Password</button>
+                <button class="danger" data-open="deactivateModal">Deactivate User</button>
+              </div>
+            </div>
+          </div></td>
+        </tr>
+        <tr>
+          <td class="first"><div class="cell-main">Sample Night Accountant</div><div class="cell-sub">Email And Password</div></td>
+          <td data-label="Role"><span class="badge role">Night Accountant</span></td>
+          <td data-label="Sign In">night@spiritflowhdf.com</td>
+          <td data-label="Outlet Access">All Outlets</td>
+          <td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td>
+          <td class="act"><div class="actions">
+            <a class="btn secondary small" href="user-form.html">Edit</a>
+            <div class="menu-wrap">
+              <button class="icon-btn" style="width:36px;height:36px" data-menu="m4" aria-label="More Actions For Sample Night Accountant"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></svg></button>
+              <div class="menu" id="m4">
+                <button data-open="resetModal">Reset Password</button>
+                <button class="danger" data-open="deactivateModal">Deactivate User</button>
+              </div>
+            </div>
+          </div></td>
+        </tr>
+        <tr>
+          <td class="first"><div class="cell-main">Sample Cashier One</div><div class="cell-sub">Username And PIN</div></td>
+          <td data-label="Role"><span class="badge role">Cashier</span></td>
+          <td data-label="Sign In">cashier1</td>
+          <td data-label="Outlet Access">Spadikam · Counter 1</td>
+          <td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td>
+          <td class="act"><div class="actions">
+            <a class="btn secondary small" href="user-form.html?cashier">Edit</a>
+            <div class="menu-wrap">
+              <button class="icon-btn" style="width:36px;height:36px" data-menu="m5" aria-label="More Actions For Sample Cashier One"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></svg></button>
+              <div class="menu" id="m5">
+                <button data-open="resetModal">Reset PIN</button>
+                <button class="danger" data-open="deactivateModal">Deactivate User</button>
+              </div>
+            </div>
+          </div></td>
+        </tr>
+        <tr>
+          <td class="first"><div class="cell-main">Sample Cashier Two</div><div class="cell-sub">Username And PIN</div></td>
+          <td data-label="Role"><span class="badge role">Cashier</span></td>
+          <td data-label="Sign In">cashier2</td>
+          <td data-label="Outlet Access">Dhruvam · Counter 1</td>
+          <td data-label="Status"><span class="badge off"><span class="dot"></span>Inactive</span></td>
+          <td class="act"><div class="actions">
+            <a class="btn secondary small" href="user-form.html?cashier">Edit</a>
+            <div class="menu-wrap">
+              <button class="icon-btn" style="width:36px;height:36px" data-menu="m6" aria-label="More Actions For Sample Cashier Two"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></svg></button>
+              <div class="menu" id="m6">
+                <button data-open="resetModal">Reset PIN</button>
+                <button class="" data-open="activateModal">Activate User</button>
+              </div>
+            </div>
+          </div></td>
+        </tr>
+        <tr>
+          <td class="first"><div class="cell-main">Sample Stock Keeper</div><div class="cell-sub">Email And Password</div></td>
+          <td data-label="Role"><span class="badge role">Stock Keeper</span></td>
+          <td data-label="Sign In">stock1@spiritflowhdf.com</td>
+          <td data-label="Outlet Access">Spadikam</td>
+          <td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td>
+          <td class="act"><div class="actions">
+            <a class="btn secondary small" href="user-form.html">Edit</a>
+            <div class="menu-wrap">
+              <button class="icon-btn" style="width:36px;height:36px" data-menu="m7" aria-label="More Actions For Sample Stock Keeper"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></svg></button>
+              <div class="menu" id="m7">
+                <button data-open="resetModal">Reset Password</button>
+                <button class="danger" data-open="deactivateModal">Deactivate User</button>
+              </div>
+            </div>
+          </div></td>
+        </tr>
+        </tbody>
+      </table>
+      <div class="pager"><span>Showing 8 Of 8 Users</span><span>Page 1 Of 1</span></div>
+    </div>
+  </main>
+</div>
+
+<div class="modal-scrim" id="resetModal" role="dialog" aria-modal="true" aria-labelledby="resetTitle">
+  <div class="modal">
+    <h2 id="resetTitle">Reset Password</h2>
+    <p class="sub">Set a temporary password for Sample Accounts One. They must change it the next time they sign in. For a cashier this resets the PIN instead.</p>
+    <div class="field">
+      <label class="lbl" for="tmp">Temporary Password</label>
+      <input id="tmp" type="text" value="" placeholder="At least 10 characters">
+      <p class="hint">Share it with the user in person or by phone. It is shown only now.</p>
+    </div>
+    <div class="modal-actions">
+      <button class="btn secondary" data-close>Cancel</button>
+      <button class="btn" data-close>Reset Password</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-scrim" id="deactivateModal" role="dialog" aria-modal="true" aria-labelledby="deactTitle">
+  <div class="modal">
+    <h2 id="deactTitle">Deactivate User?</h2>
+    <p class="sub">Sample Cashier One will be signed out and will not be able to sign in. Their history stays in the records. You can activate them again later.</p>
+    <div class="modal-actions">
+      <button class="btn secondary" data-close>Cancel</button>
+      <button class="btn danger" data-close>Deactivate</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-scrim" id="activateModal" role="dialog" aria-modal="true" aria-labelledby="actTitle">
+  <div class="modal">
+    <h2 id="actTitle">Activate User?</h2>
+    <p class="sub">Sample Cashier Two will be able to sign in again with their current password or PIN.</p>
+    <div class="modal-actions">
+      <button class="btn secondary" data-close>Cancel</button>
+      <button class="btn" data-close>Activate</button>
+    </div>
+  </div>
+</div>
+<script src="shell.js"></script>
+</body>
+</html>
