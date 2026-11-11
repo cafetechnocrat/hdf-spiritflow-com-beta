@@ -16,6 +16,11 @@
   --border: #86868b;
   --border-soft: #d2d2d7;
   --success: #1e7e34;
+  --success-bg: #e9f6ec;
+  --warn: #8a5a00;
+  --warn-bg: #fff4db;
+  --accent-soft: #e8f1fc;
+  --divider: #e8e8ed;
   --error: #c9342a;
   --error-bg: #fff1f0;
 }
@@ -34,6 +39,11 @@
   --color-border: var(--border);
   --color-border-soft: var(--border-soft);
   --color-success: var(--success);
+  --color-success-bg: var(--success-bg);
+  --color-warn: var(--warn);
+  --color-warn-bg: var(--warn-bg);
+  --color-accent-soft: var(--accent-soft);
+  --color-divider: var(--divider);
   --color-error: var(--error);
   --color-error-bg: var(--error-bg);
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI",

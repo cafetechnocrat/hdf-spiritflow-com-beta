@@ -1,20 +1,9 @@
 import "server-only";
 import { connection } from "next/server";
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 
-export const ROLE_LABELS = {
-  md: "Managing Director",
-  system_admin: "System Admin",
-  chief_accountant: "Chief Accountant",
-  accounts_staff: "Accounts Staff",
-  night_accountant: "Night Accountant",
-  cashier: "Cashier",
-  stock_keeper: "Stock Keeper",
-  security: "Security",
-  kitchen_staff: "Kitchen Staff",
-} as const;
-
-export type Role = keyof typeof ROLE_LABELS;
+import type { Role } from "./roles";
 
 export type CurrentUser = {
   id: string;
@@ -23,7 +12,7 @@ export type CurrentUser = {
 };
 
 // Returns the signed in user with an active profile, or null.
-export async function getCurrentUser(): Promise<CurrentUser | null> {
+export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   // The session check depends on the current time, so wait for a real request.
   await connection();
   const supabase = await createClient();
@@ -43,4 +32,4 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     fullName: profile.full_name,
     role: profile.role as Role,
   };
-}
+});
