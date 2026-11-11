@@ -96,6 +96,25 @@ h1, h2, h3, p { margin: 0; }
 .topbar .title { font-weight: 600; font-size: 1rem; }
 .topbar .spacer { flex: 1; }
 
+/* Plain buttons used as tabs, pills and remove buttons: no browser border. */
+.tabs button, .vtabs button, .line .x { border: 0; font-family: inherit; cursor: pointer; }
+
+/* Transaction date: a small label and a calendar next to Sign Out. Phase 2 pages only. */
+.txdate { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.txdate .txl { font-size: .72rem; font-weight: 500; color: var(--text-muted); white-space: nowrap; }
+.txdate input {
+  height: 34px; width: 136px; padding: 0 8px; border: 1px solid var(--border-soft); border-radius: 9px;
+  background: var(--surface); color: var(--text); font: inherit; font-size: .82rem;
+}
+.txdate input:hover { border-color: var(--border); }
+.txdate .txbd { width: 8px; height: 8px; border-radius: 50%; background: var(--warn); flex: none; }
+.txdate .txbd[hidden] { display: none; }
+@media (max-width: 560px) {
+  .txdate .txl { display: none; }
+  .txdate input { width: 124px; }
+  .topbar .title { display: none; }
+}
+
 .content { padding: 16px 16px 40px; max-width: 1180px; margin: 0 auto; }
 @media (min-width: 1024px) {
   .sidebar { transform: none; }

@@ -18,6 +18,14 @@
       '><svg viewBox="0 0 24 24" aria-hidden="true">' + p.icon + "</svg>" + p.label + "</a>";
   }).join("");
 
+  // Phase 2 pages add data-txdate. A small label and a calendar that save the
+  // transaction date the moment a date is picked. No Set button.
+  var txdate = body.hasAttribute("data-txdate")
+    ? '<label class="txdate"><span class="txl">Transaction Date</span>' +
+      '<input type="date" id="txDate" value="2026-11-05" aria-label="Transaction Date">' +
+      '<span class="txbd" id="txBd" title="Back-dated" aria-label="Back-dated"></span></label>'
+    : "";
+
   var shell = document.querySelector(".shell");
   shell.insertAdjacentHTML("afterbegin",
     '<div class="scrim" id="scrim"></div>' +
@@ -32,10 +40,21 @@
         '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>' +
       '<span class="title">' + title + "</span>" +
       '<span class="spacer"></span>' +
+      txdate +
       '<button class="icon-btn" aria-label="Sign Out"><svg viewBox="0 0 24 24" aria-hidden="true">' +
         '<path d="M9 4H5v16h4M16 8l4 4-4 4M20 12H9"/></svg></button>' +
     "</header>"
   );
+
+  // Mockup only: the dot shows when the chosen date is not the sample "today".
+  var txInput = document.getElementById("txDate");
+  if (txInput) {
+    var sampleToday = "2026-11-12";
+    var txBd = document.getElementById("txBd");
+    var sync = function () { txBd.hidden = txInput.value === sampleToday; };
+    txInput.addEventListener("change", sync);
+    sync();
+  }
 
   var sidebar = document.getElementById("sidebar");
   var scrim = document.getElementById("scrim");

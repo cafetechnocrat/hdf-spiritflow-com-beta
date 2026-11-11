@@ -116,10 +116,10 @@ Every type uses the same row: debit ledger, credit ledger, amount, on one line. 
 
 ### Transaction Date
 - The system keeps a **transaction date** for each user: the date new vouchers start on. If none has been set, it is today's date in Asia/Kolkata. It is stored in the database, not in code.
-- The **Dashboard** has a Transaction Date card with a calendar to pick the date, a Set Date button, and a Use Today button. This is how the accountant sets the date once and then enters many vouchers, including back-fill of earlier months in any order.
+- The **top bar**, next to Sign Out, has a small "Transaction Date" label and a calendar (owner, 2026-11-12). Picking a date saves it at once. There is no Set button and no dashboard card. On phones the label hides and only the calendar shows. A small dot appears beside it when the date is not today. This is how the accountant sets the date once and then enters many vouchers, including back-fill of earlier months in any order.
+- The selector shows on every screen of the signed-in app for roles that can enter transactions, and it is hidden for other roles.
 - The voucher popup **always shows the date in a calendar field**, filled with the transaction date. The user can still change it for one voucher. A date that is not today shows a "Back-dated" note beside the field.
-- The Transactions page shows the current transaction date at the top.
-- **Open:** should the transaction date reset to today at the start of each day? Proposed: no, it stays until changed, with the Back-dated note as the reminder.
+- **Open:** should the transaction date reset to today at the start of each day? Proposed: no, it stays until changed, with the dot and the Back-dated note as the reminder.
 - Which ledger groups each side of each type may pick from is held in the database (`voucher_type_rules`) and set up by migration. **Proposed starting rules:** cash and bank sides pick under Cash-in-Hand and Bank Accounts; paid-to and received-from pick any ledger; Sales credit picks under Sales Accounts and Duties And Taxes; Sales debit picks under Cash-in-Hand, Bank Accounts and Sundry Debtors; Purchase debit picks under Purchase Accounts, Direct Expenses, Indirect Expenses and Duties And Taxes; Purchase credit picks under Cash-in-Hand, Bank Accounts and Sundry Creditors. **Open:** confirm these.
 
 ### Night Accountant

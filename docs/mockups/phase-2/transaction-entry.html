@@ -41,7 +41,7 @@
   .modal.wide { max-width: 980px; }
 </style>
 </head>
-<body data-page="transactions" data-title="Transactions">
+<body data-page="transactions" data-title="Transactions" data-txdate>
 <div class="mock-note">Mockup. Sample data only. Not the real app. Voucher types, numbering and the ledger lists all come from the database in the real screen.</div>
 <div class="shell">
   <main class="content">
@@ -51,8 +51,6 @@
         <p>Vouchers entered against ledgers. Posted vouchers are never deleted. Only the Chief Accountant can edit or void one, with a reason.</p>
       </div>
     </div>
-
-    <div class="datechip">Transaction Date <span>12/11/2026. Change it on the Dashboard.</span></div>
 
     <div class="toolbar">
       <p class="hint" style="margin:0">Void a voucher with a reason if it was entered wrongly.</p>
@@ -136,7 +134,7 @@
       <div class="field">
         <label class="lbl" for="h1">Transaction Date <span class="req">*</span></label>
         <div class="datebox"><input id="h1" type="date" value="2026-11-05"><span class="backdated">Back-dated</span></div>
-        <p class="hint">Starts on the transaction date set on the Dashboard. You can change it for this voucher.</p>
+        <p class="hint">Starts on the transaction date in the top bar. You can change it for this voucher.</p>
       </div>
       <div class="field"><label class="lbl">Voucher Number</label><span class="assigned">Assigned when you save</span></div>
     </div>
