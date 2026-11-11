@@ -44,7 +44,7 @@
     <!-- STOCK POINTS -->
     <section class="panel" id="p-sp" role="tabpanel" aria-labelledby="t-sp">
       <div class="toolbar">
-        <p class="hint" style="margin:0">Stock moves between stock points. It never moves between outlets.</p>
+        <p class="hint" style="margin:0">Stock moves between stock points. It never moves between outlets. A stock point can be deleted only when it is inactive and no outlet is linked to it.</p>
         <button class="btn" data-open="spModal">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add Stock Point
         </button>
@@ -75,11 +75,11 @@
               <td class="act"><div class="actions"><button class="btn secondary small" data-open="spModal">Edit</button><button class="btn danger small" data-open="spBlockedModal">Deactivate</button></div></td>
             </tr>
             <tr>
-              <td class="first"><div class="cell-main">Mini Bar</div><div class="cell-sub">MNB</div></td>
-              <td data-label="Type">Mini Bar</td>
+              <td class="first"><div class="cell-main">Kitchen Store</div><div class="cell-sub">KIT</div></td>
+              <td data-label="Type">Kitchen</td>
               <td data-label="Outlets"><div class="chips"><span class="chip none">None</span></div></td>
               <td data-label="Status"><span class="badge off"><span class="dot"></span>Inactive</span></td>
-              <td class="act"><div class="actions"><button class="btn secondary small" data-open="spModal">Edit</button><button class="btn secondary small" data-close>Activate</button></div></td>
+              <td class="act"><div class="actions"><button class="btn secondary small" data-open="spModal">Edit</button><button class="btn secondary small" data-close>Activate</button><button class="btn danger small" data-open="delSpModal">Delete</button></div></td>
             </tr>
           </tbody>
         </table>
@@ -89,7 +89,7 @@
     <!-- OUTLETS -->
     <section class="panel" id="p-ou" role="tabpanel" aria-labelledby="t-ou" hidden>
       <div class="toolbar">
-        <p class="hint" style="margin:0">An outlet has one stock point, or none. Selling rates are set per outlet.</p>
+        <p class="hint" style="margin:0">An outlet has one stock point, or none. An outlet can be deleted only when it is inactive and has no counters or assigned cashiers.</p>
         <button class="btn" data-open="ouModal">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add Outlet
         </button>
@@ -143,8 +143,8 @@
               <td data-label="Type"><span class="badge warn">Not Set</span></td>
               <td data-label="Stock Point"><span class="chip none">No Stock Point</span></td>
               <td data-label="Counters"><span class="cell-sub">None</span></td>
-              <td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td>
-              <td class="act"><div class="actions"><button class="btn secondary small" data-open="ouModal">Edit</button></div></td>
+              <td data-label="Status"><span class="badge off"><span class="dot"></span>Inactive</span></td>
+              <td class="act"><div class="actions"><button class="btn secondary small" data-open="ouModal">Edit</button><button class="btn secondary small" data-close>Activate</button><button class="btn danger small" data-open="delOuModal">Delete</button></div></td>
             </tr>
           </tbody>
         </table>
@@ -158,7 +158,7 @@
     <!-- COUNTERS -->
     <section class="panel" id="p-co" role="tabpanel" aria-labelledby="t-co" hidden>
       <div class="toolbar">
-        <p class="hint" style="margin:0">A counter belongs to one outlet. An outlet can have several counters.</p>
+        <p class="hint" style="margin:0">A counter belongs to one outlet. An outlet can have several counters. A counter can be deleted only when it is inactive and has no cashier assigned.</p>
         <button class="btn" data-open="coModal">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add Counter
         </button>
@@ -178,7 +178,7 @@
               <td class="first"><div class="cell-main">Counter 2</div></td>
               <td data-label="Cashiers"><span class="cell-sub">None Assigned</span></td>
               <td data-label="Status"><span class="badge off"><span class="dot"></span>Inactive</span></td>
-              <td class="act"><div class="actions"><button class="btn secondary small" data-open="coModal">Edit</button></div></td>
+              <td class="act"><div class="actions"><button class="btn secondary small" data-open="coModal">Edit</button><button class="btn secondary small" data-close>Activate</button><button class="btn danger small" data-open="delCoModal">Delete</button></div></td>
             </tr>
           </tbody>
         </table>
@@ -219,12 +219,12 @@
 <div class="modal-scrim" id="spModal" role="dialog" aria-modal="true" aria-labelledby="spTitle">
   <div class="modal">
     <h2 id="spTitle">Stock Point</h2>
-    <p class="sub">A place where stock is kept. Stock points cannot be deleted. Deactivate one that closes.</p>
+    <p class="sub">A place where stock is kept.</p>
     <div class="field"><label class="lbl" for="sp1">Stock Point Name <span class="req">*</span></label><input id="sp1" type="text" placeholder="For example Liquor Store"></div>
     <div class="grid-2">
       <div class="field"><label class="lbl" for="sp2">Code <span class="req">*</span></label><input id="sp2" type="text" placeholder="LST"><p class="hint">Letters and numbers only.</p></div>
-      <div class="field"><label class="lbl" for="sp3">Type</label>
-        <select id="sp3"><option>Select A Type</option><option>Warehouse</option><option>Bar</option><option>Mini Bar</option><option>Other</option></select></div>
+      <div class="field"><label class="lbl" for="sp3">Type <span class="req">*</span></label>
+        <select id="sp3"><option>Select A Type</option><option>Warehouse</option><option>Bar</option><option>Kitchen</option><option>Restaurant</option></select></div>
     </div>
     <div class="field"><label class="lbl" for="sp4">Status</label><select id="sp4"><option>Active</option><option>Inactive</option></select></div>
     <div class="modal-actions"><button class="btn secondary" data-close>Cancel</button><button class="btn" data-close>Save Stock Point</button></div>
@@ -244,17 +244,18 @@
 <div class="modal-scrim" id="ouModal" role="dialog" aria-modal="true" aria-labelledby="ouTitle">
   <div class="modal">
     <h2 id="ouTitle">Outlet</h2>
-    <p class="sub">A place that sells. Outlets cannot be deleted. Deactivate an outlet that closes.</p>
+    <p class="sub">A place that sells.</p>
     <div class="field"><label class="lbl" for="ou1">Outlet Name <span class="req">*</span></label><input id="ou1" type="text" placeholder="For example Spadikam"></div>
     <div class="grid-2">
       <div class="field"><label class="lbl" for="ou2">Code <span class="req">*</span></label><input id="ou2" type="text" placeholder="SPA"></div>
       <div class="field"><label class="lbl" for="ou3">Type <span class="req">*</span></label>
-        <select id="ou3"><option>Select A Type</option><option>Bar</option><option>Restaurant</option><option>Front Office</option><option>Other</option></select></div>
+        <select id="ou3"><option>Select A Type</option><option>Bar</option><option>Restaurant</option><option>Front Office</option></select></div>
     </div>
     <div class="field">
       <label class="lbl" for="ou4">Stock Point</label>
-      <select id="ou4"><option>No Stock Point</option><option>Liquor Store</option><option>Spadikam</option><option>Dhruvam</option><option>Mini Bar (Inactive)</option></select>
+      <select id="ou4"><option>No Stock Point</option><option>Liquor Store</option><option>Spadikam</option><option>Dhruvam</option></select>
       <p class="hint">Only one. Choose where this outlet's stock comes from. Several outlets may share a stock point and still keep their own selling rates. Leave as No Stock Point for an outlet that sells nothing from stock.</p>
+      <p class="hint" style="color:var(--warn)">Once stock or sales exist for this outlet, the stock point is locked and cannot be changed.</p>
     </div>
     <div class="field"><label class="lbl" for="ou5">Status</label><select id="ou5"><option>Active</option><option>Inactive</option></select></div>
     <div class="modal-actions"><button class="btn secondary" data-close>Cancel</button><button class="btn" data-close>Save Outlet</button></div>
@@ -271,6 +272,31 @@
     <div class="field"><label class="lbl" for="co2">Counter Name <span class="req">*</span></label><input id="co2" type="text" placeholder="For example Counter 3"></div>
     <div class="field"><label class="lbl" for="co3">Status</label><select id="co3"><option>Active</option><option>Inactive</option></select></div>
     <div class="modal-actions"><button class="btn secondary" data-close>Cancel</button><button class="btn" data-close>Save Counter</button></div>
+  </div>
+</div>
+
+<!-- Delete confirmations: type the name, as on the Users screen -->
+<div class="modal-scrim" id="delSpModal" role="dialog" aria-modal="true" aria-labelledby="dsTitle">
+  <div class="modal">
+    <h2 id="dsTitle">Delete Stock Point?</h2>
+    <p class="sub"><strong>Kitchen Store</strong> will be deleted permanently. This cannot be undone. The audit log keeps a record of it.</p>
+    <div class="field"><label class="lbl" for="ds1">Type The Name To Confirm</label><input id="ds1" type="text" placeholder="Kitchen Store"></div>
+    <div class="modal-actions"><button class="btn secondary" data-close>Cancel</button><button class="btn danger" data-close>Delete Stock Point</button></div>
+  </div>
+</div>
+<div class="modal-scrim" id="delOuModal" role="dialog" aria-modal="true" aria-labelledby="doTitle">
+  <div class="modal">
+    <h2 id="doTitle">Delete Outlet?</h2>
+    <p class="sub"><strong>Touchings</strong> will be deleted permanently. This cannot be undone. The audit log keeps a record of it.</p>
+    <div class="field"><label class="lbl" for="do1">Type The Name To Confirm</label><input id="do1" type="text" placeholder="Touchings"></div>
+    <div class="modal-actions"><button class="btn secondary" data-close>Cancel</button><button class="btn danger" data-close>Delete Outlet</button></div>
+  </div>
+</div>
+<div class="modal-scrim" id="delCoModal" role="dialog" aria-modal="true" aria-labelledby="dcTitle">
+  <div class="modal">
+    <h2 id="dcTitle">Delete Counter?</h2>
+    <p class="sub"><strong>Spadikam, Counter 2</strong> will be deleted permanently. This cannot be undone. The audit log keeps a record of it.</p>
+    <div class="modal-actions"><button class="btn secondary" data-close>Cancel</button><button class="btn danger" data-close>Delete Counter</button></div>
   </div>
 </div>
 
