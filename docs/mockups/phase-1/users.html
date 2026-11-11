@@ -53,6 +53,7 @@
               <button class="icon-btn" style="width:36px;height:36px" data-menu="m0" aria-label="More Actions For Sample Admin"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></svg></button>
               <div class="menu" id="m0">
                 <button data-open="resetModal">Reset Password</button>
+                <button data-open="resetMfaModal">Reset Two-Factor</button>
                 <button class="danger" data-open="deactivateModal">Deactivate User</button>
               </div>
             </div>
@@ -70,6 +71,7 @@
               <button class="icon-btn" style="width:36px;height:36px" data-menu="m1" aria-label="More Actions For Sample Director"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></svg></button>
               <div class="menu" id="m1">
                 <button data-open="resetModal">Reset Password</button>
+                <button data-open="resetMfaModal">Reset Two-Factor</button>
                 <button class="danger" data-open="deactivateModal">Deactivate User</button>
               </div>
             </div>
@@ -87,6 +89,7 @@
               <button class="icon-btn" style="width:36px;height:36px" data-menu="m2" aria-label="More Actions For Sample Chief Accountant"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></svg></button>
               <div class="menu" id="m2">
                 <button data-open="resetModal">Reset Password</button>
+                <button data-open="resetMfaModal">Reset Two-Factor</button>
                 <button class="danger" data-open="deactivateModal">Deactivate User</button>
               </div>
             </div>
@@ -104,6 +107,7 @@
               <button class="icon-btn" style="width:36px;height:36px" data-menu="m3" aria-label="More Actions For Sample Accounts One"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></svg></button>
               <div class="menu" id="m3">
                 <button data-open="resetModal">Reset Password</button>
+                <button data-open="resetMfaModal">Reset Two-Factor</button>
                 <button class="danger" data-open="deactivateModal">Deactivate User</button>
               </div>
             </div>
@@ -218,6 +222,17 @@
     <div class="modal-actions">
       <button class="btn secondary" data-close>Cancel</button>
       <button class="btn" data-close>Activate</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-scrim" id="resetMfaModal" role="dialog" aria-modal="true" aria-labelledby="mfaTitle">
+  <div class="modal">
+    <h2 id="mfaTitle">Reset Two-Factor?</h2>
+    <p class="sub">The user will be asked to set up their authenticator app again the next time they sign in. Use this when they lose or change their phone.</p>
+    <div class="modal-actions">
+      <button class="btn secondary" data-close>Cancel</button>
+      <button class="btn danger" data-close>Reset Two-Factor</button>
     </div>
   </div>
 </div>

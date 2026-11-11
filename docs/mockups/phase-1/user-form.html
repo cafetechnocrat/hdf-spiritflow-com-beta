@@ -137,6 +137,7 @@
         </div>
         <div class="danger-zone">
           <button type="button" class="btn secondary small" data-open="resetModal">Reset Password Or PIN</button>
+          <button type="button" class="btn secondary small" id="mfaBtn" data-open="resetMfaModal">Reset Two-Factor</button>
           <button type="button" class="btn danger small" data-open="deactivateModal">Deactivate User</button>
         </div>
         <p class="hint" style="margin-bottom:14px">Deactivating signs the user out at once and blocks sign in. Records and history are kept.</p>
@@ -176,6 +177,17 @@
   </div>
 </div>
 
+
+<div class="modal-scrim" id="resetMfaModal" role="dialog" aria-modal="true" aria-labelledby="mfaTitle">
+  <div class="modal">
+    <h2 id="mfaTitle">Reset Two-Factor?</h2>
+    <p class="sub">They will be asked to set up their authenticator app again the next time they sign in. Use this when they lose or change their phone.</p>
+    <div class="modal-actions">
+      <button class="btn secondary" data-close>Cancel</button>
+      <button class="btn danger" data-close>Reset Two-Factor</button>
+    </div>
+  </div>
+</div>
 <script src="shell.js"></script>
 <script>
   // Mockup behaviour only: the form changes with the role, and the page
@@ -198,6 +210,7 @@
     document.body.setAttribute("data-kind", sel.value);
     document.getElementById("roleHint").textContent = hints[label];
     document.getElementById("mfaNote").style.display = twoFactor[label] ? "flex" : "none";
+    document.getElementById("mfaBtn").style.display = twoFactor[label] ? "" : "none";
   }
   sel.addEventListener("change", apply);
   apply();
