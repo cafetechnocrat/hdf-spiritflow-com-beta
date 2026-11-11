@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
+import { PageLoading } from "@/components/page-loading";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { ROLE_LABELS } from "@/lib/auth/roles";
 
@@ -13,8 +15,7 @@ const text = {
   placeholder: "Your workspace is being set up. Screens will appear here soon.",
 } as const;
 
-// Placeholder dashboard. The real dashboard comes in a later step.
-export default async function DashboardPage() {
+async function DashboardContent() {
   const user = await getCurrentUser();
   if (!user) return null;
 
@@ -28,5 +29,14 @@ export default async function DashboardPage() {
       </p>
       <p className="mt-4 text-[0.9rem]">{text.placeholder}</p>
     </div>
+  );
+}
+
+// Placeholder dashboard. The real dashboard comes in a later step.
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<PageLoading />}>
+      <DashboardContent />
+    </Suspense>
   );
 }
