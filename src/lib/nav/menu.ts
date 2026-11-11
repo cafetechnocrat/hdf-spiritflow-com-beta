@@ -66,7 +66,43 @@ const MENU: MenuDefinition[] = [
         href: "/transactions",
         area: "transactions",
       },
-      { id: "day-book", label: "Day Book", planned: true },
+      {
+        id: "reports",
+        label: "Reports",
+        children: [
+          { id: "day-book", label: "Day Book", href: "/reports/day-book", area: "reports" },
+          {
+            id: "ledger-statement",
+            label: "Ledger Statement",
+            href: "/reports/ledger-statement",
+            area: "reports",
+          },
+          {
+            id: "cash-bank-book",
+            label: "Cash And Bank Book",
+            href: "/reports/cash-bank-book",
+            area: "reports",
+          },
+          {
+            id: "trial-balance",
+            label: "Trial Balance",
+            href: "/reports/trial-balance",
+            area: "reports",
+          },
+          {
+            id: "profit-loss",
+            label: "Profit And Loss",
+            href: "/reports/profit-loss",
+            area: "reports",
+          },
+          {
+            id: "balance-sheet",
+            label: "Balance Sheet",
+            href: "/reports/balance-sheet",
+            area: "reports",
+          },
+        ],
+      },
       {
         id: "ledgers",
         label: "Ledger Groups And Ledgers",

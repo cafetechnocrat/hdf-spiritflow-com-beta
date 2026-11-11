@@ -53,6 +53,13 @@ export const PERMISSIONS = {
     system_admin: "E",
     chief_accountant: "E",
   },
+  // Day Book reports. The Night Accountant has no reports.
+  reports: {
+    md: "V",
+    system_admin: "V",
+    chief_accountant: "V",
+    accounts_staff: "V",
+  },
   // Deleting a voucher for real. System Admin only, for development. Review
   // before the system goes live.
   voucher_delete: {

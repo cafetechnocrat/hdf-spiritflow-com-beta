@@ -260,7 +260,7 @@ export function AppShell({
 
   return (
     <div
-      className={`min-h-dvh transition-[padding-left] ${
+      className={`min-h-dvh transition-[padding-left] print:!pl-0 ${
         collapsed ? "lg:pl-[72px]" : "lg:pl-[264px]"
       }`}
     >
@@ -274,7 +274,7 @@ export function AppShell({
 
       <aside
         aria-label={text.mainNav}
-        className={`fixed inset-y-0 left-0 z-30 flex w-[264px] flex-col overflow-hidden border-r border-divider bg-surface px-3 py-4 transition-[transform,width] lg:translate-x-0 ${
+        className={`print:hidden fixed inset-y-0 left-0 z-30 flex w-[264px] flex-col overflow-hidden border-r border-divider bg-surface px-3 py-4 transition-[transform,width] lg:translate-x-0 ${
           collapsed ? "lg:w-[72px]" : "lg:w-[264px]"
         } ${drawerOpen ? "translate-x-0 shadow-card" : "-translate-x-full"}`}
       >
@@ -326,7 +326,7 @@ export function AppShell({
         </div>
       </aside>
 
-      <header className="sticky top-0 z-10 flex h-14 items-center gap-2 border-b border-divider bg-surface/90 pl-3 pr-2 backdrop-blur">
+      <header className="print:hidden sticky top-0 z-10 flex h-14 items-center gap-2 border-b border-divider bg-surface/90 pl-3 pr-2 backdrop-blur">
         <button
           type="button"
           onClick={() => setDrawerOpen((value) => !value)}

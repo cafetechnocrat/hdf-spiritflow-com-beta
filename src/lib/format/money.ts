@@ -43,3 +43,25 @@ export function formatDate(value: string): string {
   const [year, month, day] = value.split("-");
   return `${day}/${month}/${year}`;
 }
+
+// A signed amount from the database as text, like -1234.50, into paise.
+export function parseSignedPaise(text: string): bigint {
+  const negative = text.trim().startsWith("-");
+  const paise = parseAmountToPaise(negative ? text.trim().slice(1) : text) ?? BigInt(0);
+  return negative ? -paise : paise;
+}
+
+export type BalanceSide = "Dr" | "Cr" | null;
+
+// A signed balance (debit positive) as an amount and a side, with no minus
+// sign. A balance that has gone the other way shows on the opposite side, as
+// in Tally. A zero balance has no side.
+export function toBalance(paise: bigint): { amount: string; side: BalanceSide } {
+  const side: BalanceSide = paise > BigInt(0) ? "Dr" : paise < BigInt(0) ? "Cr" : null;
+  return { amount: formatPaise(paise < BigInt(0) ? -paise : paise), side };
+}
+
+export function formatBalance(paise: bigint): string {
+  const { amount, side } = toBalance(paise);
+  return side ? `${amount} ${side}` : amount;
+}

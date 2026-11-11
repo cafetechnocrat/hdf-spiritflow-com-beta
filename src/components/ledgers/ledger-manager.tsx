@@ -6,7 +6,6 @@ import {
   DataList,
   ErrorLine,
   Modal,
-  SelectField,
   TextField,
 } from "@/components/ui/admin-parts";
 import { badge, button, field } from "@/components/ui/styles";
@@ -84,6 +83,8 @@ const text = {
   statusBlocked:
     "This group has active ledgers or sub-groups, so it cannot be made inactive.",
   statusHint: "A group with active ledgers or active sub-groups cannot be made inactive.",
+  cashBank: "Counts As Cash Or Bank",
+  cashBankHint: "Ledgers under this group appear in the Cash And Bank Book. Only for assets groups.",
   // Ledger form
   ledgerTitle: "Ledger",
   ledgerSub: "An account that transactions are posted to.",
@@ -221,6 +222,9 @@ function GroupForm({
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const isDefault = record?.isDefault ?? false;
+  const [parentId, setParentId] = useState(record?.parentId ?? "");
+  const cashBankId = useId();
+  const parentSelectId = useId();
 
   // A group cannot be moved under itself or under one of its own sub-groups.
   const hideIds = useMemo(() => {
@@ -251,6 +255,11 @@ function GroupForm({
   }
 
   const blocked = record ? record.activeLedgerCount + record.activeChildCount > 0 : false;
+  // The nature follows the group above, or is fixed for a default group.
+  const nature = isDefault
+    ? record?.nature
+    : data.groups.find((group) => group.id === parentId)?.nature;
+  const assetsGroup = nature === "assets";
 
   return (
     <Modal
@@ -288,19 +297,42 @@ function GroupForm({
             </div>
           </div>
         ) : (
-          <SelectField
-            label={text.under}
-            name="parentId"
-            defaultValue={record?.parentId ?? ""}
-            hint={text.natureHint}
-          >
-            <GroupOptions
-              groups={data.groups}
-              hideIds={hideIds}
-              keepId={record?.parentId ?? undefined}
-            />
-          </SelectField>
+          <div className="mb-3.5">
+            <label htmlFor={parentSelectId} className={field.label}>
+              {text.under} <span className="text-error">*</span>
+            </label>
+            <select
+              id={parentSelectId}
+              name="parentId"
+              value={parentId}
+              onChange={(event) => setParentId(event.target.value)}
+              className={field.input}
+            >
+              <GroupOptions
+                groups={data.groups}
+                hideIds={hideIds}
+                keepId={record?.parentId ?? undefined}
+              />
+            </select>
+            <p className={field.hint}>{text.natureHint}</p>
+          </div>
         )}
+        {assetsGroup ? (
+          <div className="mb-3.5">
+            <label htmlFor={cashBankId} className="inline-flex min-h-11 items-center gap-2 text-[0.88rem]">
+              <input
+                id={cashBankId}
+                name="isCashBank"
+                type="checkbox"
+                value="1"
+                defaultChecked={record?.isCashBank ?? false}
+                className="h-[18px] w-[18px]"
+              />
+              {text.cashBank}
+            </label>
+            <p className={field.hint}>{text.cashBankHint}</p>
+          </div>
+        ) : null}
         <StatusSelect
           defaultValue={record?.status ?? "active"}
           hint={blocked ? text.statusBlocked : text.statusHint}
