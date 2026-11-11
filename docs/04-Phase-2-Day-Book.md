@@ -38,26 +38,37 @@ Rules already fixed elsewhere:
 - The Night Accountant has no power to make any payment and has entry-only rights. Their entries are limited to already paid or incurred expenses left over by the day accountant, and they receive no reports.
 - **Open:** the owner says "accountant". This frame assumes the day accountant is the Accounts Staff role and the night accountant is the Night Accountant role. Confirm.
 
-## 3. Ledger Groups (Proposed Starting List)
+## 3. Ledger Groups (Agreed Direction, Details To Confirm)
 
-Follows the usual Tally-style grouping so the Chief Accountant and CA find it familiar. The Chief Accountant confirms and adjusts with the CA. Groups are seeded as structure; **ledgers are never seeded**. The Chief Accountant creates them.
+**Nothing is hardcoded.** The group list lives only in the database (`ledger_groups`). The app reads every group, its parent and its nature from there. The code holds no list of group names. A migration seeds the starting set once; after that the groups are ordinary data.
 
-- Cash-in-Hand
-- Bank Accounts
-- Sales Accounts
-- Purchase Accounts
-- Direct Expenses
-- Indirect Expenses
-- Direct Incomes
-- Indirect Incomes
-- Sundry Creditors (vendors)
-- Sundry Debtors
-- Duties And Taxes
-- Current Assets
-- Current Liabilities
-- Fixed Assets
-- Capital Account
-- Loans (Liability)
+### Starting Set (Seeded By Migration): The 28 Tally Default Groups
+Primary groups (15), each with its nature:
+- Assets: Current Assets, Fixed Assets, Investments, Misc. Expenses (Asset)
+- Liabilities: Capital Account, Current Liabilities, Loans (Liability), Suspense Account, Branch / Divisions
+- Income: Sales Accounts, Direct Incomes, Indirect Incomes
+- Expenses: Purchase Accounts, Direct Expenses, Indirect Expenses
+
+Sub-groups (13), which take the nature of their parent:
+- Under Capital Account: Reserves And Surplus
+- Under Current Assets: Bank Accounts, Cash-in-Hand, Deposits (Asset), Loans And Advances (Asset), Stock-in-Hand, Sundry Debtors
+- Under Current Liabilities: Duties And Taxes, Provisions, Sundry Creditors
+- Under Loans (Liability): Bank OD Account, Secured Loans, Unsecured Loans
+
+Names use Title Case and "And" instead of "&".
+
+### Proposed Rules For Groups
+- Each group has: name, parent (none for a primary group), nature (Assets, Liabilities, Income, Expenses), default flag, status, sort order.
+- A sub-group always has the same nature as its parent. The database enforces it.
+- Seeded groups are marked **Default**. A default group cannot be deleted. Its parent and nature are fixed because reports depend on them. **Open:** may the Chief Accountant rename a default group? Proposed: yes.
+- The Chief Accountant may add custom groups under any group, and edit them. A custom group can be deleted only when it is inactive and has no ledgers and no sub-groups.
+- A group with active ledgers or active sub-groups cannot be deactivated.
+- Every change is audited.
+- **Open:** keep Stock-in-Hand, Purchase Accounts and Branch / Divisions, given there is no inventory in this phase and HDF is one hotel? They are seeded for now and can be deactivated.
+- **Open:** split Duties And Taxes into separate Excise and GST sub-groups so the two never mix. Proposed: yes, as custom groups created by the Chief Accountant.
+
+### Ledgers
+Ledgers are never seeded. The Chief Accountant creates them.
 
 Each ledger has: name, group, opening balance (as on the books beginning date) with Dr or Cr, status (active or inactive), optional note.
 

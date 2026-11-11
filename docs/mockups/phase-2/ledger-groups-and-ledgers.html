@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spirit Flow</title>
+<link rel="icon" type="image/png" href="../../../src/app/icon.png">
+<link rel="stylesheet" href="../phase-1/shared.css">
+<style>
+  .tabs { display: flex; gap: 2px; padding: 2px; background: var(--track); border-radius: 10px; margin-bottom: 14px; max-width: 420px; }
+  .tabs button { flex: 1; min-height: 40px; border-radius: 8px; font-size: .86rem; font-weight: 500; color: var(--text-muted); white-space: nowrap; }
+  .tabs button[aria-selected="true"] { background: var(--surface); color: var(--text); font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,.2), 0 0 0 .5px rgba(0,0,0,.04); }
+  .panel[hidden] { display: none; }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; align-items: center; justify-content: space-between; }
+  .sub-mark { color: var(--text-muted); margin-right: 6px; }
+  .right { text-align: right; }
+  .num { font-variant-numeric: tabular-nums; font-weight: 600; }
+  .two { display: grid; grid-template-columns: 1fr 100px; gap: 10px; }
+  .filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+  .filters select, .filters input { max-width: 240px; }
+</style>
+</head>
+<body data-page="ledgers" data-title="Ledger Groups And Ledgers">
+<div class="mock-note">Mockup. Sample data only. Not the real app. In the real screen every group comes from the database.</div>
+<div class="shell">
+  <main class="content">
+    <div class="page-head">
+      <div>
+        <h1>Ledger Groups And Ledgers</h1>
+        <p>Groups organise the ledgers. Ledgers are the accounts that transactions are posted to. Only the Chief Accountant can change either.</p>
+      </div>
+    </div>
+
+    <div class="tabs" role="tablist" aria-label="Section">
+      <button type="button" role="tab" id="t-gr" aria-selected="true" aria-controls="p-gr">Ledger Groups</button>
+      <button type="button" role="tab" id="t-le" aria-selected="false" aria-controls="p-le">Ledgers</button>
+    </div>
+
+    <section class="panel" id="p-gr" role="tabpanel" aria-labelledby="t-gr">
+      <div class="toolbar">
+        <p class="hint" style="margin:0">Default groups cannot be deleted. A sub-group always has the same nature as its group. A custom group can be deleted only when it is inactive and holds no ledgers or sub-groups.</p>
+        <button class="btn" data-open="grpModal">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add Group
+        </button>
+      </div>
+      <div class="card table-wrap">
+        <table class="data">
+          <thead><tr><th>Group</th><th>Under</th><th>Nature</th><th>Active Ledgers</th><th>Kind</th><th>Status</th><th><span class="sr-only">Actions</span></th></tr></thead>
+          <tbody>
+<tr><td class="first" style="padding-left:16px"><div class="cell-main">Current Assets</div></td><td data-label="Under">None (Primary)</td><td data-label="Nature"><span class="badge role">Assets</span></td><td data-label="Active Ledgers">0</td><td data-label="Kind"><span class="badge role">Default</span></td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td><td class="act"><div class="actions"><button class="btn secondary small" data-open="grpDefModal">Edit</button></div></td></tr>
+<tr><td class="first" style="padding-left:36px"><div class="cell-main"><span class="sub-mark" aria-hidden="true">└</span>Bank Accounts</div></td><td data-label="Under">Current Assets</td><td data-label="Nature"><span class="badge role">Assets</span></td><td data-label="Active Ledgers">2</td><td data-label="Kind"><span class="badge role">Default</span></td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td><td class="act"><div class="actions"><button class="btn secondary small" data-open="grpDefModal">Edit</button></div></td></tr>
+<tr><td class="first" style="padding-left:36px"><div class="cell-main"><span class="sub-mark" aria-hidden="true">└</span>Cash-in-Hand</div></td><td data-label="Under">Current Assets</td><td data-label="Nature"><span class="badge role">Assets</span></td><td data-label="Active Ledgers">1</td><td data-label="Kind"><span class="badge role">Default</span></td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td><td class="act"><div class="actions"><button class="btn secondary small" data-open="grpDefModal">Edit</button></div></td></tr>
+<tr><td class="first" style="padding-left:36px"><div class="cell-main"><span class="sub-mark" aria-hidden="true">└</span>Deposits (Asset)</div></td><td data-label="Under">Current Assets</td><td data-label="Nature"><span class="badge role">Assets</span></td><td data-label="Active Ledgers">0</td><td data-label="Kind"><span class="badge role">Default</span></td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td><td class="act"><div class="actions"><button class="btn secondary small" data-open="grpDefModal">Edit</button></div></td></tr>
+<tr><td class="first" style="padding-left:36px"><div class="cell-main"><span class="sub-mark" aria-hidden="true">└</span>Loans And Advances (Asset)</div></td><td data-label="Under">Current Assets</td><td data-label="Nature"><span class="badge role">Assets</span></td><td data-label="Active Ledgers">0</td><td data-label="Kind"><span class="badge role">Default</span></td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td><td class="act"><div class="actions"><button class="btn secondary small" data-open="grpDefModal">Edit</button></div></td></tr>
+<tr><td class="first" style="padding-left:36px"><div class="cell-main"><span class="sub-mark" aria-hidden="true">└</span>Stock-in-Hand</div></td><td data-label="Under">Current Assets</td><td data-label="Nature"><span class="badge role">Assets</span></td><td data-label="Active Ledgers">0</td><td data-label="Kind"><span class="badge role">Default</span></td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td><td class="act"><div class="actions"><button class="btn secondary small" data-open="grpDefModal">Edit</button></div></td></tr>
+<tr><td class="first" style="padding-left:36px"><div class="cell-main"><span class="sub-mark" aria-hidden="true">└</span>Sundry Debtors</div></td><td data-label="Under">Current Assets</td><td data-label="Nature"><span class="badge role">Assets</span></td><td data-label="Active Ledgers">0</td><td data-label="Kind"><span class="badge role">Default</span></td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td><td class="act"><div class="actions"><button class="btn secondary small" data-open="grpDefModal">Edit</button></div></td></tr>
+<tr><td class="first" style="padding-left:16px"><div class="cell-main">Fixed Assets</div></td><td data-label="Under">None (Primary)</td><td data-label="Nature"><span class="badge role">Assets</span></td><td data-label="Active Ledgers">0</td><td data-label="Kind"><span class="badge role">Default</span></td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td><td class="act"><div class="actions"><button class="btn secondary small" data-open="grpDefModal">Edit</button></div></td></tr>
+<tr><td class="first" style="padding-left:16px"><div class="cell-main">Investments</div></td><td data-label="Under">None (Primary)</td><td data-label="Nature"><span class="badge role">Assets</span></td><td data-label="Active Ledgers">0</td><td data-label="Kind"><span class="badge role">Default</span></td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td><td class="act"><div class="actions"><button class="btn secondary small" data-open="grpDefModal">Edit</button></div></td></tr>
+<tr><td class="first" style="padding-left:16px"><div class="cell-main">Misc. Expenses (Asset)</div></td><td data-label="Under">None (Primary)</td><td data-label="Nature"><span class="badge role">Assets</span></td><td data-label="Active Ledgers">0</td><td data-label="Kind"><span class="badge role">Default</span></td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td><td class="act"><div class="actions"><button class="btn secondary small" data-open="grpDefModal">Edit</button></div></td></tr>
+<tr><td class="first" style="padding-left:16px"><div class="cell-main">Capital Account</div></td><td data-label="Under">None (Primary)</td><td data-label="Nature"><span class="badge warn">Liabilities</span></td><td data-label="Active Ledgers">1</td><td data-label="Kind"><span class="badge role">Default</span></td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td><td class="act"><div class="actions"><button class="btn secondary small" data-open="grpDefModal">Edit</button></div></td></tr>
+<tr><td class="first" style="padding-left:36px"><div class="cell-main"><span class="sub-mark" aria-hidden="true">└</span>Reserves And Surplus</div></td><td data-label="Under">Capital Account</td><td data-label="Nature"><span class="badge warn">Liabilities</span></td><td data-label="Active Ledgers">0</td><td data-label="Kind"><span class="badge role">Default</span></td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td><td class="act"><div class="actions"><button class="btn secondary small" data-open="grpDefModal">Edit</button></div></td></tr>
+<tr><td class="first" style="padding-left:16px"><div class="cell-main">Current Liabilities</div></td><td data-label="Under">None (Primary)</td><td data-label="Nature"><span class="badge warn">Liabilities</span></td><td data-label="Active Ledgers">0</td><td data-label="Kind"><span class="badge role">Default</span></td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td><td class="act"><div class="actions"><button class="btn secondary small" data-open="grpDefModal">Edit</button></div></td></tr>
+<tr><td class="first" style="padding-left:36px"><div class="cell-main"><span class="sub-mark" aria-hidden="true">└</span>Duties And Taxes</div></td><td data-label="Under">Current Liabilities</td><td data-label="Nature"><span class="badge warn">Liabilities</span></td><td data-label="Active Ledgers">1</td><td data-label="Kind"><span class="badge role">Default</span></td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td><td class="act"><div class="actions"><button class="btn secondary small" data-open="grpDefModal">Edit</button></div></td></tr>
+<tr><td class="first" style="padding-left:36px"><div class="cell-main"><span class="sub-mark" aria-hidden="true">└</span>Provisions</div></td><td data-label="Under">Current Liabilities</td><td data-label="Nature"><span class="badge warn">Liabilities</span></td><td data-label="Active Ledgers">0</td><td data-label="Kind"><span class="badge role">Default</span></td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td><td class="act"><div class="actions"><button class="btn secondary small" data-open="grpDefModal">Edit</button></div></td></tr>
+<tr><td class="first" style="padding-left:36px"><div class="cell-main"><span class="sub-mark" aria-hidden="true">└</span>Sundry Creditors</div></td><td data-label="Under">Current Liabilities</td><td data-label="Nature"><span class="badge warn">Liabilities</span></td><td data-label="Active Ledgers">1</td><td data-label="Kind"><span class="badge role">Default</span></td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td><td class="act"><div class="actions"><button class="btn secondary small" data-open="grpDefModal">Edit</button></div></td></tr>
+<tr><td class="first" style="padding-left:36px"><div class="cell-main"><span class="sub-mark" aria-hidden="true">└</span>Duties And Taxes - Excise</div></td><td data-label="Under">Duties And Taxes</td><td data-label="Nature"><span class="badge warn">Liabilities</span></td><td data-label="Active Ledgers">0</td><td data-label="Kind"><span class="badge off">Custom</span></td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td><td class="act"><div class="actions"><button class="btn secondary small" data-open="grpModal">Edit</button><button class="btn danger small" data-open="delGrpModal">Delete</button></div></td></tr>
+<tr><td class="first" style="padding-left:36px"><div class="cell-main"><span class="sub-mark" aria-hidden="true">└</span>Duties And Taxes - GST</div></td><td data-label="Under">Duties And Taxes</td><td data-label="Nature"><span class="badge warn">Liabilities</span></td><td data-label="Active Ledgers">0</td><td data-label="Kind"><span class="badge off">Custom</span></td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td><td class="act"><div class="actions"><button class="btn secondary small" data-open="grpModal">Edit</button><button class="btn danger small" data-open="delGrpModal">Delete</button></div></td></tr>
+<tr><td class="first" style="padding-left:16px"><div class="cell-main">Loans (Liability)</div></td><td data-label="Under">None (Primary)</td><td data-label="Nature"><span class="badge warn">Liabilities</span></td><td data-label="Active Ledgers">0</td><td data-label="Kind"><span class="badge role">Default</span></td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td><td class="act"><div class="actions"><button class="btn secondary small" data-open="grpDefModal">Edit</button></div></td></tr>
+<tr><td class="first" style="padding-left:36px"><div class="cell-main"><span class="sub-mark" aria-hidden="true">└</span>Bank OD Account</div></td><td data-label="Under">Loans (Liability)</td><td data-label="Nature"><span class="badge warn">Liabilities</span></td><td data-label="Active Ledgers">0</td><td data-label="Kind"><span class="badge role">Default</span></td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td><td class="act"><div class="actions"><button class="btn secondary small" data-open="grpDefModal">Edit</button></div></td></tr>
+<tr><td class="first" style="padding-left:36px"><div class="cell-main"><span class="sub-mark" aria-hidden="true">└</span>Secured Loans</div></td><td data-label="Under">Loans (Liability)</td><td data-label="Nature"><span class="badge warn">Liabilities</span></td><td data-label="Active Ledgers">0</td><td data-label="Kind"><span class="badge role">Default</span></td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td><td class="act"><div class="actions"><button class="btn secondary small" data-open="grpDefModal">Edit</button></div></td></tr>
+<tr><td class="first" style="padding-left:36px"><div class="cell-main"><span class="sub-mark" aria-hidden="true">└</span>Unsecured Loans</div></td><td data-label="Under">Loans (Liability)</td><td data-label="Nature"><span class="badge warn">Liabilities</span></td><td data-label="Active Ledgers">0</td><td data-label="Kind"><span class="badge role">Default</span></td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td><td class="act"><div class="actions"><button class="btn secondary small" data-open="grpDefModal">Edit</button></div></td></tr>
+<tr><td class="first" style="padding-left:16px"><div class="cell-main">Suspense Account</div></td><td data-label="Under">None (Primary)</td><td data-label="Nature"><span class="badge warn">Liabilities</span></td><td data-label="Active Ledgers">0</td><td data-label="Kind"><span class="badge role">Default</span></td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td><td class="act"><div class="actions"><button class="btn secondary small" data-open="grpDefModal">Edit</button></div></td></tr>
+<tr><td class="first" style="padding-left:16px"><div class="cell-main">Branch / Divisions</div></td><td data-label="Under">None (Primary)</td><td data-label="Nature"><span class="badge warn">Liabilities</span></td><td data-label="Active Ledgers">0</td><td data-label="Kind"><span class="badge role">Default</span></td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td><td class="act"><div class="actions"><button class="btn secondary small" data-open="grpDefModal">Edit</button></div></td></tr>
+<tr><td class="first" style="padding-left:16px"><div class="cell-main">Sales Accounts</div></td><td data-label="Under">None (Primary)</td><td data-label="Nature"><span class="badge ok">Income</span></td><td data-label="Active Ledgers">2</td><td data-label="Kind"><span class="badge role">Default</span></td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td><td class="act"><div class="actions"><button class="btn secondary small" data-open="grpDefModal">Edit</button></div></td></tr>
+<tr><td class="first" style="padding-left:16px"><div class="cell-main">Direct Incomes</div></td><td data-label="Under">None (Primary)</td><td data-label="Nature"><span class="badge ok">Income</span></td><td data-label="Active Ledgers">0</td><td data-label="Kind"><span class="badge role">Default</span></td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td><td class="act"><div class="actions"><button class="btn secondary small" data-open="grpDefModal">Edit</button></div></td></tr>
+<tr><td class="first" style="padding-left:16px"><div class="cell-main">Indirect Incomes</div></td><td data-label="Under">None (Primary)</td><td data-label="Nature"><span class="badge ok">Income</span></td><td data-label="Active Ledgers">0</td><td data-label="Kind"><span class="badge role">Default</span></td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td><td class="act"><div class="actions"><button class="btn secondary small" data-open="grpDefModal">Edit</button></div></td></tr>
+<tr><td class="first" style="padding-left:16px"><div class="cell-main">Purchase Accounts</div></td><td data-label="Under">None (Primary)</td><td data-label="Nature"><span class="badge bad">Expenses</span></td><td data-label="Active Ledgers">0</td><td data-label="Kind"><span class="badge role">Default</span></td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td><td class="act"><div class="actions"><button class="btn secondary small" data-open="grpDefModal">Edit</button></div></td></tr>
+<tr><td class="first" style="padding-left:16px"><div class="cell-main">Direct Expenses</div></td><td data-label="Under">None (Primary)</td><td data-label="Nature"><span class="badge bad">Expenses</span></td><td data-label="Active Ledgers">0</td><td data-label="Kind"><span class="badge role">Default</span></td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td><td class="act"><div class="actions"><button class="btn secondary small" data-open="grpDefModal">Edit</button></div></td></tr>
+<tr><td class="first" style="padding-left:16px"><div class="cell-main">Indirect Expenses</div></td><td data-label="Under">None (Primary)</td><td data-label="Nature"><span class="badge bad">Expenses</span></td><td data-label="Active Ledgers">0</td><td data-label="Kind"><span class="badge role">Default</span></td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td><td class="act"><div class="actions"><button class="btn secondary small" data-open="grpDefModal">Edit</button></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel" id="p-le" role="tabpanel" aria-labelledby="t-le" hidden>
+      <div class="toolbar">
+        <p class="hint" style="margin:0">Names follow the prefix style, for example Sales - Liquor. An alias holds a name staff already use. A ledger that has entries cannot be deleted; make it inactive instead.</p>
+        <button class="btn" data-open="ledModal">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add Ledger
+        </button>
+      </div>
+      <div class="filters">
+        <input type="search" placeholder="Search Name Or Alias" aria-label="Search">
+        <select aria-label="Group"><option>All Groups</option><option>Bank Accounts</option><option>Cash-in-Hand</option><option>Sales Accounts</option><option>Sundry Creditors</option></select>
+        <select aria-label="Status"><option>Active</option><option>Inactive</option><option>All</option></select>
+      </div>
+      <div class="card table-wrap">
+        <table class="data">
+          <thead><tr><th>Ledger</th><th>Group</th><th class="right">Opening Balance</th><th>Status</th><th><span class="sr-only">Actions</span></th></tr></thead>
+          <tbody>
+<tr><td class="first"><div class="cell-main">Cash</div><div class="cell-sub">Cash In Hand</div></td><td data-label="Group">Cash-in-Hand</td><td data-label="Opening Balance" class="right"><span class="num">0.00</span> Dr</td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td><td class="act"><div class="actions"><button class="btn secondary small" data-open="ledModal">Edit</button></div></td></tr>
+<tr><td class="first"><div class="cell-main">SBI</div><div class="cell-sub">Main account</div></td><td data-label="Group">Bank Accounts</td><td data-label="Opening Balance" class="right"><span class="num">0.00</span> Dr</td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td><td class="act"><div class="actions"><button class="btn secondary small" data-open="ledModal">Edit</button></div></td></tr>
+<tr><td class="first"><div class="cell-main">Federal Bank</div><div class="cell-sub"></div></td><td data-label="Group">Bank Accounts</td><td data-label="Opening Balance" class="right"><span class="num">0.00</span> Dr</td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td><td class="act"><div class="actions"><button class="btn secondary small" data-open="ledModal">Edit</button></div></td></tr>
+<tr><td class="first"><div class="cell-main">Sales - Liquor</div><div class="cell-sub"></div></td><td data-label="Group">Sales Accounts</td><td data-label="Opening Balance" class="right"><span class="cell-sub">Not Applicable</span></td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td><td class="act"><div class="actions"><button class="btn secondary small" data-open="ledModal">Edit</button></div></td></tr>
+<tr><td class="first"><div class="cell-main">Sales - Food</div><div class="cell-sub"></div></td><td data-label="Group">Sales Accounts</td><td data-label="Opening Balance" class="right"><span class="cell-sub">Not Applicable</span></td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td><td class="act"><div class="actions"><button class="btn secondary small" data-open="ledModal">Edit</button></div></td></tr>
+<tr><td class="first"><div class="cell-main">KSBC</div><div class="cell-sub">Kerala State Beverages</div></td><td data-label="Group">Sundry Creditors</td><td data-label="Opening Balance" class="right"><span class="num">0.00</span> Cr</td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td><td class="act"><div class="actions"><button class="btn secondary small" data-open="ledModal">Edit</button></div></td></tr>
+<tr><td class="first"><div class="cell-main">Liquor Cess</div><div class="cell-sub"></div></td><td data-label="Group">Duties And Taxes - Excise</td><td data-label="Opening Balance" class="right"><span class="num">0.00</span> Cr</td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td><td class="act"><div class="actions"><button class="btn secondary small" data-open="ledModal">Edit</button></div></td></tr>
+<tr><td class="first"><div class="cell-main">Capital - Opening Adjustment</div><div class="cell-sub">Temporary</div></td><td data-label="Group">Capital Account</td><td data-label="Opening Balance" class="right"><span class="num">0.00</span> Cr</td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td><td class="act"><div class="actions"><button class="btn secondary small" data-open="ledModal">Edit</button></div></td></tr>
+<tr><td class="first"><div class="cell-main">Old Petty Cash</div><div class="cell-sub"></div></td><td data-label="Group">Cash-in-Hand</td><td data-label="Opening Balance" class="right"><span class="num">0.00</span> Dr</td><td data-label="Status"><span class="badge off"><span class="dot"></span>Inactive</span></td><td class="act"><div class="actions"><button class="btn secondary small" data-open="ledModal">Edit</button></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="modal-scrim" id="grpModal" role="dialog" aria-modal="true" aria-labelledby="grpTitle">
+  <div class="modal">
+    <h2 id="grpTitle">Ledger Group</h2>
+    <p class="sub">A heading that ledgers sit under.</p>
+    <div class="field"><label class="lbl" for="g1">Group Name <span class="req">*</span></label><input id="g1" type="text" placeholder="For example Duties And Taxes - GST"></div>
+    <div class="field"><label class="lbl" for="g2">Under <span class="req">*</span></label>
+      <select id="g2"><option>Select A Group</option><option>Current Assets</option><option>    Bank Accounts</option><option>    Cash-in-Hand</option><option>    Deposits (Asset)</option><option>    Loans And Advances (Asset)</option><option>    Stock-in-Hand</option><option>    Sundry Debtors</option><option>Fixed Assets</option><option>Investments</option><option>Misc. Expenses (Asset)</option><option>Capital Account</option><option>    Reserves And Surplus</option><option>Current Liabilities</option><option>    Duties And Taxes</option><option>    Provisions</option><option>    Sundry Creditors</option><option>        Duties And Taxes - Excise</option><option>        Duties And Taxes - GST</option><option>Loans (Liability)</option><option>    Bank OD Account</option><option>    Secured Loans</option><option>    Unsecured Loans</option><option>Suspense Account</option><option>Branch / Divisions</option><option>Sales Accounts</option><option>Direct Incomes</option><option>Indirect Incomes</option><option>Purchase Accounts</option><option>Direct Expenses</option><option>Indirect Expenses</option></select>
+      <p class="hint">The nature (Assets, Liabilities, Income or Expenses) follows the group you choose.</p></div>
+    <div class="field"><label class="lbl" for="g3">Status</label><select id="g3"><option>Active</option><option>Inactive</option></select>
+      <p class="hint">A group with active ledgers or active sub-groups cannot be made inactive.</p></div>
+    <div class="modal-actions"><button class="btn secondary" data-close>Cancel</button><button class="btn" data-close>Save Group</button></div>
+  </div>
+</div>
+
+<div class="modal-scrim" id="grpDefModal" role="dialog" aria-modal="true" aria-labelledby="gdTitle">
+  <div class="modal">
+    <h2 id="gdTitle">Default Group</h2>
+    <p class="sub">This group came with the system. Its place and nature are fixed because reports depend on them.</p>
+    <div class="field"><label class="lbl" for="gd1">Group Name <span class="req">*</span></label><input id="gd1" type="text" value="Bank Accounts"></div>
+    <div class="grid-2">
+      <div class="field"><label class="lbl" for="gd2">Under</label><input id="gd2" type="text" value="Current Assets" disabled></div>
+      <div class="field"><label class="lbl" for="gd3">Nature</label><input id="gd3" type="text" value="Assets" disabled></div>
+    </div>
+    <div class="field"><label class="lbl" for="gd4">Status</label><select id="gd4"><option>Active</option><option>Inactive</option></select>
+      <p class="hint">Bank Accounts has active ledgers, so it cannot be made inactive.</p></div>
+    <div class="modal-actions"><button class="btn secondary" data-close>Cancel</button><button class="btn" data-close>Save Group</button></div>
+  </div>
+</div>
+
+<div class="modal-scrim" id="delGrpModal" role="dialog" aria-modal="true" aria-labelledby="dgTitle">
+  <div class="modal">
+    <h2 id="dgTitle">Delete Group?</h2>
+    <p class="sub"><strong>Duties And Taxes - GST</strong> will be deleted permanently. This cannot be undone. The audit log keeps a record of it.</p>
+    <div class="field"><label class="lbl" for="dg1">Type The Name To Confirm</label><input id="dg1" type="text" placeholder="Duties And Taxes - GST"></div>
+    <div class="modal-actions"><button class="btn secondary" data-close>Cancel</button><button class="btn danger" data-close>Delete Group</button></div>
+  </div>
+</div>
+
+<div class="modal-scrim" id="ledModal" role="dialog" aria-modal="true" aria-labelledby="ledTitle">
+  <div class="modal">
+    <h2 id="ledTitle">Ledger</h2>
+    <p class="sub">An account that transactions are posted to.</p>
+    <div class="field"><label class="lbl" for="l1">Ledger Name <span class="req">*</span></label><input id="l1" type="text" placeholder="For example Sales - Liquor"><p class="hint">Prefix style: a plain hyphen with a space on each side, Title Case.</p></div>
+    <div class="field"><label class="lbl" for="l2">Alias</label><input id="l2" type="text" placeholder="A name staff already use"></div>
+    <div class="field"><label class="lbl" for="l3">Group <span class="req">*</span></label><select id="l3"><option>Select A Group</option><option>Current Assets</option><option>    Bank Accounts</option><option>    Cash-in-Hand</option><option>    Deposits (Asset)</option><option>    Loans And Advances (Asset)</option><option>    Stock-in-Hand</option><option>    Sundry Debtors</option><option>Fixed Assets</option><option>Investments</option><option>Misc. Expenses (Asset)</option><option>Capital Account</option><option>    Reserves And Surplus</option><option>Current Liabilities</option><option>    Duties And Taxes</option><option>    Provisions</option><option>    Sundry Creditors</option><option>        Duties And Taxes - Excise</option><option>        Duties And Taxes - GST</option><option>Loans (Liability)</option><option>    Bank OD Account</option><option>    Secured Loans</option><option>    Unsecured Loans</option><option>Suspense Account</option><option>Branch / Divisions</option><option>Sales Accounts</option><option>Direct Incomes</option><option>Indirect Incomes</option><option>Purchase Accounts</option><option>Direct Expenses</option><option>Indirect Expenses</option></select></div>
+    <div class="field">
+      <label class="lbl" for="l4">Opening Balance</label>
+      <div class="two"><input id="l4" type="text" inputmode="decimal" placeholder="0.00"><select aria-label="Debit or credit"><option>Dr</option><option>Cr</option></select></div>
+      <p class="hint">As on 01/04/2023, when the books begin. Shown only for ledgers under Assets and Liabilities groups.</p>
+    </div>
+    <div class="field"><label class="lbl" for="l5">Status</label><select id="l5"><option>Active</option><option>Inactive</option></select></div>
+    <div class="field"><label class="lbl" for="l6">Note</label><input id="l6" type="text" placeholder="Optional"></div>
+    <div class="modal-actions"><button class="btn secondary" data-close>Cancel</button><button class="btn" data-close>Save Ledger</button></div>
+  </div>
+</div>
+
+<script src="../phase-1/shell.js"></script>
+<script>
+  // Mockup behaviour only: switches the two sections.
+  (function () {
+    var tabs = [["t-gr", "p-gr"], ["t-le", "p-le"]];
+    tabs.forEach(function (pair) {
+      document.getElementById(pair[0]).addEventListener("click", function () {
+        tabs.forEach(function (p) {
+          var on = p[0] === pair[0];
+          document.getElementById(p[0]).setAttribute("aria-selected", String(on));
+          document.getElementById(p[1]).hidden = !on;
+        });
+      });
+    });
+  })();
+</script>
+</body>
+</html>
