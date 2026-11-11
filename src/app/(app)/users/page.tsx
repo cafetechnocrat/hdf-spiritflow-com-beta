@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
+import { PageLoading } from "@/components/page-loading";
 import { UsersTable } from "@/components/users/users-table";
 import { button } from "@/components/ui/styles";
 import { getCurrentUser } from "@/lib/auth/current-user";
@@ -20,7 +22,7 @@ const text = {
   add: "Add User",
 } as const;
 
-export default async function UsersPage() {
+async function UsersContent() {
   const me = await getCurrentUser();
   if (!me || !canView("users", me.role)) notFound();
 
@@ -57,5 +59,13 @@ export default async function UsersPage() {
       </div>
       <UsersTable rows={rows} canEdit={editable} currentUserId={me.id} />
     </div>
+  );
+}
+
+export default function UsersPage() {
+  return (
+    <Suspense fallback={<PageLoading />}>
+      <UsersContent />
+    </Suspense>
   );
 }

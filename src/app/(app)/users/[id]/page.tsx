@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
+import { PageLoading } from "@/components/page-loading";
 import { UserForm } from "@/components/users/user-form";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { canEdit } from "@/lib/auth/permissions";
@@ -17,7 +19,7 @@ const text = {
   subtitle: "Change the name, phone or role. The email address stays the same.",
 } as const;
 
-export default async function EditUserPage({
+async function EditUserContent({
   params,
 }: {
   params: Promise<{ id: string }>;
@@ -52,5 +54,17 @@ export default async function EditUserPage({
         }}
       />
     </div>
+  );
+}
+
+export default function EditUserPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  return (
+    <Suspense fallback={<PageLoading />}>
+      <EditUserContent params={params} />
+    </Suspense>
   );
 }

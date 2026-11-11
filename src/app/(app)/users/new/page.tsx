@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
+import { PageLoading } from "@/components/page-loading";
 import { UserForm } from "@/components/users/user-form";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { canEdit } from "@/lib/auth/permissions";
@@ -17,7 +19,7 @@ const text = {
     "Set a temporary password and share it with the user. They should change it after they first sign in.",
 } as const;
 
-export default async function NewUserPage() {
+async function NewUserContent() {
   const me = await getCurrentUser();
   if (!me || !canEdit("users", me.role)) notFound();
 
@@ -34,5 +36,13 @@ export default async function NewUserPage() {
       </div>
       <UserForm mode="create" />
     </div>
+  );
+}
+
+export default function NewUserPage() {
+  return (
+    <Suspense fallback={<PageLoading />}>
+      <NewUserContent />
+    </Suspense>
   );
 }
