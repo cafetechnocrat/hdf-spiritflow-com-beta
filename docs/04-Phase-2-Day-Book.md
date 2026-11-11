@@ -28,7 +28,7 @@ Anything marked **Proposed** is a starting suggestion. Anything marked **Open** 
 | --- | --- | --- | --- | --- | --- |
 | Create and edit ledger groups and ledgers | Yes | No | No | No | Open |
 | View ledgers | Yes | Yes | Limited | View only | Open |
-| Enter transactions | Yes | Yes | Restricted (section 4) | No | Yes |
+| Enter transactions | Yes | Yes | Not in this slice | No | Yes |
 | Edit or void a transaction | Yes | No | No | No | No |
 | View Day Book and reports | Yes | Yes | No reports | View only | Open |
 
@@ -90,12 +90,14 @@ Owner decisions, 2026-11-12:
 - Voucher types in the first release: **Receipt, Payment, Journal, Contra, Sales, Purchase**. All value only.
 - Numbering: **per voucher type, per financial year** (April to March). Each type counts from 1 every April. A number is never reused, even after a void.
 - Edit and void: **Chief Accountant only**, a reason is required for both. Accounts Staff, Night Accountant and System Admin cannot change a posted voucher.
-- Who enters: Chief Accountant, Accounts Staff, System Admin, and the Night Accountant through a restricted form.
+- Who enters: Chief Accountant, Accounts Staff and System Admin. The Night Accountant form is left out of this slice (owner, 2026-11-12) and comes later.
+- No outlet tag on vouchers (owner, 2026-11-12).
+- New Voucher opens as a popup window, like the stock and ledger screens.
 
 Nothing is hardcoded. Voucher types, their numbering prefix and which ledger groups each side may pick from are rows in the database, not lists in code.
 
 ### Voucher Fields
-- Header: voucher type, date (from a calendar), voucher number (assigned on save), optional outlet tag (from the outlets table), optional reference (bill or cheque number), narration.
+- Header: voucher type, date (from a calendar), voucher number (assigned on save), optional reference (bill or cheque number), narration.
 - Lines: ledger, debit or credit, amount. **Double-entry underneath, simple on screen.** Total debit must equal total credit, enforced in the database. A voucher has at least two lines and every amount is above zero.
 - Amounts are `numeric(14,2)` and shown in Indian format. Back-dated entry is allowed.
 - Complimentary and cancelled bills are not transactions. They are reporting figures only.
@@ -109,10 +111,8 @@ Nothing is hardcoded. Voucher types, their numbering prefix and which ledger gro
 - **Purchase:** debit lines (purchase and expense ledgers and tax ledgers) and credit lines (paid from cash or bank, or due to a creditor).
 - Which ledger groups each side of each type may pick from is held in the database (`voucher_type_rules`) and set up by migration. **Proposed starting rules:** cash and bank sides pick under Cash-in-Hand and Bank Accounts; paid-to and received-from pick any ledger; Sales credit picks under Sales Accounts and Duties And Taxes; Sales debit picks under Cash-in-Hand, Bank Accounts and Sundry Debtors; Purchase debit picks under Purchase Accounts, Direct Expenses, Indirect Expenses and Duties And Taxes; Purchase credit picks under Cash-in-Hand, Bank Accounts and Sundry Creditors. **Open:** confirm these.
 
-### Night Accountant (Restricted Entry)
-- One form only: **Expense Already Paid or Incurred**. Fields: date, expense ledger (only ledgers under expense groups), amount, paid by, narration.
-- No payment can be made from here, no receipt, no journal. The entry cannot be edited after saving. No reports.
-- **Open:** which ledger does it credit? Proposed: the Chief Accountant sets a short list of allowed "paid by" ledgers (for example Cash), and the Night Accountant picks from that list.
+### Night Accountant
+Left out of this slice. When it is added later it will be a restricted form for expenses already paid or incurred, with no payments and no reports. Open: which ledger it credits.
 
 ### Voucher Numbers
 - Each voucher gets its type's prefix, the financial year and a running number for that type and year, for example Payment No. 12 of 2026-27. The database assigns the number when the voucher is saved, so two people saving at once never get the same number.

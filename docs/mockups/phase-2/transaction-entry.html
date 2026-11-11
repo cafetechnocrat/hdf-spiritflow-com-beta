@@ -32,6 +32,7 @@
   .btn-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
   .note-box { padding: 10px 12px; border-radius: 12px; background: var(--warn-bg); color: var(--warn); font-size: .84rem; margin-bottom: 12px; }
   .assigned { display: block; padding: 11px 12px; border-radius: 12px; background: var(--background); color: var(--text-muted); font-size: .9rem; }
+  .modal.wide { max-width: 720px; }
   .void-row td { color: var(--text-muted); }
   .void-row .cell-main { text-decoration: line-through; }
 </style>
@@ -48,8 +49,8 @@
     </div>
 
     <div class="toolbar">
-      <p class="hint" style="margin:0">Start a new voucher by choosing its type.</p>
-      <a class="btn" href="#entry"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>New Voucher</a>
+      <p class="hint" style="margin:0">Posted vouchers are never deleted. Void one with a reason if it was entered wrongly.</p>
+      <button class="btn" data-open="entryModal"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>New Voucher</button>
     </div>
 
     <div class="filters">
@@ -62,14 +63,13 @@
 
     <div class="card table-wrap">
       <table class="data">
-        <thead><tr><th>Voucher</th><th>Date</th><th>Details</th><th class="right">Amount</th><th>Outlet</th><th>Status</th><th><span class="sr-only">Actions</span></th></tr></thead>
+        <thead><tr><th>Voucher</th><th>Date</th><th>Details</th><th class="right">Amount</th><th>Status</th><th><span class="sr-only">Actions</span></th></tr></thead>
         <tbody>
           <tr>
             <td class="first"><div class="cell-main">Payment No. 12</div><div class="cell-sub">PAY/2026-27/0012</div></td>
             <td data-label="Date">12/11/2026</td>
             <td data-label="Details"><div>Electricity Charges <span class="cell-sub">paid from Cash</span></div><div class="cell-sub">Bill 4471</div></td>
             <td data-label="Amount" class="right"><span class="num">12,450.00</span></td>
-            <td data-label="Outlet">No Outlet</td>
             <td data-label="Status"><span class="badge ok"><span class="dot"></span>Posted</span></td>
             <td class="act"><div class="actions"><button class="btn secondary small" data-open="viewModal">View</button><button class="btn secondary small">Edit</button><button class="btn danger small" data-open="voidModal">Void</button></div></td>
           </tr>
@@ -78,7 +78,6 @@
             <td data-label="Date">12/11/2026</td>
             <td data-label="Details"><div>Banquet Advance <span class="cell-sub">received in SBI</span></div></td>
             <td data-label="Amount" class="right"><span class="num">50,000.00</span></td>
-            <td data-label="Outlet">Front Office</td>
             <td data-label="Status"><span class="badge ok"><span class="dot"></span>Posted</span></td>
             <td class="act"><div class="actions"><button class="btn secondary small" data-open="viewModal">View</button><button class="btn secondary small">Edit</button><button class="btn danger small" data-open="voidModal">Void</button></div></td>
           </tr>
@@ -87,7 +86,6 @@
             <td data-label="Date">11/11/2026</td>
             <td data-label="Details"><div>Sales - Liquor, Sales - Food <span class="cell-sub">received in Cash, SBI</span></div></td>
             <td data-label="Amount" class="right"><span class="num">1,84,300.00</span></td>
-            <td data-label="Outlet">Spadikam</td>
             <td data-label="Status"><span class="badge ok"><span class="dot"></span>Posted</span></td>
             <td class="act"><div class="actions"><button class="btn secondary small" data-open="viewModal">View</button><button class="btn secondary small">Edit</button><button class="btn danger small" data-open="voidModal">Void</button></div></td>
           </tr>
@@ -96,7 +94,6 @@
             <td data-label="Date">11/11/2026</td>
             <td data-label="Details"><div>Cash deposited <span class="cell-sub">Cash to Federal Bank</span></div></td>
             <td data-label="Amount" class="right"><span class="num">1,00,000.00</span></td>
-            <td data-label="Outlet">No Outlet</td>
             <td data-label="Status"><span class="badge ok"><span class="dot"></span>Posted</span></td>
             <td class="act"><div class="actions"><button class="btn secondary small" data-open="viewModal">View</button><button class="btn secondary small">Edit</button><button class="btn danger small" data-open="voidModal">Void</button></div></td>
           </tr>
@@ -105,7 +102,6 @@
             <td data-label="Date">10/11/2026</td>
             <td data-label="Details"><div>Entered twice by mistake</div><div class="cell-sub">Voided by Chief Accountant</div></td>
             <td data-label="Amount" class="right"><span class="num">3,200.00</span></td>
-            <td data-label="Outlet">No Outlet</td>
             <td data-label="Status"><span class="badge off">Void</span></td>
             <td class="act"><div class="actions"><button class="btn secondary small" data-open="viewModal">View</button></div></td>
           </tr>
@@ -113,11 +109,15 @@
       </table>
     </div>
 
-    <!-- ENTRY -->
-    <h2 class="section-title" id="entry">New Voucher</h2>
-    <p class="section-sub">Each type has its own simple screen. Debit always equals credit underneath, and the database refuses a voucher that does not balance.</p>
+  </main>
+</div>
 
-    <div class="card card-pad">
+<!-- New voucher -->
+<div class="modal-scrim" id="entryModal" role="dialog" aria-modal="true" aria-labelledby="enTitle">
+  <div class="modal wide">
+    <h2 id="enTitle">New Voucher</h2>
+    <p class="sub">Choose the type. Debit always equals credit underneath, and the database refuses a voucher that does not balance.</p>
+
       <div class="vtabs" role="tablist" aria-label="Voucher type">
         <button type="button" role="tab" data-tab="pay" aria-selected="true">Payment</button>
         <button type="button" role="tab" data-tab="rec" aria-selected="false">Receipt</button>
@@ -132,10 +132,7 @@
         <div class="field"><label class="lbl" for="h1">Date <span class="req">*</span></label><input id="h1" type="date"><p class="hint">Back-dated entry is allowed.</p></div>
         <div class="field"><label class="lbl">Voucher Number</label><span class="assigned">Assigned when you save</span></div>
       </div>
-      <div class="grid-2">
-        <div class="field"><label class="lbl" for="h2">Outlet</label><select id="h2"><option>No Outlet</option><option>Spadikam</option><option>Dhruvam</option><option>No 20</option><option>Front Office</option></select></div>
-        <div class="field"><label class="lbl" for="h3">Reference</label><input id="h3" type="text" placeholder="Bill or cheque number"></div>
-      </div>
+      <div class="field"><label class="lbl" for="h3">Reference</label><input id="h3" type="text" placeholder="Bill or cheque number"></div>
 
       <!-- PAYMENT -->
       <section class="vpanel" data-panel="pay">
@@ -211,27 +208,8 @@
       </section>
 
       <div class="field" style="margin-top:14px"><label class="lbl" for="h4">Narration</label><input id="h4" type="text" placeholder="What this entry is for"></div>
-      <div class="btn-row"><button class="btn" type="button">Save Voucher</button><button class="btn secondary" type="button">Clear</button></div>
-    </div>
-
-    <!-- NIGHT ACCOUNTANT -->
-    <h2 class="section-title">Night Accountant View</h2>
-    <p class="section-sub">The Night Accountant sees only this form. No payments, receipts or journals, no reports, and a saved entry cannot be edited.</p>
-    <div class="card card-pad">
-      <div class="note-box">Expense already paid or incurred. Use this only for expenses the day accountant left out.</div>
-      <div class="grid-2">
-        <div class="field"><label class="lbl" for="n1">Date <span class="req">*</span></label><input id="n1" type="date"></div>
-        <div class="field"><label class="lbl">Voucher Number</label><span class="assigned">Assigned when you save</span></div>
+      <div class="modal-actions"><button class="btn secondary" type="button" data-close>Cancel</button><button class="btn" type="button" data-close>Save Voucher</button></div>
       </div>
-      <div class="field"><label class="lbl">Expense <span class="req">*</span></label><select data-pick="expense"></select><p class="hint">Expense ledgers only.</p></div>
-      <div class="grid-2">
-        <div class="field"><label class="lbl" for="n2">Amount <span class="req">*</span></label><input id="n2" type="text" inputmode="decimal" placeholder="0.00"></div>
-        <div class="field"><label class="lbl">Paid By <span class="req">*</span></label><select data-pick="paidby"></select><p class="hint">A short list set by the Chief Accountant.</p></div>
-      </div>
-      <div class="field"><label class="lbl" for="n3">Narration</label><input id="n3" type="text" placeholder="What this expense was for"></div>
-      <div class="btn-row"><button class="btn" type="button">Save Entry</button></div>
-    </div>
-  </main>
 </div>
 
 <!-- View voucher -->
