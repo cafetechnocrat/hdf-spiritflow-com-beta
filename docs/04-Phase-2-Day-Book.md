@@ -72,7 +72,7 @@ Ledgers are never seeded. The Chief Accountant creates them.
 
 ### Built So Far (Ledger Groups And Ledgers Screen)
 - Screen at `/ledgers`, under Accounts in the menu. Tables `ledger_groups` and `ledgers`, with the 28 default groups seeded by `20261113090000_ledger_groups_and_ledgers.sql`.
-- Access: Chief Accountant creates and edits. MD and Accounts Staff view. System Admin and Night Accountant have no access for now. **Open:** confirm both. The Night Accountant gets a ledger list with the entry screens.
+- Access: Chief Accountant and System Admin create, edit and delete (owner decision, 2026-11-12). MD and Accounts Staff view. The Night Accountant has no access for now and gets a ledger list with the entry screens.
 - Rules held in the database: sub-group nature equals its group; default groups keep their place and cannot be deleted; a group with active ledgers or sub-groups cannot be made inactive; only inactive records can be deleted; income and expense ledgers carry no opening balance.
 - Ledger names reject long dashes and slashes. Opening balance is stored as `numeric(14,2)` with Dr or Cr.
 

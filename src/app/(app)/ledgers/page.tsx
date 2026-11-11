@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 const text = {
   title: "Ledger Groups And Ledgers",
   subtitle:
-    "Groups organise the ledgers. Ledgers are the accounts that transactions are posted to. Only the Chief Accountant can change either.",
+    "Groups organise the ledgers. Ledgers are the accounts that transactions are posted to. Only the Chief Accountant and the System Admin can change either.",
 } as const;
 
 async function LedgersContent() {
