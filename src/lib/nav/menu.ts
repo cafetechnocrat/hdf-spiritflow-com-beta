@@ -60,6 +60,12 @@ const MENU: MenuDefinition[] = [
     label: "Accounts",
     icon: "book",
     children: [
+      {
+        id: "transactions",
+        label: "Transactions",
+        href: "/transactions",
+        area: "transactions",
+      },
       { id: "day-book", label: "Day Book", planned: true },
       {
         id: "ledgers",

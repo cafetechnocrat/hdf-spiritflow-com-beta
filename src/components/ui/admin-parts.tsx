@@ -12,11 +12,14 @@ export function Modal({
   title,
   subtitle,
   onClose,
+  wide = false,
   children,
 }: {
   title: string;
   subtitle?: ReactNode;
   onClose: () => void;
+  // A wider dialog for forms with several columns.
+  wide?: boolean;
   children: ReactNode;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -32,7 +35,7 @@ export function Modal({
       ref={ref}
       onClose={onClose}
       aria-labelledby={titleId}
-      className="m-auto w-[calc(100%-2rem)] max-w-[480px] rounded-[18px] bg-surface p-5 text-text shadow-card backdrop:bg-black/40"
+      className={`m-auto w-[calc(100%-2rem)] ${wide ? "max-w-[980px]" : "max-w-[480px]"} rounded-[18px] bg-surface p-5 text-text shadow-card backdrop:bg-black/40`}
     >
       <h2 id={titleId} className="text-[1.15rem] font-semibold tracking-[-0.02em]">
         {title}

@@ -40,6 +40,17 @@ export const PERMISSIONS = {
     chief_accountant: "E",
     accounts_staff: "V",
   },
+  // Transaction entry. Edit here means enter new vouchers.
+  transactions: {
+    md: "V",
+    system_admin: "E",
+    chief_accountant: "E",
+    accounts_staff: "E",
+  },
+  // Editing or voiding a posted voucher is the Chief Accountant only.
+  voucher_changes: {
+    chief_accountant: "E",
+  },
 } as const satisfies Record<string, Partial<Record<Role, Access>>>;
 
 export type Area = keyof typeof PERMISSIONS;

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
+import { TransactionDateSelector } from "@/components/transaction-date-selector";
 import { signOut } from "@/lib/auth/actions";
 import type { MenuIcon, MenuNode } from "@/lib/nav/menu";
 import { MENU_COOKIE } from "@/lib/nav/menu-cookie";
@@ -202,11 +203,14 @@ export function AppShell({
   user,
   menu,
   initialCollapsed,
+  transactionDate,
   children,
 }: {
   user: { fullName: string; roleLabel: string };
   menu: MenuNode[];
   initialCollapsed: boolean;
+  // Shown for roles that enter transactions. null hides the selector.
+  transactionDate: { date: string; today: string } | null;
   children: ReactNode;
 }) {
   const pathname = usePathname();
@@ -364,6 +368,9 @@ export function AppShell({
           </svg>
         </button>
         <span className="flex-1" />
+        {transactionDate ? (
+          <TransactionDateSelector date={transactionDate.date} today={transactionDate.today} />
+        ) : null}
         <form action={signOut}>
           <button
             type="submit"

@@ -5,9 +5,11 @@ import type { ReactNode } from "react";
 import { AppShell } from "@/components/app-shell";
 import { NoAccess } from "@/components/no-access";
 import { getCurrentUser } from "@/lib/auth/current-user";
+import { canEdit } from "@/lib/auth/permissions";
 import { ROLE_LABELS } from "@/lib/auth/roles";
 import { buildMenu } from "@/lib/nav/menu";
 import { MENU_COOKIE } from "@/lib/nav/menu-cookie";
+import { loadTransactionDate, todayInIndia } from "@/lib/vouchers/transaction-date";
 
 const text = {
   loading: "Loading...",
@@ -26,8 +28,14 @@ async function Shell({ children }: { children: ReactNode }) {
 
   const collapsed = (await cookies()).get(MENU_COOKIE)?.value === "collapsed";
 
+  // Roles that enter transactions see the transaction date in the top bar.
+  const transactionDate = canEdit("transactions", user.role)
+    ? { date: await loadTransactionDate(user.id), today: todayInIndia() }
+    : null;
+
   return (
     <AppShell
+      transactionDate={transactionDate}
       user={{ fullName: user.fullName, roleLabel: ROLE_LABELS[user.role] }}
       menu={buildMenu(user.role)}
       initialCollapsed={collapsed}

@@ -125,6 +125,14 @@ Every type uses the same row: debit ledger, credit ledger, amount, on one line. 
 ### Night Accountant
 Left out of this slice. When it is added later it will be a restricted form for expenses already paid or incurred, with no payments and no reports. Open: which ledger it credits.
 
+### Built So Far (Transactions Screen)
+- Screen at `/transactions`, under Accounts. Migration `20261113130000_vouchers.sql` adds `voucher_types`, `voucher_type_rules`, `voucher_counters`, `vouchers`, `voucher_entries`, `user_preferences` and two views for the screen.
+- The six voucher types and their ledger rules are seeded as rows. The screen reads types, labels, rules and ledgers from the database. No ledger or type is listed in code.
+- The database assigns the number, writes every row in one step (`save_voucher`), refuses a ledger a type does not allow, refuses an inactive ledger, and never deletes a voucher. Void is `void_voucher`. Edit and void are Chief Accountant only, with a reason.
+- Amounts travel as text and add up in whole paise. No floating point touches money.
+- The transaction date selector in the top bar saves to `user_preferences` for roles that enter transactions. The list shows the newest 500 vouchers with filters; the Day Book report will cover full history.
+- Night Accountant entry, month locking and a screen to manage voucher types and rules are not built yet.
+
 ### Voucher Numbers
 - Each voucher gets its type's prefix, the financial year and a running number for that type and year, for example Payment No. 12 of 2026-27. The database assigns the number when the voucher is saved, so two people saving at once never get the same number.
 - The financial year comes from the voucher date, not from today.
