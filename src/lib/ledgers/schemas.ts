@@ -23,12 +23,11 @@ const blankToNull = (value: string) => (value === "" ? null : value);
 export const groupSchema = z.object({
   name,
   parentId: z.uuid("Choose the group this one sits under."),
-  isCashBank: z.boolean(),
   status,
 });
 
 // A default group keeps its place. Only the name and status can change.
-export const defaultGroupSchema = z.object({ name, isCashBank: z.boolean(), status });
+export const defaultGroupSchema = z.object({ name, status });
 
 export const ledgerSchema = z
   .object({

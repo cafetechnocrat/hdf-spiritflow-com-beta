@@ -80,7 +80,6 @@ export async function saveGroup(
     if (existing.is_default) {
       const parsed = defaultGroupSchema.safeParse({
         name: field(formData, "name"),
-        isCashBank: field(formData, "isCashBank") === "1",
         status: field(formData, "status"),
       });
       if (!parsed.success) {
@@ -96,7 +95,6 @@ export async function saveGroup(
   const parsed = groupSchema.safeParse({
     name: field(formData, "name"),
     parentId: field(formData, "parentId"),
-    isCashBank: field(formData, "isCashBank") === "1",
     status: field(formData, "status"),
   });
   if (!parsed.success) {
@@ -114,7 +112,6 @@ export async function saveGroup(
   const values = {
     name: parsed.data.name,
     parent_id: parsed.data.parentId,
-    is_cash_bank: parsed.data.isCashBank,
     status: parsed.data.status,
   };
   const { error } = id

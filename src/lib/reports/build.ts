@@ -43,7 +43,6 @@ type GroupRec = {
   nature: Nature;
   sort_order: number;
   pl_section: "trading" | "profit_loss" | null;
-  is_cash_bank: boolean;
 };
 
 type LedgerRec = { id: string; name: string; group_id: string };
@@ -125,7 +124,7 @@ async function loadChart(supabase: Supabase): Promise<Chart> {
   const [groupsResult, ledgersResult] = await Promise.all([
     supabase
       .from("ledger_groups")
-      .select("id, name, parent_id, nature, sort_order, pl_section, is_cash_bank"),
+      .select("id, name, parent_id, nature, sort_order, pl_section"),
     supabase.from("ledgers").select("id, name, group_id").order("name"),
   ]);
   if (groupsResult.error || ledgersResult.error) throw new Error("chart");
@@ -194,7 +193,6 @@ export async function loadReportContext(generatedBy: string): Promise<ReportCont
 // The lists the filter bars need, all from the database.
 export async function loadFilterOptions(): Promise<{
   ledgers: FilterOption[];
-  cashBankLedgers: FilterOption[];
   types: FilterOption[];
 }> {
   const supabase = await createClient();
@@ -202,12 +200,8 @@ export async function loadFilterOptions(): Promise<{
     loadChart(supabase),
     supabase.from("voucher_types").select("id, name").order("sort_order").order("name"),
   ]);
-  const cashBankGroupIds = new Set(chart.groups.filter((g) => g.is_cash_bank).map((g) => g.id));
   return {
     ledgers: chart.ledgers.map((l) => ({ value: l.id, label: l.name })),
-    cashBankLedgers: chart.ledgers
-      .filter((l) => cashBankGroupIds.has(l.group_id))
-      .map((l) => ({ value: l.id, label: l.name })),
     types: ((typesResult.data ?? []) as { id: string; name: string }[]).map((t) => ({
       value: t.id,
       label: t.name,
@@ -454,118 +448,6 @@ async function buildLedgerStatement(
     "Particulars shows the other ledger of each row. A balance that has gone the other way shows on the opposite side, with no minus sign.",
   ];
   doc.empty = false;
-  return doc;
-}
-
-// ---------------------------------------------------------------------------
-// Cash And Bank Book
-
-async function buildCashBankBook(
-  supabase: Supabase,
-  chart: Chart,
-  params: ReportParams,
-  ctx: ReportContext,
-): Promise<ReportDocument> {
-  const cashBankGroupIds = new Set(chart.groups.filter((g) => g.is_cash_bank).map((g) => g.id));
-  const cashBankLedgers = chart.ledgers.filter((l) => cashBankGroupIds.has(l.group_id));
-  const chosen = params.ledgerId
-    ? cashBankLedgers.filter((l) => l.id === params.ledgerId)
-    : cashBankLedgers;
-
-  const doc = baseDocument(
-    "cash-bank-book",
-    ctx,
-    range(params.from, params.to),
-    `Ledger: ${chosen.length === 1 && params.ledgerId ? chosen[0].name : "all cash and bank"}.`,
-  );
-  doc.tables = [{ columns: [], rows: [] }];
-
-  if (chosen.length === 0) {
-    doc.empty = true;
-    doc.emptyTitle = "No Cash Or Bank Ledgers";
-    doc.emptyHint = "Mark a ledger group as cash or bank, then add ledgers under it.";
-    return doc;
-  }
-
-  const ids = chosen.map((l) => l.id);
-  const [openingNets, days] = await Promise.all([
-    loadNets(supabase, null, addDays(params.from, -1), true),
-    supabase.rpc("report_cash_bank_days", {
-      p_from: params.from,
-      p_to: params.to,
-      p_ledger_ids: ids,
-    }),
-  ]);
-  if (days.error) throw new Error("cash bank");
-
-  const opening = sumPaise(ids.map((id) => openingNets.get(id) ?? ZERO));
-  const records = (days.data ?? []) as {
-    day: string;
-    receipts_text: string;
-    payments_text: string;
-  }[];
-
-  let running = opening;
-  let receiptTotal = ZERO;
-  let paymentTotal = ZERO;
-  const rows: DocRow[] = [];
-  for (const record of records) {
-    const receipts = parseAmountToPaise(record.receipts_text) ?? ZERO;
-    const payments = parseAmountToPaise(record.payments_text) ?? ZERO;
-    const dayOpening = running;
-    running += receipts - payments;
-    receiptTotal += receipts;
-    paymentTotal += payments;
-    rows.push(
-      row(
-        "normal",
-        text(displayDate(record.day)),
-        text(formatBalance(dayOpening)),
-        amount(receipts),
-        amount(payments),
-        text(formatBalance(running)),
-      ),
-    );
-  }
-  if (rows.length > 0) {
-    rows.push(
-      row(
-        "total",
-        text("Total"),
-        text(formatBalance(opening)),
-        amount(receiptTotal),
-        amount(paymentTotal),
-        text(formatBalance(running)),
-      ),
-    );
-  }
-
-  doc.kpis = [
-    kpi("Opening", formatBalance(opening), `On ${displayDate(params.from)}`),
-    kpi("Receipts", formatPaise(receiptTotal)),
-    kpi("Payments", formatPaise(paymentTotal)),
-    kpi("Closing", formatBalance(running), `On ${displayDate(params.to)}`),
-  ];
-  doc.tables = [
-    {
-      columns: [
-        { label: "Date", align: "left" },
-        { label: "Opening", align: "right" },
-        { label: "Receipts", align: "right" },
-        { label: "Payments", align: "right" },
-        { label: "Closing", align: "right" },
-      ],
-      rows,
-    },
-  ];
-  doc.notes = [
-    `Covers ${range(params.from, params.to)}. Receipts are debits to the cash and bank ledgers. Payments are credits.`,
-    "When all ledgers are shown together, a transfer between two of them counts as a receipt and a payment on the same day. Pick one ledger to see it on its own.",
-    "Which groups count as cash or bank comes from the ledger groups.",
-  ];
-  doc.empty = rows.length === 0;
-  doc.emptyTitle = "No Cash Or Bank Entries";
-  doc.emptyHint = "Change the dates or pick another ledger.";
   return doc;
 }
 
@@ -953,8 +835,6 @@ export async function buildReport(
   switch (key) {
     case "ledger-statement":
       return buildLedgerStatement(supabase, chart, params, ctx);
-    case "cash-bank-book":
-      return buildCashBankBook(supabase, chart, params, ctx);
     case "trial-balance":
       return buildTrialBalance(supabase, chart, params, ctx);
     case "profit-loss":

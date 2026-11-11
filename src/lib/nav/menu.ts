@@ -78,12 +78,6 @@ const MENU: MenuDefinition[] = [
             area: "reports",
           },
           {
-            id: "cash-bank-book",
-            label: "Cash And Bank Book",
-            href: "/reports/cash-bank-book",
-            area: "reports",
-          },
-          {
             id: "trial-balance",
             label: "Trial Balance",
             href: "/reports/trial-balance",

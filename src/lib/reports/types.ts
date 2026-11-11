@@ -5,7 +5,6 @@
 export const REPORT_KEYS = [
   "day-book",
   "ledger-statement",
-  "cash-bank-book",
   "trial-balance",
   "profit-loss",
   "balance-sheet",
@@ -19,7 +18,6 @@ export function isReportKey(value: string): value is ReportKey {
 export const REPORT_TITLES: Record<ReportKey, string> = {
   "day-book": "Day Book",
   "ledger-statement": "Ledger Statement",
-  "cash-bank-book": "Cash And Bank Book",
   "trial-balance": "Trial Balance",
   "profit-loss": "Profit And Loss",
   "balance-sheet": "Balance Sheet",

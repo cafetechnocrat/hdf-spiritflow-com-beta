@@ -15,7 +15,6 @@ type GroupRecord = {
   parent_id: string | null;
   nature: AccountNature;
   is_default: boolean;
-  is_cash_bank: boolean;
   sort_order: number;
   status: RecordStatus;
 };
@@ -39,7 +38,7 @@ export async function loadLedgerData(): Promise<LedgerData> {
   const [groupsResult, ledgersResult] = await Promise.all([
     supabase
       .from("ledger_groups")
-      .select("id, name, parent_id, nature, is_default, is_cash_bank, sort_order, status"),
+      .select("id, name, parent_id, nature, is_default, sort_order, status"),
     supabase
       .from("ledgers")
       .select("id, name, alias, group_id, opening_amount, opening_side, opening_date, note, status")
@@ -73,7 +72,6 @@ export async function loadLedgerData(): Promise<LedgerData> {
         parentName: group.parent_id ? (names.get(group.parent_id) ?? null) : null,
         nature: group.nature,
         isDefault: group.is_default,
-        isCashBank: group.is_cash_bank,
         status: group.status,
         depth,
         activeLedgerCount: ledgerRecords.filter(

@@ -35,7 +35,7 @@ export function Modal({
       ref={ref}
       onClose={onClose}
       aria-labelledby={titleId}
-      className={`m-auto w-[calc(100%-2rem)] ${wide ? "max-w-[980px]" : "max-w-[480px]"} rounded-[18px] bg-surface p-5 text-text shadow-card backdrop:bg-black/40`}
+      className={`m-auto w-[calc(100%-2rem)] ${wide ? "max-w-[1200px]" : "max-w-[480px]"} rounded-[18px] bg-surface p-5 text-text shadow-card backdrop:bg-black/40`}
     >
       <h2 id={titleId} className="text-[1.15rem] font-semibold tracking-[-0.02em]">
         {title}

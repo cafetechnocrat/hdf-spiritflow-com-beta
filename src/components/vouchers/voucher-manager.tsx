@@ -361,7 +361,7 @@ function VoucherForm({
 
         <div
           aria-hidden="true"
-          className="mb-1.5 mt-3.5 hidden gap-2 pl-0.5 text-[0.74rem] font-semibold uppercase tracking-[0.04em] text-muted md:grid md:grid-cols-[1fr_1fr_130px_40px]"
+          className="mb-1.5 mt-3.5 hidden gap-2 pl-0.5 text-[0.74rem] font-semibold uppercase tracking-[0.04em] text-muted lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_140px_40px]"
         >
           <span>{type.debitLabel}</span>
           <span>{type.creditLabel}</span>
@@ -373,10 +373,10 @@ function VoucherForm({
           {rows.map((row) => (
             <div
               key={row.key}
-              className="mb-2 grid gap-2.5 rounded-xl bg-background p-3 md:grid-cols-[1fr_1fr_130px_40px] md:items-start md:gap-2 md:bg-transparent md:p-0"
+              className="mb-2 grid gap-2.5 rounded-xl bg-background p-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_140px_40px] lg:items-start lg:gap-2 lg:bg-transparent lg:p-0"
             >
               <label className="block min-w-0">
-                <span className={`${field.label} md:sr-only`}>{type.debitLabel}</span>
+                <span className={`${field.label} lg:sr-only`}>{type.debitLabel}</span>
                 <select
                   value={row.debit}
                   onChange={(event) => pickLedger(row.key, "debit", event.target.value)}
@@ -392,7 +392,7 @@ function VoucherForm({
                 <BalanceNote balance={row.debit ? balances[row.debit] : undefined} />
               </label>
               <label className="block min-w-0">
-                <span className={`${field.label} md:sr-only`}>{type.creditLabel}</span>
+                <span className={`${field.label} lg:sr-only`}>{type.creditLabel}</span>
                 <select
                   value={row.credit}
                   onChange={(event) => pickLedger(row.key, "credit", event.target.value)}
@@ -408,7 +408,7 @@ function VoucherForm({
                 <BalanceNote balance={row.credit ? balances[row.credit] : undefined} />
               </label>
               <label className="block min-w-0">
-                <span className={`${field.label} md:sr-only`}>{text.amount}</span>
+                <span className={`${field.label} lg:sr-only`}>{text.amount}</span>
                 <input
                   type="text"
                   inputMode="decimal"
@@ -424,7 +424,7 @@ function VoucherForm({
                 onClick={() => removeRow(row.key)}
                 disabled={rows.length === 1}
                 aria-label={text.removeLine}
-                className="h-10 rounded-[10px] bg-track text-[1.1rem] text-muted hover:text-text disabled:opacity-50 md:h-11"
+                className="h-10 rounded-[10px] bg-track text-[1.1rem] text-muted hover:text-text disabled:opacity-50 lg:h-11"
               >
                 <span aria-hidden="true">&times;</span>
               </button>
@@ -826,7 +826,7 @@ export function VoucherManager({
           value={typeFilter}
           onChange={(event) => setTypeFilter(event.target.value)}
           aria-label={text.typeFilter}
-          className={`${field.input} sm:max-w-[170px]`}
+          className={`${field.input} !w-auto min-w-[150px] max-w-full`}
         >
           <option value="">{text.allTypes}</option>
           {data.types.map((t) => (

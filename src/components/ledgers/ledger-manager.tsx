@@ -83,8 +83,6 @@ const text = {
   statusBlocked:
     "This group has active ledgers or sub-groups, so it cannot be made inactive.",
   statusHint: "A group with active ledgers or active sub-groups cannot be made inactive.",
-  cashBank: "Counts As Cash Or Bank",
-  cashBankHint: "Ledgers under this group appear in the Cash And Bank Book. Only for assets groups.",
   // Ledger form
   ledgerTitle: "Ledger",
   ledgerSub: "An account that transactions are posted to.",
@@ -223,7 +221,6 @@ function GroupForm({
   const [pending, startTransition] = useTransition();
   const isDefault = record?.isDefault ?? false;
   const [parentId, setParentId] = useState(record?.parentId ?? "");
-  const cashBankId = useId();
   const parentSelectId = useId();
 
   // A group cannot be moved under itself or under one of its own sub-groups.
@@ -255,11 +252,6 @@ function GroupForm({
   }
 
   const blocked = record ? record.activeLedgerCount + record.activeChildCount > 0 : false;
-  // The nature follows the group above, or is fixed for a default group.
-  const nature = isDefault
-    ? record?.nature
-    : data.groups.find((group) => group.id === parentId)?.nature;
-  const assetsGroup = nature === "assets";
 
   return (
     <Modal
@@ -317,22 +309,6 @@ function GroupForm({
             <p className={field.hint}>{text.natureHint}</p>
           </div>
         )}
-        {assetsGroup ? (
-          <div className="mb-3.5">
-            <label htmlFor={cashBankId} className="inline-flex min-h-11 items-center gap-2 text-[0.88rem]">
-              <input
-                id={cashBankId}
-                name="isCashBank"
-                type="checkbox"
-                value="1"
-                defaultChecked={record?.isCashBank ?? false}
-                className="h-[18px] w-[18px]"
-              />
-              {text.cashBank}
-            </label>
-            <p className={field.hint}>{text.cashBankHint}</p>
-          </div>
-        ) : null}
         <StatusSelect
           defaultValue={record?.status ?? "active"}
           hint={blocked ? text.statusBlocked : text.statusHint}
@@ -773,7 +749,7 @@ export function LedgerManager({
               value={groupFilter}
               onChange={(event) => setGroupFilter(event.target.value)}
               aria-label={text.group}
-              className={`${field.input} sm:max-w-[240px]`}
+              className={`${field.input} !w-auto min-w-[200px] max-w-full`}
             >
               <option value="">{text.allGroups}</option>
               {data.groups.map((group) => (

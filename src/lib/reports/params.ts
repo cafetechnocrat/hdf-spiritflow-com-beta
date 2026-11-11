@@ -1,4 +1,4 @@
-import { addDays, financialYearStart, isValidDate, monthStart } from "./dates";
+import { addDays, financialYearStart, isValidDate } from "./dates";
 import type { ReportKey } from "./types";
 
 // What a report is asked for, after checking the filters from the address.
@@ -39,11 +39,7 @@ export function parseReportParams(
 
   // Each report starts on a sensible range around the transaction date.
   const defaultFrom =
-    key === "day-book"
-      ? transactionDate
-      : key === "cash-bank-book"
-        ? monthStart(transactionDate)
-        : financialYearStart(transactionDate);
+    key === "day-book" ? transactionDate : financialYearStart(transactionDate);
 
   const from = date("from", defaultFrom);
   const to = date("to", transactionDate);

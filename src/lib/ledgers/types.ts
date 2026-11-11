@@ -33,8 +33,6 @@ export type LedgerGroupRow = {
   parentName: string | null;
   nature: AccountNature;
   isDefault: boolean;
-  // Ledgers under this group appear in the Cash And Bank Book.
-  isCashBank: boolean;
   status: RecordStatus;
   // 0 for a primary group, 1 for a sub-group, and so on.
   depth: number;

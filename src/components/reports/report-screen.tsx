@@ -131,7 +131,7 @@ function FilterBar({
                 id={id}
                 value={values[item.name] ?? ""}
                 onChange={(event) => onChange(item.name, event.target.value)}
-                className={`${field.input} sm:max-w-[220px]`}
+                className={`${field.input} !w-auto min-w-[200px] max-w-full`}
               >
                 {item.options.map((option) => (
                   <option key={option.value} value={option.value}>

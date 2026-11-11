@@ -5,7 +5,7 @@ import type { FilterField, FilterOption, ReportKey } from "./types";
 export function reportFilterFields(
   key: ReportKey,
   params: ReportParams,
-  options: { ledgers: FilterOption[]; cashBankLedgers: FilterOption[]; types: FilterOption[] },
+  options: { ledgers: FilterOption[]; types: FilterOption[] },
 ): FilterField[] {
   switch (key) {
     case "day-book":
@@ -36,18 +36,6 @@ export function reportFilterFields(
           label: "Ledger",
           value: params.ledgerId,
           options: [{ value: "", label: "Select A Ledger" }, ...options.ledgers],
-        },
-        { kind: "date", name: "from", label: "From", value: params.from },
-        { kind: "date", name: "to", label: "To", value: params.to },
-      ];
-    case "cash-bank-book":
-      return [
-        {
-          kind: "select",
-          name: "ledgerId",
-          label: "Ledger",
-          value: params.ledgerId,
-          options: [{ value: "", label: "All Cash And Bank" }, ...options.cashBankLedgers],
         },
         { kind: "date", name: "from", label: "From", value: params.from },
         { kind: "date", name: "to", label: "To", value: params.to },

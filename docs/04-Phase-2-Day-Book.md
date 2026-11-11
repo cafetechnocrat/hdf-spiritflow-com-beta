@@ -18,7 +18,7 @@ Anything marked **Proposed** is a starting suggestion. Anything marked **Open** 
 - Ledger groups and ledgers: cash, bank accounts, sales, vendors, expense heads, and other account heads.
 - Transaction entry against ledgers, value only.
 - Day Book: all transactions for a day or date range.
-- Ledger statement with running balance, cash and bank book, trial balance (proposed).
+- Ledger statement with running balance, trial balance, profit and loss and balance sheet.
 - Opening balances and back-dated entry (section 5).
 - Void with reason instead of delete; full audit trail.
 
@@ -138,9 +138,9 @@ Left out of this slice. When it is added later it will be a restricted form for 
 - When a ledger is picked on a voucher row, its **balance shows beside it as Dr or Cr**, as on the voucher date. Balance is the opening balance plus posted debits minus posted credits up to that date (the voucher being edited is left out). A balance that has gone the other way shows on the opposite side **with no minus sign**, as in Tally. A zero balance shows no side.
 
 ### Built So Far (Reports)
-- Reports at `/reports/day-book`, `/reports/ledger-statement`, `/reports/cash-bank-book`, `/reports/trial-balance`, `/reports/profit-loss` and `/reports/balance-sheet`, under Accounts, Reports in the menu. Migration `20261113150000_reports.sql` adds the group flags (`pl_section`, `is_cash_bank`), the `app_settings` hotel name, the `day_book_rows` view and the functions `report_ledger_nets`, `report_ledger_statement` and `report_cash_bank_days`.
+- Reports at `/reports/day-book`, `/reports/ledger-statement`, `/reports/trial-balance`, `/reports/profit-loss` and `/reports/balance-sheet`, under Accounts, Reports in the menu. Migration `20261113150000_reports.sql` adds the group flags (`pl_section`), the `app_settings` hotel name, the `day_book_rows` view and the functions `report_ledger_nets`, `report_ledger_statement` and `report_cash_bank_days`.
 - One document model feeds the screen, print view, Excel and PDF, so all four show the same figures. Excel and PDF are built on the server at `/reports/export`. Packages added: `exceljs`, `jspdf`, `jspdf-autotable`.
-- The group form has a "Counts As Cash Or Bank" checkbox for assets groups.
+- The cash and bank book and its group flag were removed on 2026-11-13 (migration `20261113160000_remove_cash_bank_book.sql`).
 - Not built yet: editing the hotel name from a screen, and a year-end closing for the Balance Sheet profit.
 
 ### Voucher Numbers
@@ -179,7 +179,7 @@ This follows the plan agreed for the new Tally company. Confirm it applies to th
 All use the global report template from `docs/00-Overview-And-Architecture.md`, with Indian number format, a totals row, PDF, Excel and print view, and a footer with notes only (no copyright or company branding).
 
 Owner decisions, 2026-11-12:
-- Reports in this slice: **Day Book, Ledger Statement, Cash And Bank Book, Trial Balance, Profit And Loss, Balance Sheet**.
+- Reports in this slice: **Day Book, Ledger Statement, Trial Balance, Profit And Loss, Balance Sheet**. A separate Cash And Bank Book is not needed, since the Ledger Statement covers every ledger, cash and bank included (owner, 2026-11-13).
 - Exports: **print view, Excel and a direct PDF download**. No paid services.
 - Headline cards only. No charts yet.
 - Day Book shows **both layouts, switchable**: one line per row (date, voucher, debit, credit, amount) and Tally style (one block per voucher, with each ledger and Dr or Cr underneath).
@@ -188,7 +188,6 @@ Owner decisions, 2026-11-12:
 ### The Reports
 - **Day Book:** vouchers for a date or date range. Filters: voucher type, ledger, show void. The default range is the transaction date. Cards: vouchers, total amount, void vouchers left out.
 - **Ledger Statement:** one ledger and a date range. Opening balance on the first day, every entry with the other ledger, debit, credit and a running Dr or Cr balance, then the closing balance.
-- **Cash And Bank Book:** by day, for all cash and bank ledgers together or for one of them. Opening, receipts, payments and closing for each day.
 - **Trial Balance:** every ledger with its closing Dr or Cr balance as on a date, grouped under its group tree, with group subtotals and a grand total. A difference line shows if debit and credit do not match.
 - **Profit And Loss:** income and expenses for a date range, split into a trading part (gross profit) and the profit and loss part (net profit).
 - **Balance Sheet:** assets and liabilities as on a date, with the profit carried in. A difference line shows if it does not balance.
@@ -197,14 +196,13 @@ Owner decisions, 2026-11-12:
 - All figures come from database functions, so every report shows the same numbers. Amounts travel as text and add up in whole paise.
 - A balance that has gone the other way shows on the opposite side with no minus sign, as in Tally.
 - Void vouchers are left out of every balance and total.
-- Nothing is hardcoded. Group headings, group order and cash and bank membership come from the groups table. The hotel name comes from a settings row.
+- Nothing is hardcoded. Group headings and group order come from the groups table. The hotel name comes from a settings row.
 - Header: report title, hotel name, date range, filters, generated by and generated at (IST). Footer: notes on how the figures are calculated and the date range each covers, with no copyright or company branding. Loading, empty and error states on every report. Print layout hides navigation.
 - Filters apply as soon as they change. There is no Show button.
-- Menu: Accounts, then a Reports group holding the six reports. Roles that can view: MD, System Admin, Chief Accountant, Accounts Staff. The Night Accountant has no reports.
+- Menu: Accounts, then a Reports group holding the five reports. Roles that can view: MD, System Admin, Chief Accountant, Accounts Staff. The Night Accountant has no reports.
 
 ### Data Definitions To Confirm
 - **Profit and loss split:** the trading part and the profit and loss part come from a section marker on each ledger group, seeded for the default groups (Sales Accounts, Direct Incomes, Purchase Accounts and Direct Expenses are trading; Indirect Incomes and Indirect Expenses are profit and loss). Sub-groups follow their group. **Open:** confirm.
-- **Cash and bank:** a flag on ledger groups marks which groups count as cash or bank, seeded for Cash-in-Hand and Bank Accounts, editable on the group form. **Open:** confirm.
 - **Stock:** there is no inventory, so there is no automatic opening or closing stock. Stock appears only as the balance of a Stock-in-Hand ledger. A month-end stock value can be journalled to a ledger under the trading groups and will then flow into gross profit. **Open:** is this how you want stock handled for now?
 - **Balance Sheet profit:** the profit carried into the Balance Sheet is the cumulative net profit from the first entry up to the date, shown as its own line under liabilities. There is no year-end closing yet. **Open:** confirm.
 - **Hotel name:** a settings row, seeded with the hotel name. **Open:** confirm the exact name to seed.
@@ -227,7 +225,7 @@ Produce static HTML mockups in `docs/mockups/phase-2/` at phone and desktop widt
 - The Chief Accountant can create ledger groups and ledgers; accountants cannot.
 - Accountants can enter, view and (where allowed) correct transactions.
 - Debit equals credit is enforced by the database.
-- Day Book, ledger statement and cash and bank book match the sample.
+- Day Book and ledger statement match the sample.
 - Audit log records every create, edit and void.
 - Mockups approved; works at phone, tablet and desktop widths in both themes.
 - `pnpm lint`, `pnpm typecheck` and `pnpm build` pass; migrations committed.
