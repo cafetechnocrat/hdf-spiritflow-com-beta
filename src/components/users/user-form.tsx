@@ -15,6 +15,11 @@ import {
 import { createUser, updateUser } from "@/lib/users/actions";
 import type { UserFormState } from "@/lib/users/schemas";
 import { DeleteDialog, type DeleteTarget } from "./delete-dialog";
+import { ResetPasswordDialog, type ResetTarget } from "./reset-password-dialog";
+import {
+  ResetTwoFactorDialog,
+  type ResetTwoFactorTarget,
+} from "./reset-two-factor-dialog";
 import { StatusDialog, type StatusTarget } from "./status-dialog";
 
 const text = {
@@ -34,7 +39,7 @@ const text = {
   passwordHint:
     "Share it with the user in person or by phone. They should change it after they first sign in.",
   twoFactorNote:
-    "This role signs in with an authenticator app as well. They will set it up in a later release.",
+    "This role signs in with an authenticator app as well. They set it up the first time they sign in.",
   outletAccess: "Outlet Access",
   allOutlets: "Can see all outlets.",
   outletHint:
@@ -46,6 +51,8 @@ const text = {
   deactivate: "Deactivate User",
   activate: "Activate User",
   delete: "Delete User",
+  resetPassword: "Reset Password",
+  resetTwoFactor: "Reset Two-Factor",
   statusHint:
     "Deactivating signs the user out and blocks sign in. Records and history are kept. A deactivated user can be deleted permanently.",
   cancel: "Cancel",
@@ -61,6 +68,7 @@ type Props =
   | { mode: "create" }
   | {
       mode: "edit";
+      currentUserId: string;
       user: {
         id: string;
         fullName: string;
@@ -90,6 +98,7 @@ export function UserForm(props: Props) {
   const router = useRouter();
   const editing = props.mode === "edit";
   const user = props.mode === "edit" ? props.user : null;
+  const currentUserId = props.mode === "edit" ? props.currentUserId : "";
 
   const initial: UserFormState = {
     error: null,
@@ -107,6 +116,8 @@ export function UserForm(props: Props) {
   const [role, setRole] = useState<string>(initial.values.role);
   const [target, setTarget] = useState<StatusTarget | null>(null);
   const [deleting, setDeleting] = useState<DeleteTarget | null>(null);
+  const [resetting, setResetting] = useState<ResetTarget | null>(null);
+  const [resettingMfa, setResettingMfa] = useState<ResetTwoFactorTarget | null>(null);
 
   const isCashier = user?.role === "cashier";
   const roleKey = isRole(role) ? role : undefined;
@@ -269,6 +280,26 @@ export function UserForm(props: Props) {
               </span>
             </div>
             <div className="mb-3 flex flex-wrap gap-2">
+              {user.status === "active" && user.id !== currentUserId ? (
+                <button
+                  type="button"
+                  onClick={() => setResetting({ id: user.id, name: user.fullName })}
+                  className={`${button.secondary} ${button.small}`}
+                >
+                  {text.resetPassword}
+                </button>
+              ) : null}
+              {user.status === "active" &&
+              user.id !== currentUserId &&
+              TWO_FACTOR_ROLES.includes(user.role) ? (
+                <button
+                  type="button"
+                  onClick={() => setResettingMfa({ id: user.id, name: user.fullName })}
+                  className={`${button.secondary} ${button.small}`}
+                >
+                  {text.resetTwoFactor}
+                </button>
+              ) : null}
               <button
                 type="button"
                 onClick={() =>
@@ -306,6 +337,14 @@ export function UserForm(props: Props) {
         </div>
       </form>
 
+      <ResetPasswordDialog
+        target={resetting}
+        onClose={() => setResetting(null)}
+      />
+      <ResetTwoFactorDialog
+        target={resettingMfa}
+        onClose={() => setResettingMfa(null)}
+      />
       <StatusDialog
         target={target}
         onClose={() => setTarget(null)}

@@ -2,10 +2,11 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { KEEP_COOKIE, KEEP_SECONDS } from "@/lib/supabase/session-cookies";
 import { logAuthEvent } from "./audit";
-import { emailSignInSchema } from "./schemas";
+import { changePasswordSchema, emailSignInSchema } from "./schemas";
 
 export type SignInState = {
   error: string | null;
@@ -73,6 +74,54 @@ export async function signInWithEmail(
   }
 
   await logAuthEvent("login", { actorId: data.user.id });
+  redirect("/");
+}
+
+export type ChangePasswordState = { error: string | null };
+
+// Replaces the user's password. Used for the forced change after a temporary
+// password and for a voluntary change. The current password is checked first.
+export async function changePassword(
+  _previous: ChangePasswordState,
+  formData: FormData,
+): Promise<ChangePasswordState> {
+  const supabase = await createClient();
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user?.email) redirect("/login");
+
+  const parsed = changePasswordSchema.safeParse({
+    current: String(formData.get("current") ?? ""),
+    next: String(formData.get("next") ?? ""),
+    confirm: String(formData.get("confirm") ?? ""),
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Could not save." };
+  }
+
+  // Check the current password by signing in again with it.
+  const { error: checkError } = await supabase.auth.signInWithPassword({
+    email: auth.user.email,
+    password: parsed.data.current,
+  });
+  if (checkError) {
+    return { error: "The current password is not correct." };
+  }
+
+  const { error: updateError } = await supabase.auth.updateUser({
+    password: parsed.data.next,
+  });
+  if (updateError) {
+    return { error: "Could not save the new password. Try a different one." };
+  }
+
+  // The flag is cleared with the service role: users cannot edit profiles.
+  const admin = createAdminClient();
+  await admin
+    .from("profiles")
+    .update({ must_change_password: false })
+    .eq("id", auth.user.id);
+
+  await logAuthEvent("password_change", { actorId: auth.user.id });
   redirect("/");
 }
 

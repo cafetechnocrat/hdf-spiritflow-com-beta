@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import type { ReactNode } from "react";
 import { AppShell, type NavItem } from "@/components/app-shell";
@@ -17,6 +18,11 @@ const text = {
 async function Shell({ children }: { children: ReactNode }) {
   const user = await getCurrentUser();
   if (!user) return <NoAccess />;
+  // A temporary password must be replaced before anything else.
+  if (user.mustChangePassword) redirect("/change-password");
+  // Roles that use an authenticator app must set it up and pass it each sign in.
+  if (user.twoFactor === "setup") redirect("/two-factor/setup");
+  if (user.twoFactor === "verify") redirect("/two-factor/verify");
 
   // Items a role cannot use are hidden.
   const nav: NavItem[] = [];

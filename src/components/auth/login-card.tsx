@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useActionState, useId, useRef, useState } from "react";
 import type { ClipboardEvent, FormEvent, KeyboardEvent } from "react";
 import { signInWithEmail, type SignInState } from "@/lib/auth/actions";
@@ -279,12 +280,12 @@ export function LoginCard() {
               />
               {text.keepSignedIn}
             </label>
-            <a
-              href="#"
+            <Link
+              href="/forgot-password"
               className="inline-flex min-h-11 items-center text-[0.875rem] text-link hover:underline hover:underline-offset-[3px]"
             >
               {text.forgotPassword}
-            </a>
+            </Link>
           </div>
           <SubmitButton pending={emailPending} />
         </form>
