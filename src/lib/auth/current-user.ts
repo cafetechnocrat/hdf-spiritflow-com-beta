@@ -1,4 +1,5 @@
 import "server-only";
+import { connection } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 export const ROLE_LABELS = {
@@ -23,6 +24,8 @@ export type CurrentUser = {
 
 // Returns the signed in user with an active profile, or null.
 export async function getCurrentUser(): Promise<CurrentUser | null> {
+  // The session check depends on the current time, so wait for a real request.
+  await connection();
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) return null;
