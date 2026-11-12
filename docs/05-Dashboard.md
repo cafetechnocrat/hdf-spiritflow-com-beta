@@ -2,7 +2,7 @@
 
 Goal: one informative, good looking home screen with real data from the modules that are live, and clearly marked places for the modules that are not built yet. Each place fills in with real data when its module goes live, with no redesign.
 
-Status: spec and mockup for approval. Not built.
+Status: built (2026-11-14). Mockup approved: `docs/mockups/phase-2/dashboard.html`.
 
 ## 1. Owner Decisions (2026-11-14)
 
@@ -65,3 +65,11 @@ A new database function (or views) returns each section's figures in one round t
 - **Change against last year:** shown only when the previous financial year has posted entries. Otherwise the card shows no change. Confirm.
 - **Receivables and payables:** taken from the Sundry Debtors and Sundry Creditors groups. If other groups should count, they are marked the same way the register groups are. Confirm.
 - **Refresh:** the page reads fresh data on every visit and has a Refresh button. No automatic refresh in the background. Confirm.
+
+## 6. Built
+
+- Page `/` (the Dashboard). Migration `20261114120000_dashboard.sql` adds a `position_kind` marker on ledger groups (cash and bank, receivable, payable, seeded for the default groups and inherited by sub-groups) and the functions `dashboard_monthly`, `dashboard_register_monthly` and `dashboard_positions`. They read through Row Level Security.
+- Each section loads on its own behind its own loading skeleton, and shows its own error panel if it fails, so one failing section never blanks the page.
+- Charts use Recharts with the Okabe-Ito palette. The cash and bank card has no trend line, because the balance at each month end would need a call per month.
+- The change against last year shows only when last year has a figure to compare with. Purchases going up is shown in the warning colour, not the success colour.
+- The Coming Soon cards come from a small list in `sections.tsx`. To light one up, replace its card with a live one when its module is built.
