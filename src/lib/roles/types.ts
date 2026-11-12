@@ -34,4 +34,12 @@ export type RolesData = {
   access: RoleAccessMap;
 };
 
+// The features that are locks, not role rights. Each has one action, View, where
+// View off means the report or dashboard card is locked.
+export const LOCK_GROUPS = ["Reports", "Dashboard Cards"] as const;
+
+export function isLockFeature(feature: FeatureRow): boolean {
+  return (LOCK_GROUPS as readonly string[]).includes(feature.group);
+}
+
 export const NO_ACCESS: AccessFlags = { view: false, edit: false, delete: false };

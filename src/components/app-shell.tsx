@@ -21,6 +21,7 @@ const text = {
   logoAlt: "Spirit Flow",
   logoShort: "SF",
   later: "Later",
+  locked: "Locked. Ask the System Admin to unlock it.",
 } as const;
 
 const icons: Record<MenuIcon, ReactNode> = {
@@ -169,6 +170,34 @@ function MenuLevel({ nodes, depth, pathname, rail, isOpen, onToggle, onNavigate 
                 <span className="rounded-full bg-track px-2 py-px text-[0.68rem] font-semibold">
                   {text.later}
                 </span>
+              </span>
+            </li>
+          );
+        }
+
+        if (node.locked) {
+          return (
+            <li key={node.id} className={branch}>
+              <span
+                aria-disabled="true"
+                title={text.locked}
+                className={`flex items-center rounded-xl text-muted opacity-70 ${row}`}
+              >
+                <span className="flex-1">{node.label}</span>
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-label={text.locked}
+                  role="img"
+                  className="h-3.5 w-3.5 flex-none"
+                >
+                  <rect x="5" y="11" width="14" height="9" rx="2" />
+                  <path d="M8 11V8a4 4 0 118 0v3" />
+                </svg>
               </span>
             </li>
           );

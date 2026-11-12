@@ -1,5 +1,5 @@
 import { getCurrentUser } from "@/lib/auth/current-user";
-import { canView } from "@/lib/auth/permissions";
+import { canView, REPORT_FEATURES } from "@/lib/auth/permissions";
 import { buildReport, loadReportContext } from "@/lib/reports/build";
 import { buildExcel, buildPdf, fileName } from "@/lib/reports/export-files";
 import { parseReportParams } from "@/lib/reports/params";
@@ -10,10 +10,10 @@ import { loadTransactionDate } from "@/lib/vouchers/transaction-date";
 const XLSX_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
 // Excel and PDF downloads. They build the same document as the screen, so the
-// figures always agree. The person must be signed in and allowed to see reports.
+// figures always agree. The person must be signed in and allowed to see that report.
 export async function GET(request: Request) {
   const me = await getCurrentUser();
-  if (!me || !canView(me, "reports")) {
+  if (!me) {
     return new Response("Not allowed", { status: 403 });
   }
 
@@ -22,6 +22,11 @@ export async function GET(request: Request) {
   const format = url.searchParams.get("format");
   if (!isReportKey(report) || (format !== "xlsx" && format !== "pdf")) {
     return new Response("Not found", { status: 404 });
+  }
+
+  // A locked report cannot be downloaded.
+  if (!canView(me, REPORT_FEATURES[report])) {
+    return new Response("This report is locked for you.", { status: 403 });
   }
 
   const raw: Record<string, string> = {};

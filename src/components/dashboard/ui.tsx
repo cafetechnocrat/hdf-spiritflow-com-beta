@@ -199,6 +199,50 @@ export function KpiCard({
   );
 }
 
+// A card the person may not see. It keeps its place and its title, shows no
+// figure and says why. Nothing about the figures is loaded for it.
+export function LockedCard({
+  name,
+  subtitle,
+  className = "",
+}: {
+  name: string;
+  subtitle?: string;
+  className?: string;
+}) {
+  return (
+    <Panel label={`${name} (locked)`} className={className}>
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[0.78rem] font-semibold uppercase tracking-[0.05em] text-muted">
+          {name}
+        </span>
+        <span className="grid h-[34px] w-[34px] place-items-center rounded-[10px] bg-track text-muted">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.9"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+            className="h-[18px] w-[18px]"
+          >
+            <rect x="5" y="11" width="14" height="9" rx="2" />
+            <path d="M8 11V8a4 4 0 118 0v3" />
+          </svg>
+        </span>
+      </div>
+      {subtitle ? <p className="mt-px text-[0.78rem] text-muted">{subtitle}</p> : null}
+      <div className="mt-3 text-[1.35rem] font-bold leading-[1.1] text-[#A8AFC0] sm:text-[1.75rem]" aria-hidden="true">
+        &#8212; &#8212;
+      </div>
+      <p role="status" className="mt-2 text-[0.8rem] text-muted">
+        You do not have access to view this report. Ask the System Admin to unlock it.
+      </p>
+    </Panel>
+  );
+}
+
 export function SectionSkeleton({ height = "h-40" }: { height?: string }) {
   return (
     <div aria-busy="true" className={`animate-pulse rounded-[18px] bg-surface ${height}`}>

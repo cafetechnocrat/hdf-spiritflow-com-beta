@@ -2,17 +2,25 @@
 
 import { useEffect, useId, useRef, useState, useTransition } from "react";
 import type { FormEvent, ReactNode } from "react";
-import { ErrorLine, Modal, SelectField, TextField } from "@/components/ui/admin-parts";
+import { LocksPanel } from "@/components/roles/locks-panel";
+import {
+  ErrorLine,
+  Modal,
+  SelectField,
+  TextField,
+} from "@/components/ui/admin-parts";
 import { button, field } from "@/components/ui/styles";
 import {
   createRole,
   deleteRole,
+  setLocks,
   setRoleAccess,
   setRoleSwitch,
   updateRole,
 } from "@/lib/roles/actions";
 import type { RoleResult } from "@/lib/roles/schemas";
 import {
+  isLockFeature,
   NO_ACCESS,
   type AccessFlags,
   type FeatureRow,
@@ -24,6 +32,8 @@ import {
 // All visible text sits here so it can be translated later.
 const text = {
   addRole: "Add Role",
+  tabAccess: "Access",
+  tabLocks: "Reports And Dashboard Locks",
   note: "The System Admin role is built in. It always has full access and cannot be renamed, deleted or reduced, so you can never lock yourself out. Only its two-factor switch can be changed. Every other role can be renamed, and deleted when no user has it.",
   hint: "Click a cell and tick View, Edit and Delete, or Select All. Edit and Delete need View, so ticking either ticks View. A feature offers only the actions that apply to it.",
   feature: "Feature",
@@ -57,7 +67,8 @@ const text = {
   roleName: "Role Name",
   roleNamePlaceholder: "For example Stock Keeper",
   signInLabel: "Sign In Method",
-  signInDialogHint: "Username And PIN is for counter staff who sign in at a billing counter.",
+  signInDialogHint:
+    "Username And PIN is for counter staff who sign in at a billing counter.",
   copyFrom: "Copy Access From",
   copyNone: "Start With No Access",
   copyHint: "You can change every box afterwards.",
@@ -105,7 +116,12 @@ function summary(chosen: Action[], actions: Action[]): string {
 }
 
 // Edit and Delete need View. Ticking either ticks View. Unticking View clears them.
-function nextFlags(current: AccessFlags, action: Action | "all", on: boolean, feature: FeatureRow): AccessFlags {
+function nextFlags(
+  current: AccessFlags,
+  action: Action | "all",
+  on: boolean,
+  feature: FeatureRow,
+): AccessFlags {
   const actions = offered(feature);
   const next: AccessFlags = { ...current };
   if (action === "all") {
@@ -150,7 +166,12 @@ function Switch({
   );
 }
 
-type OpenMenu = { roleId: string; feature: FeatureRow; top: number; left: number };
+type OpenMenu = {
+  roleId: string;
+  feature: FeatureRow;
+  top: number;
+  left: number;
+};
 
 function AccessButton({
   feature,
@@ -187,7 +208,13 @@ function AccessButton({
   );
 }
 
-function AddRoleDialog({ roles, onClose }: { roles: RoleRow[]; onClose: () => void }) {
+function AddRoleDialog({
+  roles,
+  onClose,
+}: {
+  roles: RoleRow[];
+  onClose: () => void;
+}) {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -238,7 +265,12 @@ function AddRoleDialog({ roles, onClose }: { roles: RoleRow[]; onClose: () => vo
         </SelectField>
         <ErrorLine message={error} />
         <div className="flex flex-wrap justify-end gap-2">
-          <button type="button" onClick={onClose} disabled={pending} className={button.secondary}>
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={pending}
+            className={button.secondary}
+          >
             {text.cancel}
           </button>
           <button type="submit" disabled={pending} className={button.primary}>
@@ -250,7 +282,13 @@ function AddRoleDialog({ roles, onClose }: { roles: RoleRow[]; onClose: () => vo
   );
 }
 
-function EditRoleDialog({ role, onClose }: { role: RoleRow; onClose: () => void }) {
+function EditRoleDialog({
+  role,
+  onClose,
+}: {
+  role: RoleRow;
+  onClose: () => void;
+}) {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [confirming, setConfirming] = useState(false);
@@ -327,7 +365,12 @@ function EditRoleDialog({ role, onClose }: { role: RoleRow; onClose: () => void 
               </button>
             )
           ) : null}
-          <button type="button" onClick={onClose} disabled={pending} className={button.secondary}>
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={pending}
+            className={button.secondary}
+          >
             {text.cancel}
           </button>
           <button type="submit" disabled={pending} className={button.primary}>
@@ -346,6 +389,7 @@ export function RolesManager({ data }: { data: RolesData }) {
   const [notice, setNotice] = useState(false);
   const [menu, setMenu] = useState<OpenMenu | null>(null);
   const [adding, setAdding] = useState(false);
+  const [tab, setTab] = useState<"access" | "locks">("access");
   const [editing, setEditing] = useState<RoleRow | null>(null);
   const [phoneRoleId, setPhoneRoleId] = useState(
     data.roles.find((role) => !role.isSystem)?.id ?? data.roles[0]?.id ?? "",
@@ -397,10 +441,18 @@ export function RolesManager({ data }: { data: RolesData }) {
     return access[roleId]?.[key] ?? NO_ACCESS;
   }
 
-  function changeAccess(roleId: string, feature: FeatureRow, action: Action | "all", on: boolean) {
+  function changeAccess(
+    roleId: string,
+    feature: FeatureRow,
+    action: Action | "all",
+    on: boolean,
+  ) {
     const next = nextFlags(flagsFor(roleId, feature.key), action, on, feature);
     const before = access;
-    setAccess({ ...access, [roleId]: { ...access[roleId], [feature.key]: next } });
+    setAccess({
+      ...access,
+      [roleId]: { ...access[roleId], [feature.key]: next },
+    });
     setMessage(null);
     startTransition(async () => {
       const result = await setRoleAccess({
@@ -419,12 +471,50 @@ export function RolesManager({ data }: { data: RolesData }) {
     });
   }
 
-  function changeSwitch(role: RoleRow, kind: "active" | "two_factor", value: boolean) {
+  // Locks or opens reports and cards for roles. Shows at once, saves in the
+  // background, and puts the old state back if the save fails.
+  function changeLocks(
+    roleIds: string[],
+    featureKeys: string[],
+    open: boolean,
+  ) {
+    const before = access;
+    const next: RoleAccessMap = { ...access };
+    for (const roleId of roleIds) {
+      const rows = { ...next[roleId] };
+      for (const key of featureKeys) {
+        rows[key] = { view: open, edit: false, delete: false };
+      }
+      next[roleId] = rows;
+    }
+    setAccess(next);
+    setMessage(null);
+    startTransition(async () => {
+      const result = await setLocks({ roleIds, featureKeys, open });
+      if (result.error) {
+        setAccess(before);
+        setMessage(result.error);
+      } else {
+        flash();
+      }
+    });
+  }
+
+  function changeSwitch(
+    role: RoleRow,
+    kind: "active" | "two_factor",
+    value: boolean,
+  ) {
     const before = roles;
     setRoles(
       roles.map((r) =>
         r.id === role.id
-          ? { ...r, ...(kind === "active" ? { isActive: value } : { requiresTwoFactor: value }) }
+          ? {
+              ...r,
+              ...(kind === "active"
+                ? { isActive: value }
+                : { requiresTwoFactor: value }),
+            }
           : r,
       ),
     );
@@ -446,7 +536,9 @@ export function RolesManager({ data }: { data: RolesData }) {
       return;
     }
     // The panel sits under the button and stays on the screen.
-    const height = 44 * (offered(feature).length + (offered(feature).length > 1 ? 1 : 0)) + 16;
+    const height =
+      44 * (offered(feature).length + (offered(feature).length > 1 ? 1 : 0)) +
+      16;
     setMenu({
       roleId,
       feature,
@@ -455,8 +547,9 @@ export function RolesManager({ data }: { data: RolesData }) {
     });
   }
 
+  const lockFeatures = data.features.filter(isLockFeature);
   const groups: { label: string; features: FeatureRow[] }[] = [];
-  for (const feature of data.features) {
+  for (const feature of data.features.filter((f) => !isLockFeature(f))) {
     const last = groups[groups.length - 1];
     if (last && last.label === feature.group) last.features.push(feature);
     else groups.push({ label: feature.group, features: [feature] });
@@ -468,7 +561,8 @@ export function RolesManager({ data }: { data: RolesData }) {
   const roleCount = (role: RoleRow) =>
     `${role.userCount} ${role.userCount === 1 ? text.user : text.users}`;
 
-  const signInLabel = (role: RoleRow) => (role.signInMethod === "pin" ? text.pin : text.email);
+  const signInLabel = (role: RoleRow) =>
+    role.signInMethod === "pin" ? text.pin : text.email;
 
   function renderAccessCell(role: RoleRow, feature: FeatureRow): ReactNode {
     const flags = role.isSystem
@@ -491,7 +585,11 @@ export function RolesManager({ data }: { data: RolesData }) {
   return (
     <>
       <div className="mb-3 flex justify-end">
-        <button type="button" onClick={() => setAdding(true)} className={button.primary}>
+        <button
+          type="button"
+          onClick={() => setAdding(true)}
+          className={button.primary}
+        >
           <svg
             viewBox="0 0 24 24"
             fill="none"
@@ -507,192 +605,270 @@ export function RolesManager({ data }: { data: RolesData }) {
         </button>
       </div>
 
-      <p className="mb-3 rounded-xl bg-accent-soft px-3 py-2.5 text-[0.84rem] text-link">{text.note}</p>
+      <div role="tablist" className="mb-3 flex gap-1 border-b border-divider">
+        {(
+          [
+            ["access", text.tabAccess],
+            ["locks", text.tabLocks],
+          ] as const
+        ).map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            role="tab"
+            aria-selected={tab === id}
+            onClick={() => {
+              setTab(id);
+              setMenu(null);
+            }}
+            className={`-mb-px min-h-10 border-b-2 px-3 text-[0.88rem] font-medium ${
+              tab === id
+                ? "border-brand font-semibold text-accent"
+                : "border-transparent text-muted hover:text-text"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
 
       {message ? <ErrorLine message={message} /> : null}
 
-      {/* Wide screens: one grid for every role. */}
-      <div className="hidden overflow-hidden rounded-2xl bg-surface shadow-[0_1px_3px_rgba(0,0,0,0.05)] min-[900px]:block">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[960px] border-separate border-spacing-0 text-[0.86rem]">
-            <thead>
-              <tr>
-                <th className="sticky left-0 top-0 z-[2] min-w-[230px] border-b border-divider bg-[#f8f9fc] px-3.5 py-2.5 text-left text-[0.74rem] font-semibold text-muted">
-                  {text.feature}
-                </th>
-                {roles.map((role) => (
-                  <th
-                    key={role.id}
-                    className="sticky top-0 border-b border-divider bg-[#f8f9fc] px-2 py-2.5 align-top text-[0.78rem] font-semibold"
-                  >
-                    {role.name}
-                    {role.isSystem ? (
-                      <div className="text-[0.66rem] font-medium text-warn">{text.locked}</div>
-                    ) : null}
-                    <div className="text-[0.72rem] font-normal text-muted">{roleCount(role)}</div>
-                    {!role.isSystem ? (
-                      <button
-                        type="button"
-                        onClick={() => setEditing(role)}
-                        className="mt-0.5 text-[0.74rem] font-medium text-link"
-                      >
-                        {text.edit}
-                      </button>
-                    ) : null}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td
-                  colSpan={columns}
-                  className="bg-[#eff1f7] px-3.5 py-1.5 text-[0.72rem] font-semibold uppercase tracking-[0.04em] text-muted"
-                >
-                  {text.roleSettings}
-                </td>
-              </tr>
-              <tr>
-                <td className="sticky left-0 z-[1] border-b border-divider bg-surface px-3.5 py-2 font-semibold">
-                  {text.roleActive}
-                  <div className="text-[0.74rem] font-normal text-muted">{text.roleActiveHint}</div>
-                </td>
-                {roles.map((role) => (
-                  <td key={role.id} className="border-b border-divider px-2 py-2 text-center">
-                    <Switch
-                      checked={role.isActive}
-                      disabled={role.isSystem}
-                      label={`${text.roleActive}, ${role.name}`}
-                      onChange={(value) => changeSwitch(role, "active", value)}
-                    />
-                  </td>
-                ))}
-              </tr>
-              <tr>
-                <td className="sticky left-0 z-[1] border-b border-divider bg-surface px-3.5 py-2 font-semibold">
-                  {text.twoFactor}
-                  <div className="text-[0.74rem] font-normal text-muted">{text.twoFactorHint}</div>
-                </td>
-                {roles.map((role) => (
-                  <td key={role.id} className="border-b border-divider px-2 py-2 text-center">
-                    <Switch
-                      checked={role.requiresTwoFactor}
-                      label={`${text.twoFactor}, ${role.name}`}
-                      onChange={(value) => changeSwitch(role, "two_factor", value)}
-                    />
-                  </td>
-                ))}
-              </tr>
-              <tr>
-                <td className="sticky left-0 z-[1] border-b border-divider bg-surface px-3.5 py-2 font-semibold">
-                  {text.signIn}
-                  <div className="text-[0.74rem] font-normal text-muted">{text.signInHint}</div>
-                </td>
-                {roles.map((role) => (
-                  <td
-                    key={role.id}
-                    className="border-b border-divider px-2 py-2 text-center text-[0.78rem] text-muted"
-                  >
-                    {signInLabel(role)}
-                  </td>
-                ))}
-              </tr>
-              {groups.map((group) => (
-                <FeatureGroup
-                  key={group.label}
-                  label={group.label}
-                  columns={columns}
-                  features={group.features}
-                  roles={roles}
-                  render={renderAccessCell}
-                />
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-      <p className="mt-2 hidden text-[0.8rem] text-muted min-[900px]:block">{text.hint}</p>
+      {tab === "locks" ? (
+        <LocksPanel
+          roles={roles}
+          features={lockFeatures}
+          access={access}
+          onSet={changeLocks}
+        />
+      ) : (
+        <>
+          <p className="mb-3 rounded-xl bg-accent-soft px-3 py-2.5 text-[0.84rem] text-link">
+            {text.note}
+          </p>
 
-      {/* Phones: one role at a time. */}
-      <div className="min-[900px]:hidden">
-        <div className="mb-3 max-w-[320px]">
-          <label htmlFor={roleSelectId} className={field.label}>
-            {text.roleLabel}
-          </label>
-          <select
-            id={roleSelectId}
-            value={phoneRole?.id ?? ""}
-            onChange={(event) => setPhoneRoleId(event.target.value)}
-            className={field.input}
-          >
-            {roles.map((role) => (
-              <option key={role.id} value={role.id}>
-                {role.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        {phoneRole ? (
-          <div className="overflow-hidden rounded-2xl bg-surface py-1 shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
-            <PhoneRow>
-              <div>
-                <strong className="font-semibold">{roleCount(phoneRole)}</strong>
-              </div>
-              {!phoneRole.isSystem ? (
-                <button
-                  type="button"
-                  onClick={() => setEditing(phoneRole)}
-                  className={`${button.secondary} ${button.small}`}
-                >
-                  {text.edit} {text.roleLabel}
-                </button>
-              ) : (
-                <span className="text-[0.74rem] font-medium text-warn">{text.locked}</span>
-              )}
-            </PhoneRow>
-            <PhoneRow>
-              <div>
-                <strong className="font-semibold">{text.roleActive}</strong>
-                <div className="text-[0.74rem] text-muted">{text.roleActiveHint}</div>
-              </div>
-              <Switch
-                checked={phoneRole.isActive}
-                disabled={phoneRole.isSystem}
-                label={text.roleActive}
-                onChange={(value) => changeSwitch(phoneRole, "active", value)}
-              />
-            </PhoneRow>
-            <PhoneRow>
-              <div>
-                <strong className="font-semibold">{text.twoFactor}</strong>
-                <div className="text-[0.74rem] text-muted">{text.twoFactorHint}</div>
-              </div>
-              <Switch
-                checked={phoneRole.requiresTwoFactor}
-                label={text.twoFactor}
-                onChange={(value) => changeSwitch(phoneRole, "two_factor", value)}
-              />
-            </PhoneRow>
-            <PhoneRow>
-              <strong className="font-semibold">{text.signIn}</strong>
-              <span className="text-[0.78rem] text-muted">{signInLabel(phoneRole)}</span>
-            </PhoneRow>
-            {groups.map((group) => (
-              <div key={group.label}>
-                <div className="px-4 pb-1 pt-3 text-[0.72rem] font-semibold uppercase tracking-[0.04em] text-muted">
-                  {group.label}
-                </div>
-                {group.features.map((feature) => (
-                  <PhoneRow key={feature.key}>
-                    <strong className="font-semibold">{feature.label}</strong>
-                    {renderAccessCell(phoneRole, feature)}
-                  </PhoneRow>
+          {/* Wide screens: one grid for every role. */}
+          <div className="hidden overflow-hidden rounded-2xl bg-surface shadow-[0_1px_3px_rgba(0,0,0,0.05)] min-[900px]:block">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[960px] border-separate border-spacing-0 text-[0.86rem]">
+                <thead>
+                  <tr>
+                    <th className="sticky left-0 top-0 z-[2] min-w-[230px] border-b border-divider bg-[#f8f9fc] px-3.5 py-2.5 text-left text-[0.74rem] font-semibold text-muted">
+                      {text.feature}
+                    </th>
+                    {roles.map((role) => (
+                      <th
+                        key={role.id}
+                        className="sticky top-0 border-b border-divider bg-[#f8f9fc] px-2 py-2.5 align-top text-[0.78rem] font-semibold"
+                      >
+                        {role.name}
+                        {role.isSystem ? (
+                          <div className="text-[0.66rem] font-medium text-warn">
+                            {text.locked}
+                          </div>
+                        ) : null}
+                        <div className="text-[0.72rem] font-normal text-muted">
+                          {roleCount(role)}
+                        </div>
+                        {!role.isSystem ? (
+                          <button
+                            type="button"
+                            onClick={() => setEditing(role)}
+                            className="mt-0.5 text-[0.74rem] font-medium text-link"
+                          >
+                            {text.edit}
+                          </button>
+                        ) : null}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td
+                      colSpan={columns}
+                      className="bg-[#eff1f7] px-3.5 py-1.5 text-[0.72rem] font-semibold uppercase tracking-[0.04em] text-muted"
+                    >
+                      {text.roleSettings}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="sticky left-0 z-[1] border-b border-divider bg-surface px-3.5 py-2 font-semibold">
+                      {text.roleActive}
+                      <div className="text-[0.74rem] font-normal text-muted">
+                        {text.roleActiveHint}
+                      </div>
+                    </td>
+                    {roles.map((role) => (
+                      <td
+                        key={role.id}
+                        className="border-b border-divider px-2 py-2 text-center"
+                      >
+                        <Switch
+                          checked={role.isActive}
+                          disabled={role.isSystem}
+                          label={`${text.roleActive}, ${role.name}`}
+                          onChange={(value) =>
+                            changeSwitch(role, "active", value)
+                          }
+                        />
+                      </td>
+                    ))}
+                  </tr>
+                  <tr>
+                    <td className="sticky left-0 z-[1] border-b border-divider bg-surface px-3.5 py-2 font-semibold">
+                      {text.twoFactor}
+                      <div className="text-[0.74rem] font-normal text-muted">
+                        {text.twoFactorHint}
+                      </div>
+                    </td>
+                    {roles.map((role) => (
+                      <td
+                        key={role.id}
+                        className="border-b border-divider px-2 py-2 text-center"
+                      >
+                        <Switch
+                          checked={role.requiresTwoFactor}
+                          label={`${text.twoFactor}, ${role.name}`}
+                          onChange={(value) =>
+                            changeSwitch(role, "two_factor", value)
+                          }
+                        />
+                      </td>
+                    ))}
+                  </tr>
+                  <tr>
+                    <td className="sticky left-0 z-[1] border-b border-divider bg-surface px-3.5 py-2 font-semibold">
+                      {text.signIn}
+                      <div className="text-[0.74rem] font-normal text-muted">
+                        {text.signInHint}
+                      </div>
+                    </td>
+                    {roles.map((role) => (
+                      <td
+                        key={role.id}
+                        className="border-b border-divider px-2 py-2 text-center text-[0.78rem] text-muted"
+                      >
+                        {signInLabel(role)}
+                      </td>
+                    ))}
+                  </tr>
+                  {groups.map((group) => (
+                    <FeatureGroup
+                      key={group.label}
+                      label={group.label}
+                      columns={columns}
+                      features={group.features}
+                      roles={roles}
+                      render={renderAccessCell}
+                    />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <p className="mt-2 hidden text-[0.8rem] text-muted min-[900px]:block">
+            {text.hint}
+          </p>
+
+          {/* Phones: one role at a time. */}
+          <div className="min-[900px]:hidden">
+            <div className="mb-3 max-w-[320px]">
+              <label htmlFor={roleSelectId} className={field.label}>
+                {text.roleLabel}
+              </label>
+              <select
+                id={roleSelectId}
+                value={phoneRole?.id ?? ""}
+                onChange={(event) => setPhoneRoleId(event.target.value)}
+                className={field.input}
+              >
+                {roles.map((role) => (
+                  <option key={role.id} value={role.id}>
+                    {role.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {phoneRole ? (
+              <div className="overflow-hidden rounded-2xl bg-surface py-1 shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
+                <PhoneRow>
+                  <div>
+                    <strong className="font-semibold">
+                      {roleCount(phoneRole)}
+                    </strong>
+                  </div>
+                  {!phoneRole.isSystem ? (
+                    <button
+                      type="button"
+                      onClick={() => setEditing(phoneRole)}
+                      className={`${button.secondary} ${button.small}`}
+                    >
+                      {text.edit} {text.roleLabel}
+                    </button>
+                  ) : (
+                    <span className="text-[0.74rem] font-medium text-warn">
+                      {text.locked}
+                    </span>
+                  )}
+                </PhoneRow>
+                <PhoneRow>
+                  <div>
+                    <strong className="font-semibold">{text.roleActive}</strong>
+                    <div className="text-[0.74rem] text-muted">
+                      {text.roleActiveHint}
+                    </div>
+                  </div>
+                  <Switch
+                    checked={phoneRole.isActive}
+                    disabled={phoneRole.isSystem}
+                    label={text.roleActive}
+                    onChange={(value) =>
+                      changeSwitch(phoneRole, "active", value)
+                    }
+                  />
+                </PhoneRow>
+                <PhoneRow>
+                  <div>
+                    <strong className="font-semibold">{text.twoFactor}</strong>
+                    <div className="text-[0.74rem] text-muted">
+                      {text.twoFactorHint}
+                    </div>
+                  </div>
+                  <Switch
+                    checked={phoneRole.requiresTwoFactor}
+                    label={text.twoFactor}
+                    onChange={(value) =>
+                      changeSwitch(phoneRole, "two_factor", value)
+                    }
+                  />
+                </PhoneRow>
+                <PhoneRow>
+                  <strong className="font-semibold">{text.signIn}</strong>
+                  <span className="text-[0.78rem] text-muted">
+                    {signInLabel(phoneRole)}
+                  </span>
+                </PhoneRow>
+                {groups.map((group) => (
+                  <div key={group.label}>
+                    <div className="px-4 pb-1 pt-3 text-[0.72rem] font-semibold uppercase tracking-[0.04em] text-muted">
+                      {group.label}
+                    </div>
+                    {group.features.map((feature) => (
+                      <PhoneRow key={feature.key}>
+                        <strong className="font-semibold">
+                          {feature.label}
+                        </strong>
+                        {renderAccessCell(phoneRole, feature)}
+                      </PhoneRow>
+                    ))}
+                  </div>
                 ))}
               </div>
-            ))}
+            ) : null}
           </div>
-        ) : null}
-      </div>
+        </>
+      )}
 
       {menu ? (
         <div
@@ -708,7 +884,12 @@ export function RolesManager({ data }: { data: RolesData }) {
                 type="checkbox"
                 checked={menuActions.every((action) => menuFlags[action])}
                 onChange={(event) =>
-                  changeAccess(menu.roleId, menu.feature, "all", event.target.checked)
+                  changeAccess(
+                    menu.roleId,
+                    menu.feature,
+                    "all",
+                    event.target.checked,
+                  )
                 }
                 className="h-[18px] w-[18px]"
               />
@@ -724,11 +905,18 @@ export function RolesManager({ data }: { data: RolesData }) {
                 type="checkbox"
                 checked={menuFlags[action]}
                 onChange={(event) =>
-                  changeAccess(menu.roleId, menu.feature, action, event.target.checked)
+                  changeAccess(
+                    menu.roleId,
+                    menu.feature,
+                    action,
+                    event.target.checked,
+                  )
                 }
                 className="h-[18px] w-[18px]"
               />
-              {menuActions.length === 1 && action === "edit" ? text.allowed : ACTION_LABEL[action]}
+              {menuActions.length === 1 && action === "edit"
+                ? text.allowed
+                : ACTION_LABEL[action]}
             </label>
           ))}
         </div>
@@ -743,9 +931,15 @@ export function RolesManager({ data }: { data: RolesData }) {
         {notice ? text.saved : ""}
       </div>
 
-      {adding ? <AddRoleDialog roles={roles} onClose={() => setAdding(false)} /> : null}
+      {adding ? (
+        <AddRoleDialog roles={roles} onClose={() => setAdding(false)} />
+      ) : null}
       {editing ? (
-        <EditRoleDialog key={editing.id} role={editing} onClose={() => setEditing(null)} />
+        <EditRoleDialog
+          key={editing.id}
+          role={editing}
+          onClose={() => setEditing(null)}
+        />
       ) : null}
     </>
   );
@@ -788,7 +982,10 @@ function FeatureGroup({
             {feature.label}
           </td>
           {roles.map((role) => (
-            <td key={role.id} className="border-b border-divider px-2 py-2 text-center">
+            <td
+              key={role.id}
+              className="border-b border-divider px-2 py-2 text-center"
+            >
               {render(role, feature)}
             </td>
           ))}

@@ -35,7 +35,7 @@ export type RowStyle = "normal" | "group" | "sub" | "ledger" | "subtotal" | "tot
 export type DocRow = { cells: Cell[]; style: RowStyle };
 export type DocColumn = { label: string; align: "left" | "right" };
 export type DocTable = { heading?: string; columns: DocColumn[]; rows: DocRow[] };
-export type DocKpi = { label: string; value: string; sub?: string };
+export type DocKpi = { label: string; value: string; sub?: string; money?: boolean };
 
 // The Tally style layout of the Day Book.
 export type DayBookBlock = {

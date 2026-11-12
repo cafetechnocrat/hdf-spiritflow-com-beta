@@ -273,6 +273,7 @@ export function ReportScreen({
                     {item.label}
                   </div>
                   <div className="mt-0.5 text-[1.25rem] font-semibold tracking-[-0.02em] tabular-nums">
+                    {item.money ? "₹" : ""}
                     {item.value}
                   </div>
                   {item.sub ? <div className="text-[0.75rem] text-muted">{item.sub}</div> : null}

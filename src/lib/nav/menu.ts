@@ -1,4 +1,8 @@
-import { canView, type AccessMap, type FeatureKey } from "@/lib/auth/permissions";
+import {
+  canView,
+  type AccessMap,
+  type FeatureKey,
+} from "@/lib/auth/permissions";
 
 // The side menu as a tree. Groups can hold groups, to any depth.
 // An item with `planned` is shown but switched off until its module is built.
@@ -13,6 +17,9 @@ type MenuDefinition = {
   href?: string;
   // The feature that decides who sees a live item.
   area?: FeatureKey;
+  // The feature is a lock: a person without View still sees the item, greyed
+  // out with a lock, and cannot open it.
+  lock?: true;
   // Only the System Admin sees this item.
   systemOnly?: true;
   planned?: true;
@@ -25,12 +32,20 @@ export type MenuNode = {
   label: string;
   icon?: MenuIcon;
   href?: string;
+  // Shown greyed out with a lock. Not a link.
+  locked?: true;
   planned?: true;
   children?: MenuNode[];
 };
 
 const MENU: MenuDefinition[] = [
-  { id: "dashboard", label: "Dashboard", icon: "home", href: "/", area: "dashboard" },
+  {
+    id: "dashboard",
+    label: "Dashboard",
+    icon: "home",
+    href: "/",
+    area: "dashboard",
+  },
   {
     id: "inventory",
     label: "Inventory Management",
@@ -51,7 +66,11 @@ const MENU: MenuDefinition[] = [
         label: "Stock Reports",
         children: [
           { id: "stock-report", label: "Stock Report", planned: true },
-          { id: "stock-value-report", label: "Stock Value Report", planned: true },
+          {
+            id: "stock-value-report",
+            label: "Stock Value Report",
+            planned: true,
+          },
         ],
       },
     ],
@@ -71,42 +90,54 @@ const MENU: MenuDefinition[] = [
         id: "reports",
         label: "Reports",
         children: [
-          { id: "day-book", label: "Day Book", href: "/reports/day-book", area: "reports" },
+          {
+            id: "day-book",
+            label: "Day Book",
+            href: "/reports/day-book",
+            area: "report_day_book",
+            lock: true,
+          },
           {
             id: "ledger-statement",
             label: "Ledger Statement",
             href: "/reports/ledger-statement",
-            area: "reports",
+            area: "report_ledger_statement",
+            lock: true,
           },
           {
             id: "sales-register",
             label: "Sales Register",
             href: "/reports/sales-register",
-            area: "reports",
+            area: "report_sales_register",
+            lock: true,
           },
           {
             id: "purchase-register",
             label: "Purchase Register",
             href: "/reports/purchase-register",
-            area: "reports",
+            area: "report_purchase_register",
+            lock: true,
           },
           {
             id: "trial-balance",
             label: "Trial Balance",
             href: "/reports/trial-balance",
-            area: "reports",
+            area: "report_trial_balance",
+            lock: true,
           },
           {
             id: "profit-loss",
             label: "Profit And Loss",
             href: "/reports/profit-loss",
-            area: "reports",
+            area: "report_profit_loss",
+            lock: true,
           },
           {
             id: "balance-sheet",
             label: "Balance Sheet",
             href: "/reports/balance-sheet",
-            area: "reports",
+            area: "report_balance_sheet",
+            lock: true,
           },
         ],
       },
@@ -133,7 +164,12 @@ const MENU: MenuDefinition[] = [
     icon: "cog",
     children: [
       { id: "users", label: "Users", href: "/users", area: "users" },
-      { id: "roles", label: "Roles And Access", href: "/roles", systemOnly: true },
+      {
+        id: "roles",
+        label: "Roles And Access",
+        href: "/roles",
+        systemOnly: true,
+      },
       { id: "audit", label: "Audit Log", planned: true },
     ],
   },
@@ -153,18 +189,44 @@ function prune(
       const children = prune(node.children, user, showPlanned);
       // A group with nothing to show is hidden.
       if (children.length > 0) {
-        result.push({ id: node.id, label: node.label, icon: node.icon, children });
+        result.push({
+          id: node.id,
+          label: node.label,
+          icon: node.icon,
+          children,
+        });
       }
     } else if (node.planned) {
       if (showPlanned) {
-        result.push({ id: node.id, label: node.label, icon: node.icon, planned: true });
+        result.push({
+          id: node.id,
+          label: node.label,
+          icon: node.icon,
+          planned: true,
+        });
       }
     } else if (node.href && node.systemOnly) {
       if (user.isSystemAdmin) {
-        result.push({ id: node.id, label: node.label, icon: node.icon, href: node.href });
+        result.push({
+          id: node.id,
+          label: node.label,
+          icon: node.icon,
+          href: node.href,
+        });
       }
+    } else if (node.href && node.area && node.lock) {
+      result.push(
+        canView(user, node.area)
+          ? { id: node.id, label: node.label, icon: node.icon, href: node.href }
+          : { id: node.id, label: node.label, icon: node.icon, locked: true },
+      );
     } else if (node.href && node.area && canView(user, node.area)) {
-      result.push({ id: node.id, label: node.label, icon: node.icon, href: node.href });
+      result.push({
+        id: node.id,
+        label: node.label,
+        icon: node.icon,
+        href: node.href,
+      });
     }
   }
   return result;

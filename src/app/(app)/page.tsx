@@ -91,9 +91,6 @@ async function DashboardContent() {
     today,
   };
 
-  const seeReports = canView(user, "reports");
-  const seeActivity = seeReports || canView(user, "transactions") || user.isSystemAdmin;
-
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-end justify-between gap-x-4 gap-y-2.5">
@@ -119,39 +116,21 @@ async function DashboardContent() {
         </div>
       </div>
 
-      {seeReports ? (
-        <>
-          <Suspense fallback={<SectionSkeleton height="h-44" />}>
-            <HeadlineSection range={range} />
-          </Suspense>
+      <HeadlineSection user={user} range={range} />
 
-          <SectionLabel>{text.trends}</SectionLabel>
-          <Suspense fallback={<SectionSkeleton height="h-80" />}>
-            <TrendsSection range={range} />
-          </Suspense>
+      <SectionLabel>{text.trends}</SectionLabel>
+      <TrendsSection user={user} range={range} />
 
-          <SectionLabel>{text.positions}</SectionLabel>
-          <Suspense fallback={<SectionSkeleton height="h-56" />}>
-            <PositionsSection range={range} canStatement={seeReports} />
-          </Suspense>
-        </>
-      ) : null}
+      <SectionLabel>{text.positions}</SectionLabel>
+      <PositionsSection user={user} range={range} />
 
-      {seeActivity ? (
-        <>
-          <SectionLabel>{text.activity}</SectionLabel>
-          <Suspense fallback={<SectionSkeleton height="h-64" />}>
-            <ActivitySection user={user} range={range} />
-          </Suspense>
-        </>
-      ) : null}
+      <SectionLabel>{text.activity}</SectionLabel>
+      <Suspense fallback={<SectionSkeleton height="h-64" />}>
+        <ActivitySection user={user} range={range} />
+      </Suspense>
 
-      {seeReports || user.isSystemAdmin ? (
-        <>
-          <SectionLabel note={dashboardText.soonNote}>{text.soon}</SectionLabel>
-          <ComingSoonSection />
-        </>
-      ) : null}
+      <SectionLabel note={dashboardText.soonNote}>{text.soon}</SectionLabel>
+      <ComingSoonSection />
     </div>
   );
 }

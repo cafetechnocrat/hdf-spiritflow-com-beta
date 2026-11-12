@@ -1,9 +1,8 @@
 import "server-only";
 import { cache } from "react";
 import { parseAmountToPaise, parseSignedPaise, sumPaise } from "@/lib/format/money";
+import type { DashboardFeature } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
-
-const ZERO = BigInt(0);
 
 // ---------------------------------------------------------------------------
 // Dates
@@ -48,25 +47,45 @@ export function shiftYears(date: string, years: number): string {
 
 export type MonthRow = { month: string; income: bigint; expense: bigint };
 
-export const loadMonthly = cache(async (from: string, to: string): Promise<MonthRow[]> => {
-  const supabase = await createClient();
-  const { data, error } = await supabase.rpc("dashboard_monthly", { p_from: from, p_to: to });
-  if (error) throw new Error("monthly");
-  return ((data ?? []) as { month_start: string; income_text: string; expense_text: string }[]).map(
-    (row) => ({
+// Every figure asks for the lock of the card that shows it. The database checks
+// that lock, so a locked person gets nothing back.
+export const loadMonthly = cache(
+  async (
+    feature: DashboardFeature,
+    from: string,
+    to: string,
+    tradingOnly: boolean,
+  ): Promise<MonthRow[]> => {
+    const supabase = await createClient();
+    const { data, error } = await supabase.rpc("dashboard_monthly", {
+      p_feature: feature,
+      p_from: from,
+      p_to: to,
+      p_trading_only: tradingOnly,
+    });
+    if (error) throw new Error("monthly");
+    return (
+      (data ?? []) as { month_start: string; income_text: string; expense_text: string }[]
+    ).map((row) => ({
       month: row.month_start.slice(0, 7),
       income: parseAmountToPaise(row.income_text) ?? parseSignedPaise(row.income_text),
       expense: parseAmountToPaise(row.expense_text) ?? parseSignedPaise(row.expense_text),
-    }),
-  );
-});
+    }));
+  },
+);
 
 export type RegisterRow = { month: string; ledgerId: string; ledgerName: string; amount: bigint };
 
 export const loadRegisterMonthly = cache(
-  async (kind: "sales" | "purchase", from: string, to: string): Promise<RegisterRow[]> => {
+  async (
+    feature: DashboardFeature,
+    kind: "sales" | "purchase",
+    from: string,
+    to: string,
+  ): Promise<RegisterRow[]> => {
     const supabase = await createClient();
     const { data, error } = await supabase.rpc("dashboard_register_monthly", {
+      p_feature: feature,
       p_kind: kind,
       p_from: from,
       p_to: to,
@@ -89,21 +108,26 @@ export const loadRegisterMonthly = cache(
 );
 
 export type PositionKind = "cash_bank" | "receivable" | "payable";
-export type PositionRow = { kind: PositionKind; ledgerId: string; name: string; net: bigint };
+export type PositionRow = { ledgerId: string; name: string; net: bigint };
 
-export const loadPositions = cache(async (asOn: string): Promise<PositionRow[]> => {
-  const supabase = await createClient();
-  const { data, error } = await supabase.rpc("dashboard_positions", { p_as_on: asOn });
-  if (error) throw new Error("positions");
-  return (
-    (data ?? []) as { kind: PositionKind; ledger_id: string; ledger_name: string; net_text: string }[]
-  ).map((row) => ({
-    kind: row.kind,
-    ledgerId: row.ledger_id,
-    name: row.ledger_name,
-    net: parseSignedPaise(row.net_text),
-  }));
-});
+export const loadPositions = cache(
+  async (feature: DashboardFeature, kind: PositionKind, asOn: string): Promise<PositionRow[]> => {
+    const supabase = await createClient();
+    const { data, error } = await supabase.rpc("dashboard_positions", {
+      p_feature: feature,
+      p_kind: kind,
+      p_as_on: asOn,
+    });
+    if (error) throw new Error("positions");
+    return ((data ?? []) as { ledger_id: string; ledger_name: string; net_text: string }[]).map(
+      (row) => ({
+        ledgerId: row.ledger_id,
+        name: row.ledger_name,
+        net: parseSignedPaise(row.net_text),
+      }),
+    );
+  },
+);
 
 export type LatestVoucher = {
   id: string;
@@ -116,13 +140,7 @@ export type LatestVoucher = {
 
 export async function loadLatestVouchers(): Promise<LatestVoucher[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("voucher_summaries")
-    .select("id, type_name, reference_no, voucher_date, debit_names, credit_names, total_text")
-    .eq("status", "posted")
-    .order("voucher_date", { ascending: false })
-    .order("created_at", { ascending: false })
-    .limit(6);
+  const { data, error } = await supabase.rpc("dashboard_latest_vouchers", { p_limit: 6 });
   if (error) throw new Error("latest");
   return (
     (data ?? []) as {
@@ -145,8 +163,8 @@ export async function loadLatestVouchers(): Promise<LatestVoucher[]> {
 }
 
 export type BooksCheck = {
-  // Debit and credit totals as on today, in paise. Null when the user cannot see reports.
-  difference: bigint | null;
+  // The gap between debit and credit totals as on today, in paise.
+  difference: bigint;
   enteredToday: number;
   latestTime: string | null;
   voidThisMonth: number;
@@ -155,61 +173,34 @@ export type BooksCheck = {
 // India has no daylight saving, so midnight there is a fixed offset.
 const IST = "+05:30";
 
-export async function loadBooksCheck(today: string, includeBalance: boolean): Promise<BooksCheck> {
+export async function loadBooksCheck(today: string): Promise<BooksCheck> {
   const supabase = await createClient();
+  const { data, error } = await supabase.rpc("dashboard_books_check", {
+    p_today: today,
+    p_day_start: `${today}T00:00:00${IST}`,
+    p_month_start: `${today.slice(0, 7)}-01T00:00:00${IST}`,
+  });
+  if (error) throw new Error("books");
+  const row = ((data ?? []) as {
+    difference_text: string;
+    entered_today: number;
+    latest_at: string | null;
+    void_month: number;
+  }[])[0];
+  if (!row) throw new Error("books");
 
-  let difference: bigint | null = null;
-  if (includeBalance) {
-    const { data, error } = await supabase.rpc("report_ledger_nets", {
-      p_from: null,
-      p_to: today,
-      p_with_opening: true,
-    });
-    if (error) throw new Error("books");
-    let debit = ZERO;
-    let credit = ZERO;
-    for (const row of (data ?? []) as { net_text: string }[]) {
-      const net = parseSignedPaise(row.net_text);
-      if (net > ZERO) debit += net;
-      else credit += -net;
-    }
-    difference = debit > credit ? debit - credit : credit - debit;
-  }
-
-  const [entered, latest, voided] = await Promise.all([
-    supabase
-      .from("vouchers")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "posted")
-      .gte("created_at", `${today}T00:00:00${IST}`),
-    supabase
-      .from("vouchers")
-      .select("created_at")
-      .eq("status", "posted")
-      .gte("created_at", `${today}T00:00:00${IST}`)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    supabase
-      .from("vouchers")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "void")
-      .gte("voided_at", `${today.slice(0, 7)}-01T00:00:00${IST}`),
-  ]);
-
-  const latestAt = latest.data?.created_at as string | undefined;
   return {
-    difference,
-    enteredToday: entered.count ?? 0,
-    latestTime: latestAt
+    difference: parseAmountToPaise(row.difference_text) ?? parseSignedPaise(row.difference_text),
+    enteredToday: row.entered_today,
+    latestTime: row.latest_at
       ? new Intl.DateTimeFormat("en-GB", {
           timeZone: "Asia/Kolkata",
           hour: "2-digit",
           minute: "2-digit",
           hour12: false,
-        }).format(new Date(latestAt))
+        }).format(new Date(row.latest_at))
       : null,
-    voidThisMonth: voided.count ?? 0,
+    voidThisMonth: row.void_month,
   };
 }
 

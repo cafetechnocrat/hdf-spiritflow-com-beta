@@ -7,6 +7,7 @@ import {
   accessSchema,
   createRoleSchema,
   idSchema,
+  locksSchema,
   switchSchema,
   updateRoleSchema,
   type RoleResult,
@@ -209,6 +210,57 @@ export async function setRoleAccess(input: {
     },
     { onConflict: "role_id,feature_key" },
   );
+  if (error) return { error: explain(error) };
+
+  revalidatePath(PATH);
+  return { error: null };
+}
+
+// Locks or opens reports and dashboard cards for roles, one or many at once.
+// Only features in the Reports and Dashboard Cards groups can be set here, and
+// the System Admin role is always open, so it is never touched.
+export async function setLocks(input: {
+  roleIds: string[];
+  featureKeys: string[];
+  open: boolean;
+}): Promise<RoleResult> {
+  const me = await requireSystemAdmin();
+  if (!me) return { error: text.notAllowed };
+
+  const parsed = locksSchema.safeParse(input);
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? text.failed };
+
+  const supabase = await createClient();
+  const [features, roles] = await Promise.all([
+    supabase
+      .from("features")
+      .select("key")
+      .in("key", parsed.data.featureKeys)
+      .in("group_label", ["Reports", "Dashboard Cards"]),
+    supabase
+      .from("roles")
+      .select("id")
+      .in("id", parsed.data.roleIds)
+      .eq("is_system", false),
+  ]);
+  if (features.error || roles.error) return { error: text.failed };
+  const featureKeys = ((features.data ?? []) as { key: string }[]).map((f) => f.key);
+  const roleIds = ((roles.data ?? []) as { id: string }[]).map((r) => r.id);
+  if (featureKeys.length === 0 || roleIds.length === 0) return { error: text.notFound };
+
+  const rows = roleIds.flatMap((roleId) =>
+    featureKeys.map((featureKey) => ({
+      role_id: roleId,
+      feature_key: featureKey,
+      can_view: parsed.data.open,
+      can_edit: false,
+      can_delete: false,
+      created_by: me.id,
+    })),
+  );
+  const { error } = await supabase
+    .from("role_access")
+    .upsert(rows, { onConflict: "role_id,feature_key" });
   if (error) return { error: explain(error) };
 
   revalidatePath(PATH);

@@ -11,7 +11,48 @@ export type FeatureKey =
   | "ledgers"
   | "transactions"
   | "voucher_changes"
-  | "reports";
+  | ReportFeature
+  | DashboardFeature;
+
+// Each report and each dashboard card is its own feature with one action, View.
+// View off means the report or card is locked for that person.
+export type ReportFeature =
+  | "report_day_book"
+  | "report_ledger_statement"
+  | "report_sales_register"
+  | "report_purchase_register"
+  | "report_trial_balance"
+  | "report_profit_loss"
+  | "report_balance_sheet";
+
+export type DashboardFeature =
+  | "dash_sales"
+  | "dash_purchases"
+  | "dash_gross_profit"
+  | "dash_cash_bank"
+  | "dash_income_expenses"
+  | "dash_sales_by_month"
+  | "dash_cash_bank_balances"
+  | "dash_receivables"
+  | "dash_payables"
+  | "dash_latest_vouchers"
+  | "dash_books_check";
+
+// The lock that guards each report, by the report's address.
+export const REPORT_FEATURES = {
+  "day-book": "report_day_book",
+  "ledger-statement": "report_ledger_statement",
+  "sales-register": "report_sales_register",
+  "purchase-register": "report_purchase_register",
+  "trial-balance": "report_trial_balance",
+  "profit-loss": "report_profit_loss",
+  "balance-sheet": "report_balance_sheet",
+} as const satisfies Record<string, ReportFeature>;
+
+// True when the person may open at least one report.
+export function canViewAnyReport(user: HasAccess): boolean {
+  return Object.values(REPORT_FEATURES).some((feature) => canView(user, feature));
+}
 
 export type Action = "view" | "edit" | "delete";
 

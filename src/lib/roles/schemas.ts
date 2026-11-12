@@ -38,4 +38,13 @@ export const accessSchema = z.object({
   delete: z.boolean(),
 });
 
+export const locksSchema = z.object({
+  roleIds: z.array(idSchema).min(1).max(100),
+  featureKeys: z
+    .array(z.string().regex(/^[a-z_]{1,40}$/, "That report does not exist."))
+    .min(1)
+    .max(100),
+  open: z.boolean(),
+});
+
 export type RoleResult = { error: string | null };

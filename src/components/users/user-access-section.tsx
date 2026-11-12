@@ -24,7 +24,15 @@ const text = {
   resetHint: "Removes every reduction and gives back everything the role allows.",
   nothingReduced: "This person has everything their role allows.",
   saved: "Saved",
+  lockOpen: "Open",
+  lockLocked: "Locked",
+  lockedRole: "Locked for the whole role",
+  lockHint:
+    "Reports and dashboard cards. Lock one for this person where the role has it open. A lock the role has set cannot be opened here.",
 } as const;
+
+// Reports and dashboard cards are locks, not rights. Each has View only.
+const LOCK_GROUPS = ["Reports", "Dashboard Cards"];
 
 type Action = "view" | "edit" | "delete";
 const LABEL: Record<Action, string> = { view: text.view, edit: text.edit, delete: text.delete };
@@ -214,10 +222,67 @@ export function UserAccessSection({ data }: { data: UserAccessData }) {
           <div className="pb-1 pt-3 text-[0.72rem] font-semibold uppercase tracking-[0.04em] text-muted">
             {group.label}
           </div>
+          {LOCK_GROUPS.includes(group.label) ? (
+            <p className="pb-1 text-[0.78rem] text-muted">{text.lockHint}</p>
+          ) : null}
           {group.features.map((feature) => {
             const own = flags[feature.key] ?? feature.user;
             const allowed = allowedOf(feature);
             const isReduced = reduced(feature, own);
+
+            // A lock: Open or Locked for this person.
+            if (LOCK_GROUPS.includes(feature.group)) {
+              const roleOpen = feature.role.view;
+              const open = own.view;
+              return (
+                <div
+                  key={feature.key}
+                  className="flex items-center justify-between gap-3 border-t border-divider py-2.5 text-[0.9rem]"
+                >
+                  <div>
+                    <strong className="font-semibold">{feature.label}</strong>
+                    {roleOpen && !open ? (
+                      <div className="text-[0.76rem] text-muted">
+                        {text.roleGives}: {text.lockOpen}
+                      </div>
+                    ) : null}
+                  </div>
+                  {roleOpen ? (
+                    <button
+                      type="button"
+                      aria-pressed={!open}
+                      aria-label={feature.label}
+                      onClick={() => change(feature, "view", !open)}
+                      className={`inline-flex min-h-[38px] min-w-[104px] flex-none items-center justify-center gap-1.5 rounded-[9px] border px-2.5 text-[0.84rem] ${
+                        open
+                          ? "border-transparent bg-success-bg font-semibold text-success"
+                          : "border-border-soft bg-surface text-muted"
+                      }`}
+                    >
+                      {open ? null : (
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          aria-hidden="true"
+                          className="h-3.5 w-3.5"
+                        >
+                          <rect x="5" y="11" width="14" height="9" rx="2" />
+                          <path d="M8 11V8a4 4 0 118 0v3" />
+                        </svg>
+                      )}
+                      {open ? text.lockOpen : text.lockLocked}
+                    </button>
+                  ) : (
+                    <span className="text-[0.8rem] text-muted">{text.lockedRole}</span>
+                  )}
+                </div>
+              );
+            }
+
             return (
               <div
                 key={feature.key}

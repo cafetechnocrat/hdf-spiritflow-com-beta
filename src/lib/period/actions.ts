@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/auth/current-user";
-import { canEdit, canView } from "@/lib/auth/permissions";
+import { canEdit, canView, canViewAnyReport } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
 import { loadPeriod } from "./queries";
 
@@ -20,7 +20,7 @@ export async function setFinancialYear(startYear: number): Promise<PeriodResult>
   if (
     !me ||
     me.mustChangePassword ||
-    !(canView(me, "reports") || canEdit(me, "transactions"))
+    !(canViewAnyReport(me) || canView(me, "dashboard") || canEdit(me, "transactions"))
   ) {
     return { error: text.notAllowed };
   }

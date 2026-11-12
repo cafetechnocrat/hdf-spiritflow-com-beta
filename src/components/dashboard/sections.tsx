@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import type { ReactNode } from "react";
 import { canEdit, canView } from "@/lib/auth/permissions";
 import type { CurrentUser } from "@/lib/auth/current-user";
@@ -23,7 +24,16 @@ import {
 } from "@/lib/dashboard/queries";
 import { displayDate } from "@/lib/reports/dates";
 import { MonthlyChart } from "./monthly-chart";
-import { DeltaPill, Icon, KpiCard, Panel, PanelHeader, SectionError } from "./ui";
+import {
+  DeltaPill,
+  Icon,
+  KpiCard,
+  LockedCard,
+  Panel,
+  PanelHeader,
+  SectionError,
+  SectionSkeleton,
+} from "./ui";
 
 const ZERO = BigInt(0);
 
@@ -32,8 +42,8 @@ const text = {
   vsLastYear: "against the same period last year",
   sales: "Sales",
   purchases: "Purchases",
-  netProfit: "Net Profit",
-  netLoss: "Net Loss",
+  grossProfit: "Gross Profit",
+  grossLoss: "Gross Loss",
   cashBank: "Cash And Bank",
   accounts: (count: number) => `${count} ${count === 1 ? "account" : "accounts"}`,
   asOn: "as on",
@@ -115,117 +125,198 @@ function Amount({ paise, side }: { paise: bigint; side?: string }) {
 }
 
 // ---------------------------------------------------------------------------
-// Headline cards
+// Headline cards. Each card has its own lock and loads on its own.
 
-export async function HeadlineSection({ range }: { range: DashboardRange }) {
+type CardProps = { user: CurrentUser; range: DashboardRange };
+
+async function SalesCard({ user, range }: CardProps) {
+  if (!canView(user, "dash_sales")) return <LockedCard name={text.sales} />;
   const loaded = await Promise.all([
-    loadRegisterMonthly("sales", range.from, range.to),
-    loadRegisterMonthly("sales", range.prevFrom, range.prevTo),
-    loadRegisterMonthly("purchase", range.from, range.to),
-    loadRegisterMonthly("purchase", range.prevFrom, range.prevTo),
-    loadMonthly(range.from, range.to),
-    loadMonthly(range.prevFrom, range.prevTo),
-    loadPositions(range.to),
+    loadRegisterMonthly("dash_sales", "sales", range.from, range.to),
+    loadRegisterMonthly("dash_sales", "sales", range.prevFrom, range.prevTo),
   ]).catch(() => null);
-  if (!loaded) return <SectionError title={text.failedTitle} />;
-  const [salesNow, salesPrev, buyNow, buyPrev, monthNow, monthPrev, positions] = loaded;
+  if (!loaded) return <SectionError title={text.sales} />;
+  const [now, prev] = loaded;
+  return (
+    <KpiCard
+      name={text.sales}
+      icon="M3 17l6-6 4 4 8-9M15 6h6v6"
+      iconBackground="#E9EDF8"
+      iconColor={PALETTE.blue}
+      value={<Amount paise={totalOf(now)} />}
+      footer={
+        <DeltaPill
+          current={totalOf(now)}
+          previous={totalOf(prev)}
+          goodWhen="up"
+          label={text.vsLastYear}
+        />
+      }
+      spark={byMonth(now, range.months).map(rupees)}
+      sparkColor={PALETTE.blue}
+    />
+  );
+}
 
-  const profit = (rows: typeof monthNow) =>
+async function PurchasesCard({ user, range }: CardProps) {
+  if (!canView(user, "dash_purchases")) return <LockedCard name={text.purchases} />;
+  const loaded = await Promise.all([
+    loadRegisterMonthly("dash_purchases", "purchase", range.from, range.to),
+    loadRegisterMonthly("dash_purchases", "purchase", range.prevFrom, range.prevTo),
+  ]).catch(() => null);
+  if (!loaded) return <SectionError title={text.purchases} />;
+  const [now, prev] = loaded;
+  return (
+    <KpiCard
+      name={text.purchases}
+      icon="M3 4h2l2 11h11l2-8H6M9 20h.01M17 20h.01"
+      iconBackground="#FDF1D9"
+      iconColor="#A46A00"
+      value={<Amount paise={totalOf(now)} />}
+      footer={
+        <DeltaPill
+          current={totalOf(now)}
+          previous={totalOf(prev)}
+          goodWhen="down"
+          label={text.vsLastYear}
+        />
+      }
+      spark={byMonth(now, range.months).map(rupees)}
+      sparkColor={PALETTE.orange}
+    />
+  );
+}
+
+// Gross profit is trading income minus trading expenses, the same figure as on
+// the Profit And Loss report.
+async function GrossProfitCard({ user, range }: CardProps) {
+  if (!canView(user, "dash_gross_profit")) return <LockedCard name={text.grossProfit} />;
+  const loaded = await Promise.all([
+    loadMonthly("dash_gross_profit", range.from, range.to, true),
+    loadMonthly("dash_gross_profit", range.prevFrom, range.prevTo, true),
+  ]).catch(() => null);
+  if (!loaded) return <SectionError title={text.grossProfit} />;
+  const [now, prev] = loaded;
+
+  const profit = (rows: typeof now) =>
     sumPaise(rows.map((r) => r.income)) - sumPaise(rows.map((r) => r.expense));
-  const netNow = profit(monthNow);
-  const netPrev = profit(monthPrev);
-
-  const cash = positions.filter((p) => p.kind === "cash_bank");
-  const cashNet = sumPaise(cash.map((p) => p.net));
-  const cashSide = cashNet > ZERO ? "Dr" : cashNet < ZERO ? "Cr" : "";
-
+  const grossNow = profit(now);
   const monthlyProfit = range.months.map((month) => {
-    const row = monthNow.find((r) => r.month === month);
+    const row = now.find((r) => r.month === month);
     return row ? rupees(row.income - row.expense) : 0;
   });
 
   return (
+    <KpiCard
+      name={grossNow < ZERO ? text.grossLoss : text.grossProfit}
+      icon="M12 3v18M16.5 7.5c0-1.9-2-3-4.5-3s-4.5 1.2-4.5 3 2 2.7 4.5 3.3 4.5 1.4 4.5 3.2-2 3-4.5 3-4.5-1.2-4.5-3"
+      iconBackground="#E3F4EE"
+      iconColor={PALETTE.green}
+      value={<Amount paise={grossNow < ZERO ? -grossNow : grossNow} />}
+      footer={
+        <DeltaPill
+          current={grossNow}
+          previous={profit(prev)}
+          goodWhen="up"
+          label={text.vsLastYear}
+        />
+      }
+      spark={monthlyProfit}
+      sparkColor={PALETTE.green}
+    />
+  );
+}
+
+async function CashBankCard({ user, range }: CardProps) {
+  if (!canView(user, "dash_cash_bank")) return <LockedCard name={text.cashBank} />;
+  const cash = await loadPositions("dash_cash_bank", "cash_bank", range.to).catch(() => null);
+  if (!cash) return <SectionError title={text.cashBank} />;
+  const cashNet = sumPaise(cash.map((p) => p.net));
+  const cashSide = cashNet > ZERO ? "Dr" : cashNet < ZERO ? "Cr" : "";
+  return (
+    <KpiCard
+      name={text.cashBank}
+      icon="M3 9a3 3 0 013-3h12a3 3 0 013 3v6a3 3 0 01-3 3H6a3 3 0 01-3-3zM12 9.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5z"
+      iconBackground="#EAF0F8"
+      iconColor="#102A6B"
+      value={<Amount paise={cashNet < ZERO ? -cashNet : cashNet} side={cashSide} />}
+      footer={
+        <>
+          <span className="rounded-full bg-track px-2 py-0.5 text-[0.74rem] font-semibold">
+            {text.accounts(cash.length)}
+          </span>
+          {text.asOn} {displayDate(range.to)}
+        </>
+      }
+      sparkColor={PALETTE.sky}
+    />
+  );
+}
+
+export function HeadlineSection({ user, range }: CardProps) {
+  const fallback = <SectionSkeleton height="h-44" />;
+  return (
     <div className="grid grid-cols-2 gap-3.5 min-[1100px]:grid-cols-4">
-      <KpiCard
-        name={text.sales}
-        icon="M3 17l6-6 4 4 8-9M15 6h6v6"
-        iconBackground="#E9EDF8"
-        iconColor={PALETTE.blue}
-        value={<Amount paise={totalOf(salesNow)} />}
-        footer={
-          <DeltaPill
-            current={totalOf(salesNow)}
-            previous={totalOf(salesPrev)}
-            goodWhen="up"
-            label={text.vsLastYear}
-          />
-        }
-        spark={byMonth(salesNow, range.months).map(rupees)}
-        sparkColor={PALETTE.blue}
-      />
-      <KpiCard
-        name={text.purchases}
-        icon="M3 4h2l2 11h11l2-8H6M9 20h.01M17 20h.01"
-        iconBackground="#FDF1D9"
-        iconColor="#A46A00"
-        value={<Amount paise={totalOf(buyNow)} />}
-        footer={
-          <DeltaPill
-            current={totalOf(buyNow)}
-            previous={totalOf(buyPrev)}
-            goodWhen="down"
-            label={text.vsLastYear}
-          />
-        }
-        spark={byMonth(buyNow, range.months).map(rupees)}
-        sparkColor={PALETTE.orange}
-      />
-      <KpiCard
-        name={netNow < ZERO ? text.netLoss : text.netProfit}
-        icon="M12 3v18M16.5 7.5c0-1.9-2-3-4.5-3s-4.5 1.2-4.5 3 2 2.7 4.5 3.3 4.5 1.4 4.5 3.2-2 3-4.5 3-4.5-1.2-4.5-3"
-        iconBackground="#E3F4EE"
-        iconColor={PALETTE.green}
-        value={<Amount paise={netNow < ZERO ? -netNow : netNow} />}
-        footer={
-          <DeltaPill current={netNow} previous={netPrev} goodWhen="up" label={text.vsLastYear} />
-        }
-        spark={monthlyProfit}
-        sparkColor={PALETTE.green}
-      />
-      <KpiCard
-        name={text.cashBank}
-        icon="M3 9a3 3 0 013-3h12a3 3 0 013 3v6a3 3 0 01-3 3H6a3 3 0 01-3-3zM12 9.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5z"
-        iconBackground="#EAF0F8"
-        iconColor="#102A6B"
-        value={<Amount paise={cashNet < ZERO ? -cashNet : cashNet} side={cashSide} />}
-        footer={
-          <>
-            <span className="rounded-full bg-track px-2 py-0.5 text-[0.74rem] font-semibold">
-              {text.accounts(cash.length)}
-            </span>
-            {text.asOn} {displayDate(range.to)}
-          </>
-        }
-        sparkColor={PALETTE.sky}
-      />
+      <Suspense fallback={fallback}>
+        <SalesCard user={user} range={range} />
+      </Suspense>
+      <Suspense fallback={fallback}>
+        <PurchasesCard user={user} range={range} />
+      </Suspense>
+      <Suspense fallback={fallback}>
+        <GrossProfitCard user={user} range={range} />
+      </Suspense>
+      <Suspense fallback={fallback}>
+        <CashBankCard user={user} range={range} />
+      </Suspense>
     </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Monthly trends
+// Monthly trends. The two charts have their own locks.
 
-export async function TrendsSection({ range }: { range: DashboardRange }) {
-  const loaded = await Promise.all([
-    loadMonthly(range.from, range.to),
-    loadRegisterMonthly("sales", range.from, range.to),
-  ]).catch(() => null);
-  if (!loaded) return <SectionError title={text.trendsFailed} />;
-  const [monthly, sales] = loaded;
+async function IncomeExpensesChart({ user, range }: CardProps) {
+  if (!canView(user, "dash_income_expenses")) {
+    return <LockedCard name={text.incomeExpenses} subtitle={text.incomeExpensesSub} />;
+  }
+  const monthly = await loadMonthly("dash_income_expenses", range.from, range.to, false).catch(
+    () => null,
+  );
+  if (!monthly) return <SectionError title={text.incomeExpenses} />;
   const labels = range.months.map(monthLabel);
-
   const incomeBy = range.months.map((m) => monthly.find((r) => r.month === m)?.income ?? ZERO);
   const expenseBy = range.months.map((m) => monthly.find((r) => r.month === m)?.expense ?? ZERO);
+  const period = `${monthLabel(range.months[0])} to ${monthLabel(range.months[range.months.length - 1])}`;
+  return (
+    <MonthlyChart
+      title={text.incomeExpenses}
+      subtitle={`${text.incomeExpensesSub}. ${period}`}
+      months={labels}
+      stacked={false}
+      series={[
+        { name: text.income, color: PALETTE.blue, values: incomeBy.map(lakhs) },
+        { name: text.expenses, color: PALETTE.orange, values: expenseBy.map(lakhs) },
+      ]}
+      tableHead={[text.month, text.income, text.expenses]}
+      tableRows={labels.map((label, i) => [label, formatPaise(incomeBy[i]), formatPaise(expenseBy[i])])}
+      describe={`${text.incomeExpenses}, ${period}. The table view lists the exact amounts.`}
+    />
+  );
+}
+
+async function SalesByMonthChart({ user, range }: CardProps) {
+  if (!canView(user, "dash_sales_by_month")) {
+    return <LockedCard name={text.salesByMonth} subtitle={text.salesByMonthSub} />;
+  }
+  const sales = await loadRegisterMonthly(
+    "dash_sales_by_month",
+    "sales",
+    range.from,
+    range.to,
+  ).catch(() => null);
+  if (!sales) return <SectionError title={text.salesByMonth} />;
+  const labels = range.months.map(monthLabel);
 
   // The biggest sales ledgers get their own colour. The rest are grouped.
   const totals = new Map<string, { name: string; total: bigint }>();
@@ -255,38 +346,35 @@ export async function TrendsSection({ range }: { range: DashboardRange }) {
       ),
     });
   }
-
   const period = `${monthLabel(range.months[0])} to ${monthLabel(range.months[range.months.length - 1])}`;
+  return (
+    <MonthlyChart
+      title={text.salesByMonth}
+      subtitle={`${text.salesByMonthSub}. ${period}`}
+      months={labels}
+      stacked
+      series={salesSeries.map((s) => ({ name: s.name, color: s.color, values: s.amounts.map(lakhs) }))}
+      tableHead={[text.month, ...salesSeries.map((s) => s.name), text.total]}
+      tableRows={labels.map((label, i) => [
+        label,
+        ...salesSeries.map((s) => formatPaise(s.amounts[i])),
+        formatPaise(sumPaise(salesSeries.map((s) => s.amounts[i]))),
+      ])}
+      describe={`${text.salesByMonth}, ${period}. The table view lists the exact amounts.`}
+    />
+  );
+}
 
+export function TrendsSection({ user, range }: CardProps) {
+  const fallback = <SectionSkeleton height="h-80" />;
   return (
     <div className="grid gap-3.5 min-[1100px]:grid-cols-2">
-      <MonthlyChart
-        title={text.incomeExpenses}
-        subtitle={`${text.incomeExpensesSub}. ${period}`}
-        months={labels}
-        stacked={false}
-        series={[
-          { name: text.income, color: PALETTE.blue, values: incomeBy.map(lakhs) },
-          { name: text.expenses, color: PALETTE.orange, values: expenseBy.map(lakhs) },
-        ]}
-        tableHead={[text.month, text.income, text.expenses]}
-        tableRows={labels.map((label, i) => [label, formatPaise(incomeBy[i]), formatPaise(expenseBy[i])])}
-        describe={`${text.incomeExpenses}, ${period}. The table view lists the exact amounts.`}
-      />
-      <MonthlyChart
-        title={text.salesByMonth}
-        subtitle={`${text.salesByMonthSub}. ${period}`}
-        months={labels}
-        stacked
-        series={salesSeries.map((s) => ({ name: s.name, color: s.color, values: s.amounts.map(lakhs) }))}
-        tableHead={[text.month, ...salesSeries.map((s) => s.name), text.total]}
-        tableRows={labels.map((label, i) => [
-          label,
-          ...salesSeries.map((s) => formatPaise(s.amounts[i])),
-          formatPaise(sumPaise(salesSeries.map((s) => s.amounts[i]))),
-        ])}
-        describe={`${text.salesByMonth}, ${period}. The table view lists the exact amounts.`}
-      />
+      <Suspense fallback={fallback}>
+        <IncomeExpensesChart user={user} range={range} />
+      </Suspense>
+      <Suspense fallback={fallback}>
+        <SalesByMonthChart user={user} range={range} />
+      </Suspense>
     </div>
   );
 }
@@ -309,7 +397,7 @@ function BalanceBar({
     <div className="grid gap-[5px]">
       <div className="flex justify-between gap-2 text-[0.88rem]">
         <span className="min-w-0 truncate">{name}</span>
-        <span className="font-semibold tabular-nums">{formatBalance(net)}</span>
+        <span className="font-semibold tabular-nums">&#8377;{formatBalance(net)}</span>
       </div>
       <div className="h-[7px] overflow-hidden rounded-full bg-track" role="presentation">
         <div className="h-full rounded-full" style={{ width: `${Math.max(2, share)}%`, background: color }} />
@@ -337,72 +425,105 @@ function shareOf(net: bigint, total: bigint): number {
   return whole === ZERO ? 0 : Number((absolute * BigInt(100)) / whole);
 }
 
-export async function PositionsSection({ range, canStatement }: { range: DashboardRange; canStatement: boolean }) {
-  const loaded = await loadPositions(range.to).catch(() => null);
-  if (!loaded) return <SectionError title={text.positionsFailed} />;
-  const positions = loaded;
-  const cash = positions.filter((p) => p.kind === "cash_bank");
-  const receivable = positions.filter((p) => p.kind === "receivable");
-  const payable = positions.filter((p) => p.kind === "payable");
+const absSum = (rows: PositionRow[]) => sumPaise(rows.map((r) => (r.net < ZERO ? -r.net : r.net)));
+const totalNet = (rows: PositionRow[]) => sumPaise(rows.map((r) => r.net));
 
-  const absSum = (rows: PositionRow[]) => sumPaise(rows.map((r) => (r.net < ZERO ? -r.net : r.net)));
-  const total = (rows: PositionRow[]) => sumPaise(rows.map((r) => r.net));
+function PositionSummary({ rows, color }: { rows: PositionRow[]; color: string }) {
+  const sum = totalNet(rows);
+  const base = absSum(rows);
+  return (
+    <>
+      <div className="mb-3 mt-1 text-[1.5rem] font-bold tracking-[-0.025em] tabular-nums">
+        <span className="mr-0.5 text-[1rem] font-medium text-muted">&#8377;</span>
+        {formatBalance(sum)}
+      </div>
+      <div className="grid gap-3">
+        {topBalances(rows, 3).map((row) => (
+          <BalanceBar key={row.name} name={row.name} net={row.net} share={shareOf(row.net, base)} color={color} />
+        ))}
+      </div>
+    </>
+  );
+}
 
-  const summary = (rows: PositionRow[], color: string) => {
-    const sum = total(rows);
-    const base = absSum(rows);
-    return (
-      <>
-        <div className="mb-3 mt-1 text-[1.5rem] font-bold tracking-[-0.025em] tabular-nums">
-          <span className="mr-0.5 text-[1rem] font-medium text-muted">&#8377;</span>
-          {formatBalance(sum)}
-        </div>
+const emptyPosition = <p className="text-[0.86rem] text-muted">{text.nothingYet}</p>;
+
+async function CashBankPanel({ user, range }: CardProps) {
+  if (!canView(user, "dash_cash_bank_balances")) {
+    return <LockedCard name={text.cashBank} subtitle={text.cashBankSub} />;
+  }
+  const cash = await loadPositions("dash_cash_bank_balances", "cash_bank", range.to).catch(() => null);
+  if (!cash) return <SectionError title={text.cashBank} />;
+  return (
+    <Panel label={text.cashBank}>
+      <PanelHeader title={text.cashBank} subtitle={text.cashBankSub} />
+      {cash.length === 0 ? (
+        emptyPosition
+      ) : (
         <div className="grid gap-3">
-          {topBalances(rows, 3).map((row) => (
-            <BalanceBar key={row.name} name={row.name} net={row.net} share={shareOf(row.net, base)} color={color} />
+          {cash.map((row, index) => (
+            <BalanceBar
+              key={row.ledgerId}
+              name={row.name}
+              net={row.net}
+              share={shareOf(row.net, absSum(cash))}
+              color={SERIES_COLORS[index % SERIES_COLORS.length]}
+            />
           ))}
         </div>
-      </>
-    );
-  };
+      )}
+      {canView(user, "report_ledger_statement") ? (
+        <div className="mt-3 text-[0.8rem]">
+          <Link href="/reports/ledger-statement" className="text-link hover:underline">
+            {text.openStatement}
+          </Link>
+        </div>
+      ) : null}
+    </Panel>
+  );
+}
 
-  const empty = <p className="text-[0.86rem] text-muted">{text.nothingYet}</p>;
+async function ReceivablesPanel({ user, range }: CardProps) {
+  if (!canView(user, "dash_receivables")) {
+    return <LockedCard name={text.receivables} subtitle={text.receivablesSub} />;
+  }
+  const rows = await loadPositions("dash_receivables", "receivable", range.to).catch(() => null);
+  if (!rows) return <SectionError title={text.receivables} />;
+  return (
+    <Panel label={text.receivables}>
+      <PanelHeader title={text.receivables} subtitle={text.receivablesSub} />
+      {rows.length === 0 ? emptyPosition : <PositionSummary rows={rows} color={PALETTE.green} />}
+    </Panel>
+  );
+}
 
+async function PayablesPanel({ user, range }: CardProps) {
+  if (!canView(user, "dash_payables")) {
+    return <LockedCard name={text.payables} subtitle={text.payablesSub} />;
+  }
+  const rows = await loadPositions("dash_payables", "payable", range.to).catch(() => null);
+  if (!rows) return <SectionError title={text.payables} />;
+  return (
+    <Panel label={text.payables}>
+      <PanelHeader title={text.payables} subtitle={text.payablesSub} />
+      {rows.length === 0 ? emptyPosition : <PositionSummary rows={rows} color={PALETTE.vermilion} />}
+    </Panel>
+  );
+}
+
+export function PositionsSection({ user, range }: CardProps) {
+  const fallback = <SectionSkeleton height="h-56" />;
   return (
     <div className="grid gap-3.5 min-[900px]:grid-cols-3">
-      <Panel label={text.cashBank}>
-        <PanelHeader title={text.cashBank} subtitle={text.cashBankSub} />
-        {cash.length === 0 ? (
-          empty
-        ) : (
-          <div className="grid gap-3">
-            {cash.map((row, index) => (
-              <BalanceBar
-                key={row.ledgerId}
-                name={row.name}
-                net={row.net}
-                share={shareOf(row.net, absSum(cash))}
-                color={SERIES_COLORS[index % SERIES_COLORS.length]}
-              />
-            ))}
-          </div>
-        )}
-        {canStatement ? (
-          <div className="mt-3 text-[0.8rem]">
-            <Link href="/reports/ledger-statement" className="text-link hover:underline">
-              {text.openStatement}
-            </Link>
-          </div>
-        ) : null}
-      </Panel>
-      <Panel label={text.receivables}>
-        <PanelHeader title={text.receivables} subtitle={text.receivablesSub} />
-        {receivable.length === 0 ? empty : summary(receivable, PALETTE.green)}
-      </Panel>
-      <Panel label={text.payables}>
-        <PanelHeader title={text.payables} subtitle={text.payablesSub} />
-        {payable.length === 0 ? empty : summary(payable, PALETTE.vermilion)}
-      </Panel>
+      <Suspense fallback={fallback}>
+        <CashBankPanel user={user} range={range} />
+      </Suspense>
+      <Suspense fallback={fallback}>
+        <ReceivablesPanel user={user} range={range} />
+      </Suspense>
+      <Suspense fallback={fallback}>
+        <PayablesPanel user={user} range={range} />
+      </Suspense>
     </div>
   );
 }
@@ -452,10 +573,16 @@ function QuickLink({ href, icon, children }: { href: string; icon: string; child
 }
 
 export async function ActivitySection({ user, range }: { user: CurrentUser; range: DashboardRange }) {
-  const seeTransactions = canView(user, "transactions");
-  const seeReports = canView(user, "reports");
-
   const latest = async (): Promise<ReactNode> => {
+    if (!canView(user, "dash_latest_vouchers")) {
+      return (
+        <LockedCard
+          name={text.latest}
+          subtitle={text.latestSub}
+          className="min-[1100px]:col-span-2"
+        />
+      );
+    }
     const loaded = await loadLatestVouchers().catch(() => null);
     if (!loaded) return <SectionError title={text.latest} />;
     const rows = loaded;
@@ -489,7 +616,7 @@ export async function ActivitySection({ user, range }: { user: CurrentUser; rang
                 <div className="order-3 text-muted sm:order-none">{displayDate(row.date)}</div>
                 <div className="order-4 col-span-2 sm:order-none sm:col-span-1">{row.details}</div>
                 <div className="text-right font-semibold tabular-nums">
-                  {formatAmountText(row.totalText)}
+                  &#8377;{formatAmountText(row.totalText)}
                 </div>
               </li>
             ))}
@@ -500,30 +627,31 @@ export async function ActivitySection({ user, range }: { user: CurrentUser; rang
   };
 
   const books = async (): Promise<ReactNode> => {
-    const loaded = await loadBooksCheck(range.today, seeReports).catch(() => null);
+    if (!canView(user, "dash_books_check")) {
+      return <LockedCard name={text.books} subtitle={text.booksSub} />;
+    }
+    const loaded = await loadBooksCheck(range.today).catch(() => null);
     if (!loaded) return <SectionError title={text.books} />;
     const check = loaded;
     return (
       <Panel label={text.books}>
         <PanelHeader title={text.books} subtitle={text.booksSub} />
         <div className="grid gap-2.5">
-          {check.difference !== null ? (
-            check.difference === ZERO ? (
-              <Check
-                tone="ok"
-                icon="M5 12l4 4 10-10"
-                title={text.tbMatches}
-                detail={text.tbDetail(formatPaise(check.difference))}
-              />
-            ) : (
-              <Check
-                tone="warn"
-                icon="M12 8v5M12 17h.01"
-                title={text.tbDiffers}
-                detail={text.tbDetail(formatPaise(check.difference))}
-              />
-            )
-          ) : null}
+          {check.difference === ZERO ? (
+            <Check
+              tone="ok"
+              icon="M5 12l4 4 10-10"
+              title={text.tbMatches}
+              detail={text.tbDetail(`\u20B9${formatPaise(check.difference)}`)}
+            />
+          ) : (
+            <Check
+              tone="warn"
+              icon="M12 8v5M12 17h.01"
+              title={text.tbDiffers}
+              detail={text.tbDetail(`\u20B9${formatPaise(check.difference)}`)}
+            />
+          )}
           <Check
             tone="info"
             icon="M12 8v5M12 17h.01"
@@ -565,22 +693,29 @@ export async function ActivitySection({ user, range }: { user: CurrentUser; rang
     );
   };
 
-  const [latestNode, booksNode, systemNode] = await Promise.all([
-    seeTransactions ? latest() : null,
-    seeTransactions || seeReports ? books() : null,
-    system(),
-  ]);
+  const [latestNode, booksNode, systemNode] = await Promise.all([latest(), books(), system()]);
 
   const links: { href: string; icon: string; label: string }[] = [];
   if (canEdit(user, "transactions")) {
     links.push({ href: "/transactions", icon: "M12 5v14M5 12h14", label: text.newVoucher });
   }
-  if (seeReports) {
-    links.push(
-      { href: "/reports/day-book", icon: "M5 4h11a3 3 0 013 3v13H8a3 3 0 01-3-3V4zM5 17a3 3 0 013-3h11", label: text.dayBook },
-      { href: "/reports/trial-balance", icon: "M4 20V10M10 20V4M16 20v-7M22 20H2", label: text.trialBalance },
-      { href: "/reports/profit-loss", icon: "M3 17l6-6 4 4 8-9", label: text.profitLoss },
-    );
+  // Each report link shows only when that report is open for the person.
+  if (canView(user, "report_day_book")) {
+    links.push({
+      href: "/reports/day-book",
+      icon: "M5 4h11a3 3 0 013 3v13H8a3 3 0 01-3-3V4zM5 17a3 3 0 013-3h11",
+      label: text.dayBook,
+    });
+  }
+  if (canView(user, "report_trial_balance")) {
+    links.push({
+      href: "/reports/trial-balance",
+      icon: "M4 20V10M10 20V4M16 20v-7M22 20H2",
+      label: text.trialBalance,
+    });
+  }
+  if (canView(user, "report_profit_loss")) {
+    links.push({ href: "/reports/profit-loss", icon: "M3 17l6-6 4 4 8-9", label: text.profitLoss });
   }
 
   return (

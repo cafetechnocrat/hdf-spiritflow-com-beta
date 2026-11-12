@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 import { AppShell } from "@/components/app-shell";
 import { NoAccess } from "@/components/no-access";
 import { getCurrentUser } from "@/lib/auth/current-user";
-import { canEdit, canView } from "@/lib/auth/permissions";
+import { canEdit, canView, canViewAnyReport } from "@/lib/auth/permissions";
 import { buildMenu } from "@/lib/nav/menu";
 import { MENU_COOKIE } from "@/lib/nav/menu-cookie";
 import { loadPeriod } from "@/lib/period/queries";
@@ -35,7 +35,7 @@ async function Shell({ children }: { children: ReactNode }) {
 
   // Roles that see the accounts pick the financial year in the top bar.
   const period =
-    canView(user, "reports") || canEdit(user, "transactions")
+    canViewAnyReport(user) || canView(user, "dashboard") || canEdit(user, "transactions")
       ? await loadPeriod(user.id)
       : null;
 

@@ -6,6 +6,7 @@ import {
   parseSignedPaise,
   sumPaise,
 } from "@/lib/format/money";
+import { REPORT_FEATURES, type ReportFeature } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
 import { addDays, displayDate } from "./dates";
 import type { ReportParams } from "./params";
@@ -78,6 +79,11 @@ function kpi(label: string, value: string, sub?: string): DocKpi {
   return { label, value, sub };
 }
 
+// A card that shows an amount. The screen puts the rupee symbol in front of it.
+function kpiMoney(label: string, value: string, sub?: string): DocKpi {
+  return { label, value, sub, money: true };
+}
+
 export function generatedAtNow(): string {
   const parts = new Intl.DateTimeFormat("en-GB", {
     timeZone: "Asia/Kolkata",
@@ -121,12 +127,12 @@ function baseDocument(
 // ---------------------------------------------------------------------------
 // Data from the database
 
-async function loadChart(supabase: Supabase): Promise<Chart> {
+// Reads go through functions that check the lock of the report that asks, so a
+// locked person gets nothing back even if they call the database directly.
+async function loadChart(supabase: Supabase, feature: ReportFeature): Promise<Chart> {
   const [groupsResult, ledgersResult] = await Promise.all([
-    supabase
-      .from("ledger_groups")
-      .select("id, name, parent_id, nature, sort_order, pl_section, register_kind"),
-    supabase.from("ledgers").select("id, name, group_id").order("name"),
+    supabase.rpc("report_chart_groups", { p_feature: feature }),
+    supabase.rpc("report_chart_ledgers", { p_feature: feature }),
   ]);
   if (groupsResult.error || ledgersResult.error) throw new Error("chart");
 
@@ -160,11 +166,13 @@ async function loadChart(supabase: Supabase): Promise<Chart> {
 // Debit minus credit per ledger, in paise. Positive is debit.
 async function loadNets(
   supabase: Supabase,
+  feature: ReportFeature,
   from: string | null,
   to: string | null,
   withOpening: boolean,
 ): Promise<Map<string, bigint>> {
   const { data, error } = await supabase.rpc("report_ledger_nets", {
+    p_feature: feature,
     p_from: from,
     p_to: to,
     p_with_opening: withOpening,
@@ -192,17 +200,21 @@ export async function loadReportContext(generatedBy: string): Promise<ReportCont
 }
 
 // The lists the filter bars need, all from the database.
-export async function loadFilterOptions(): Promise<{
+export async function loadFilterOptions(feature: ReportFeature): Promise<{
   ledgers: FilterOption[];
   types: FilterOption[];
 }> {
   const supabase = await createClient();
-  const [chart, typesResult] = await Promise.all([
-    loadChart(supabase),
-    supabase.from("voucher_types").select("id, name").order("sort_order").order("name"),
+  const [ledgersResult, typesResult] = await Promise.all([
+    supabase.rpc("report_chart_ledgers", { p_feature: feature }),
+    supabase.rpc("report_voucher_types", { p_feature: feature }),
   ]);
+  if (ledgersResult.error) throw new Error("ledgers");
   return {
-    ledgers: chart.ledgers.map((l) => ({ value: l.id, label: l.name })),
+    ledgers: ((ledgersResult.data ?? []) as LedgerRec[]).map((l) => ({
+      value: l.id,
+      label: l.name,
+    })),
     types: ((typesResult.data ?? []) as { id: string; name: string }[]).map((t) => ({
       value: t.id,
       label: t.name,
@@ -232,25 +244,14 @@ async function buildDayBook(
   ctx: ReportContext,
   names: { ledger: string; type: string },
 ): Promise<ReportDocument> {
-  let query = supabase
-    .from("day_book_rows")
-    .select(
-      "voucher_id, voucher_date, type_name, reference_no, reference, narration, status, debit_name, credit_name, amount_text",
-    )
-    .gte("voucher_date", params.from)
-    .lte("voucher_date", params.to);
-  if (!params.showVoid) query = query.eq("status", "posted");
-  if (params.typeId) query = query.eq("voucher_type_id", params.typeId);
-  if (params.ledgerId) {
-    query = query.or(
-      `debit_ledger_id.eq.${params.ledgerId},credit_ledger_id.eq.${params.ledgerId}`,
-    );
-  }
-  const { data, error } = await query
-    .order("voucher_date")
-    .order("created_at")
-    .order("line_no")
-    .limit(DAY_BOOK_LIMIT + 1);
+  const { data, error } = await supabase.rpc("report_day_book", {
+    p_from: params.from,
+    p_to: params.to,
+    p_type: params.typeId || null,
+    p_ledger: params.ledgerId || null,
+    p_show_void: params.showVoid,
+    p_limit: DAY_BOOK_LIMIT + 1,
+  });
   if (error) throw new Error("day book");
 
   const all = (data ?? []) as DayBookRecord[];
@@ -262,15 +263,12 @@ async function buildDayBook(
   if (params.showVoid) {
     voidLeftOut = new Set(records.filter((r) => r.status === "void").map((r) => r.voucher_id)).size;
   } else {
-    let voidQuery = supabase
-      .from("voucher_summaries")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "void")
-      .gte("voucher_date", params.from)
-      .lte("voucher_date", params.to);
-    if (params.typeId) voidQuery = voidQuery.eq("voucher_type_id", params.typeId);
-    const { count } = await voidQuery;
-    voidLeftOut = count ?? 0;
+    const { data: count } = await supabase.rpc("report_day_book_void_count", {
+      p_from: params.from,
+      p_to: params.to,
+      p_type: params.typeId || null,
+    });
+    voidLeftOut = typeof count === "number" ? count : 0;
   }
 
   const posted = records.filter((r) => r.status === "posted");
@@ -320,7 +318,7 @@ async function buildDayBook(
   );
   doc.kpis = [
     kpi("Vouchers", String(voucherCount), "Posted"),
-    kpi("Total Amount", formatPaise(total), "Debit equals credit"),
+    kpiMoney("Total Amount", formatPaise(total), "Debit equals credit"),
     kpi("Void Left Out", String(voidLeftOut), "Not counted"),
     kpi("Days", String(dayCount), "With entries"),
   ];
@@ -384,7 +382,7 @@ async function buildLedgerStatement(
   }
 
   const [openingNets, statement] = await Promise.all([
-    loadNets(supabase, null, addDays(params.from, -1), true),
+    loadNets(supabase, "report_ledger_statement", null, addDays(params.from, -1), true),
     supabase.rpc("report_ledger_statement", {
       p_ledger: ledger.id,
       p_from: params.from,
@@ -426,10 +424,10 @@ async function buildLedgerStatement(
   rows.push(row("total", blank, text("Closing Balance"), blank, blank, blank, text(formatBalance(running))));
 
   doc.kpis = [
-    kpi("Opening", formatBalance(opening), `On ${displayDate(params.from)}`),
-    kpi("Debit", formatPaise(debitTotal)),
-    kpi("Credit", formatPaise(creditTotal)),
-    kpi("Closing", formatBalance(running), `On ${displayDate(params.to)}`),
+    kpiMoney("Opening", formatBalance(opening), `On ${displayDate(params.from)}`),
+    kpiMoney("Debit", formatPaise(debitTotal)),
+    kpiMoney("Credit", formatPaise(creditTotal)),
+    kpiMoney("Closing", formatBalance(running), `On ${displayDate(params.to)}`),
   ];
   doc.tables = [
     {
@@ -645,8 +643,8 @@ async function buildRegister(
   );
   doc.kpis = [
     kpi("Vouchers", String(lines.length), "Posted"),
-    kpi("Gross Total", formatPaise(grand), "All columns"),
-    kpi("Highest Voucher", formatPaise(highest), highestTitle),
+    kpiMoney("Gross Total", formatPaise(grand), "All columns"),
+    kpiMoney("Highest Voucher", formatPaise(highest), highestTitle),
     kpi("Days", String(days), "With entries"),
   ];
   doc.tables = [
@@ -693,7 +691,7 @@ async function buildTrialBalance(
   params: ReportParams,
   ctx: ReportContext,
 ): Promise<ReportDocument> {
-  const nets = await loadNets(supabase, null, params.asOn, true);
+  const nets = await loadNets(supabase, "report_trial_balance", null, params.asOn, true);
 
   type Visit = { net: bigint; rows: DocRow[]; ledgers: number };
 
@@ -770,9 +768,9 @@ async function buildTrialBalance(
     `Ledgers with zero balance: ${params.showZero ? "shown" : "not shown"}.`,
   );
   doc.kpis = [
-    kpi("Total Debit", formatPaise(debitTotal)),
-    kpi("Total Credit", formatPaise(creditTotal)),
-    kpi("Difference", formatPaise(difference), difference === ZERO ? "Matches" : "Does not match"),
+    kpiMoney("Total Debit", formatPaise(debitTotal)),
+    kpiMoney("Total Credit", formatPaise(creditTotal)),
+    kpiMoney("Difference", formatPaise(difference), difference === ZERO ? "Matches" : "Does not match"),
     kpi("Ledgers", String(ledgerCount), params.showZero ? "Shown" : "With a balance"),
   ];
   doc.tables = [
@@ -810,7 +808,7 @@ async function buildProfitLoss(
   params: ReportParams,
   ctx: ReportContext,
 ): Promise<ReportDocument> {
-  const nets = await loadNets(supabase, params.from, params.to, false);
+  const nets = await loadNets(supabase, "report_profit_loss", params.from, params.to, false);
 
   const rows: DocRow[] = [];
   let anyLedger = false;
@@ -883,10 +881,10 @@ async function buildProfitLoss(
 
   const doc = baseDocument("profit-loss", ctx, range(params.from, params.to), "");
   doc.kpis = [
-    kpi("Income", formatPaise(income)),
-    kpi("Expenses", formatPaise(expense)),
-    kpi(gross < ZERO ? "Gross Loss" : "Gross Profit", formatPaise(gross < ZERO ? -gross : gross)),
-    kpi(net < ZERO ? "Net Loss" : "Net Profit", formatPaise(net < ZERO ? -net : net)),
+    kpiMoney("Income", formatPaise(income)),
+    kpiMoney("Expenses", formatPaise(expense)),
+    kpiMoney(gross < ZERO ? "Gross Loss" : "Gross Profit", formatPaise(gross < ZERO ? -gross : gross)),
+    kpiMoney(net < ZERO ? "Net Loss" : "Net Profit", formatPaise(net < ZERO ? -net : net)),
   ];
   doc.tables = [
     {
@@ -918,8 +916,8 @@ async function buildBalanceSheet(
   ctx: ReportContext,
 ): Promise<ReportDocument> {
   const [nets, profitNets] = await Promise.all([
-    loadNets(supabase, null, params.asOn, true),
-    loadNets(supabase, null, params.asOn, false),
+    loadNets(supabase, "report_balance_sheet", null, params.asOn, true),
+    loadNets(supabase, "report_balance_sheet", null, params.asOn, false),
   ]);
 
   // The cumulative profit of every income and expense ledger up to the date.
@@ -1012,14 +1010,14 @@ async function buildBalanceSheet(
 
   const doc = baseDocument("balance-sheet", ctx, `As on ${displayDate(params.asOn)}`, "");
   doc.kpis = [
-    kpi("Total Liabilities", formatPaise(liabilities.total)),
-    kpi("Total Assets", formatPaise(assets.total)),
-    kpi(
+    kpiMoney("Total Liabilities", formatPaise(liabilities.total)),
+    kpiMoney("Total Assets", formatPaise(assets.total)),
+    kpiMoney(
       profit < ZERO ? "Loss Carried In" : "Profit Carried In",
       formatPaise(profit < ZERO ? -profit : profit),
       "Cumulative",
     ),
-    kpi("Difference", formatPaise(difference), difference === ZERO ? "Balanced" : "Does not balance"),
+    kpiMoney("Difference", formatPaise(difference), difference === ZERO ? "Balanced" : "Does not balance"),
   ];
   const columns = (label: string) => [
     { label, align: "left" as const },
@@ -1057,15 +1055,17 @@ export async function buildReport(
 ): Promise<ReportDocument> {
   const supabase = await createClient();
 
+  const feature = REPORT_FEATURES[key];
+
   if (key === "day-book") {
-    const options = await loadFilterOptions();
+    const options = await loadFilterOptions(feature);
     return buildDayBook(supabase, params, ctx, {
       ledger: options.ledgers.find((l) => l.value === params.ledgerId)?.label ?? "",
       type: options.types.find((t) => t.value === params.typeId)?.label ?? "",
     });
   }
 
-  const chart = await loadChart(supabase);
+  const chart = await loadChart(supabase, feature);
   switch (key) {
     case "ledger-statement":
       return buildLedgerStatement(supabase, chart, params, ctx);
