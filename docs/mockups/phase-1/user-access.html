@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spirit Flow</title>
+<link rel="icon" type="image/png" href="../../../src/app/icon.png">
+<link rel="stylesheet" href="shared.css">
+<style>
+  .wrap { max-width: 720px; }
+  .section { padding: 18px 18px 8px; border-bottom: 1px solid var(--divider); }
+  .section:last-child { border-bottom: 0; }
+  .section h2 { font-size: 1rem; font-weight: 600; letter-spacing: -.01em; margin-bottom: 4px; }
+  .section .sub { color: var(--text-muted); font-size: .84rem; margin-bottom: 12px; }
+  .note { padding: 10px 12px; margin: 0 0 12px; border-radius: 12px; background: var(--accent-soft); color: var(--link); font-size: .84rem; }
+  .tag { display: inline-flex; align-items: center; padding: 2px 9px; border-radius: 999px; background: var(--warn-bg); color: var(--warn); font-size: .72rem; font-weight: 600; vertical-align: middle; }
+  .grp { padding: 12px 0 4px; font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--text-muted); }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--divider); font-size: .9rem; }
+  .row .l strong { font-weight: 600; }
+  .row .l .h { font-size: .76rem; color: var(--text-muted); margin-top: 1px; }
+  .row .notin { font-size: .8rem; color: var(--text-muted); }
+  .acc { position: relative; display: inline-block; flex: none; }
+  .accbtn { min-height: 38px; min-width: 112px; padding: 0 26px 0 10px; border-radius: 9px; border: 1px solid var(--border-soft); background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236E6E73' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 6px center / 14px; font: inherit; font-size: .84rem; cursor: pointer; white-space: nowrap; }
+  .accbtn.st-none { color: var(--text-muted); }
+  .accbtn.st-some { background-color: var(--accent-soft); color: var(--link); border-color: transparent; font-weight: 600; }
+  .accbtn.st-all { background-color: var(--success-bg); color: var(--success); border-color: transparent; font-weight: 600; }
+  .accmenu { position: fixed; z-index: 70; min-width: 196px; padding: 6px; border-radius: 12px; background: var(--surface); box-shadow: var(--shadow); text-align: left; }
+  .accmenu[hidden] { display: none; }
+  .accmenu label { display: flex; align-items: center; gap: 9px; min-height: 40px; padding: 0 10px; border-radius: 8px; font-size: .88rem; cursor: pointer; }
+  .accmenu label:hover { background: var(--background); }
+  .accmenu label.off { color: var(--text-muted); cursor: not-allowed; }
+  .accmenu label.off:hover { background: transparent; }
+  .accmenu label .nr { margin-left: auto; font-size: .7rem; }
+  .accmenu label.all { border-bottom: 1px solid var(--divider); border-radius: 8px 8px 0 0; margin-bottom: 2px; font-weight: 600; }
+  .accmenu input { width: 18px; height: 18px; margin: 0; }
+  .actions-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 6px 0 16px; }
+  .saved { position: fixed; right: 16px; bottom: 16px; z-index: 60; padding: 9px 14px; border-radius: 12px; background: #1D1D1F; color: #fff; font-size: .84rem; opacity: 0; transition: opacity .2s; pointer-events: none; }
+  .saved.show { opacity: 1; }
+  .locked { padding: 12px 14px; border-radius: 12px; background: var(--warn-bg); color: var(--warn); font-size: .86rem; margin-bottom: 14px; }
+  h3.cap { font-size: .8rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--text-muted); margin: 22px 0 8px; }
+</style>
+</head>
+<body data-page="users" data-title="Users">
+<div class="mock-note">Mockup. Sample data only. Not the real app. In the real screen the features, roles and each role's limits come from the database.</div>
+<div class="shell">
+  <main class="content">
+    <div class="wrap">
+      <a href="users.html" class="hint" style="display:inline-block;margin-bottom:4px">&larr; Back To Users</a>
+      <div class="page-head">
+        <div>
+          <h1>Edit User</h1>
+          <p>Sample Accountant. Details, role and what this person can do.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section">
+          <h2>Details</h2>
+          <div class="field" style="margin-top:10px"><label class="lbl" for="n">Full Name</label><input id="n" type="text" value="Sample Accountant"></div>
+          <div class="field">
+            <label class="lbl" for="r">Role</label>
+            <select id="r"><option>Accounting Staff</option><option>Chief Accountant</option><option>Managing Director</option></select>
+            <p class="hint">Changing the role clears this person's custom access, because the new role has its own limits. You can narrow it again afterwards.</p>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>Access <span class="tag" id="customTag">Custom Access</span></h2>
+          <p class="sub">What this person can do inside the Accounting Staff role.</p>
+          <p class="note">You can give this person less than their role, never more. Boxes the role does not allow are greyed out. Changes save as soon as you make them.</p>
+          <div id="rows"></div>
+          <div class="actions-row">
+            <button type="button" class="btn secondary" id="resetBtn">Reset To Role Access</button>
+            <span class="hint" id="resetHint">Removes every reduction and gives back everything the role allows.</span>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="cap">If the person is a System Admin</h3>
+      <div class="card" style="padding:16px">
+        <div class="locked">System Admin always has full access and cannot be reduced. The Access section is not shown for this role.</div>
+      </div>
+
+      <h3 class="cap">In the Users list</h3>
+      <div class="card table-wrap">
+        <table class="data">
+          <thead><tr><th>Name</th><th>Role</th><th>Sign In</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr>
+              <td class="first"><div class="cell-main">Sample Accountant</div><div class="cell-sub">Email And Password</div></td>
+              <td data-label="Role"><span class="badge role">Accounting Staff</span> <span class="tag">Custom Access</span></td>
+              <td data-label="Sign In">accountant@spiritflowhdf.com</td>
+              <td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td>
+            </tr>
+            <tr>
+              <td class="first"><div class="cell-main">Sample Chief</div><div class="cell-sub">Email And Password</div></td>
+              <td data-label="Role"><span class="badge role">Chief Accountant</span></td>
+              <td data-label="Sign In">chief@spiritflowhdf.com</td>
+              <td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+<div class="saved" id="saved" role="status">Saved</div>
+<script src="shell.js"></script>
+<script>
+  // Mockup behaviour only. The real screen reads features, role limits and user access from the database.
+  (function () {
+    var LABEL = { view: "View", edit: "Edit", "delete": "Delete" };
+    // group, label, actions the feature offers, what the role allows, what this person has now
+    var features = [
+      ["General", "Dashboard", ["view"], ["view"], ["view"]],
+      ["Administration", "Users", ["view", "edit", "delete"], [], []],
+      ["Inventory", "Stock Points, Outlets And Counters", ["view", "edit", "delete"], [], []],
+      ["Accounts", "Ledger Groups And Ledgers", ["view", "edit", "delete"], ["view"], ["view"]],
+      ["Accounts", "Transactions", ["view", "edit", "delete"], ["view", "edit"], ["view"]],
+      ["Accounts", "Edit Or Void Posted Vouchers", ["edit"], [], []],
+      ["Accounts", "Reports", ["view"], ["view"], ["view"]]
+    ];
+    var rows = document.getElementById("rows"), saved = document.getElementById("saved"), timer, openMenu = null;
+    function flash() { saved.classList.add("show"); clearTimeout(timer); timer = setTimeout(function () { saved.classList.remove("show"); }, 1400); }
+    function name(f, a) { return f[2].length === 1 && a === "edit" ? "Allowed" : LABEL[a]; }
+    function text(f, chosen) {
+      if (!chosen.length) return "None";
+      if (f[2].length === 1) return name(f, f[2][0]);
+      if (chosen.length === f[3].length) return "All the role allows";
+      return f[2].filter(function (a) { return chosen.indexOf(a) > -1; }).map(function (a) { return LABEL[a]; }).join(", ");
+    }
+    var last = "";
+    features.forEach(function (f, i) {
+      if (f[0] !== last) { var g = document.createElement("div"); g.className = "grp"; g.textContent = f[0]; rows.appendChild(g); last = f[0]; }
+      var row = document.createElement("div"); row.className = "row"; row.dataset.i = i;
+      var left = '<div class="l"><strong>' + f[1] + '</strong><div class="h"></div></div>';
+      if (!f[3].length) { row.innerHTML = left + '<span class="notin">Not in role</span>'; rows.appendChild(row); return; }
+      var menu = "";
+      if (f[2].length > 1) menu += '<label class="all"><input type="checkbox" data-all> Select All The Role Allows</label>';
+      f[2].forEach(function (a) {
+        var ok = f[3].indexOf(a) > -1;
+        menu += '<label class="' + (ok ? "" : "off") + '"><input type="checkbox" data-act="' + a + '"' + (ok ? "" : " disabled") + (f[4].indexOf(a) > -1 ? " checked" : "") + '> ' + name(f, a) + (ok ? "" : '<span class="nr">Not in role</span>') + '</label>';
+      });
+      row.innerHTML = left + '<div class="acc"><button type="button" class="accbtn" aria-haspopup="true" aria-expanded="false"></button><div class="accmenu" hidden>' + menu + '</div></div>';
+      rows.appendChild(row);
+    });
+
+    function refresh(row) {
+      var f = features[row.dataset.i], chosen = f[2].filter(function (a) { var c = row.querySelector('[data-act="' + a + '"]'); return c && c.checked; });
+      var btn = row.querySelector(".accbtn");
+      btn.textContent = text(f, chosen);
+      btn.className = "accbtn st-" + (!chosen.length ? "none" : chosen.length === f[3].length ? "all" : "some");
+      var all = row.querySelector("[data-all]"); if (all) all.checked = chosen.length === f[3].length;
+      var reduced = chosen.length < f[3].length;
+      row.querySelector(".h").textContent = reduced ? "The role gives: " + (f[3].length === f[2].length && f[2].length > 1 ? f[3].map(function (a) { return LABEL[a]; }).join(", ") : f[3].map(function (a) { return name(f, a); }).join(", ")) : "";
+      row.dataset.reduced = reduced ? "1" : "";
+    }
+    function summary() {
+      var any = rows.querySelector('.row[data-reduced="1"]');
+      document.getElementById("customTag").style.display = any ? "" : "none";
+      document.getElementById("resetBtn").disabled = !any;
+      document.getElementById("resetHint").textContent = any ? "Removes every reduction and gives back everything the role allows." : "This person has everything their role allows.";
+    }
+    function closeMenu() { if (openMenu) { openMenu.menu.hidden = true; openMenu.btn.setAttribute("aria-expanded", "false"); openMenu = null; } }
+    rows.querySelectorAll(".row[data-i]").forEach(function (r) { if (r.querySelector(".accbtn")) refresh(r); });
+    summary();
+
+    document.addEventListener("click", function (e) {
+      var btn = e.target.closest(".accbtn");
+      if (btn) {
+        var menu = btn.parentNode.querySelector(".accmenu"), was = openMenu && openMenu.menu === menu;
+        closeMenu();
+        if (!was) {
+          var r = btn.getBoundingClientRect(); menu.hidden = false;
+          menu.style.top = Math.min(r.bottom + 4, window.innerHeight - menu.offsetHeight - 8) + "px";
+          menu.style.left = Math.max(8, Math.min(r.left, window.innerWidth - menu.offsetWidth - 8)) + "px";
+          btn.setAttribute("aria-expanded", "true"); openMenu = { menu: menu, btn: btn };
+        }
+        return;
+      }
+      if (!e.target.closest(".accmenu")) closeMenu();
+    });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeMenu(); });
+    window.addEventListener("scroll", closeMenu, true);
+    document.addEventListener("change", function (e) {
+      var t = e.target, row = t.closest(".row[data-i]");
+      if (!row) return;
+      var view = row.querySelector('[data-act="view"]'), edit = row.querySelector('[data-act="edit"]'), del = row.querySelector('[data-act="delete"]');
+      if (t.hasAttribute("data-all")) {
+        row.querySelectorAll("[data-act]").forEach(function (c) { if (!c.disabled) c.checked = t.checked; });
+      } else if (view && t.getAttribute("data-act") !== "view" && t.checked) { if (!view.disabled) view.checked = true; }
+      else if (view && t === view && !t.checked) { if (edit) edit.checked = false; if (del) del.checked = false; }
+      refresh(row); summary(); flash();
+    });
+    document.getElementById("resetBtn").addEventListener("click", function () {
+      rows.querySelectorAll(".row[data-i]").forEach(function (row) {
+        row.querySelectorAll("[data-act]").forEach(function (c) { if (!c.disabled) c.checked = true; });
+        if (row.querySelector(".accbtn")) refresh(row);
+      });
+      summary(); flash();
+    });
+  })();
+</script>
+</body>
+</html>

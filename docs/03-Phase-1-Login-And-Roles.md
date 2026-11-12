@@ -153,9 +153,15 @@ The permission table in section 2 and the fixed list of nine roles are replaced 
 - **Role active.** A role that is not active cannot sign in, and no new user can be given it.
 - **Two-factor per role.** A user in a role that requires it must set up and pass an authenticator code at each sign in. This replaces the fixed list of roles in the code and the database.
 
-### Role Access First, User Access Later
-- This slice defines **access by role** only. A role sets the overall limit.
-- **Later (not built now):** each user can get different access **within their role's limit**, with the same View, Edit, Delete and Select All checkboxes on the user. A user can have less than the role, never more. The tables are designed so user access can be added without changing the role tables.
+### Access By User (Owner Decisions, 2026-11-14)
+- A role sets the **overall limit**. A user can be given **less than their role, never more**. A user with no custom access has everything their role allows.
+- On the **Edit User** screen there is an **Access** section for the user. It lists every feature with the same dropdown and checkboxes (View, Edit, Delete, Select All) as the role screen. Boxes the role does not allow are greyed and cannot be ticked. A feature the role does not offer at all shows "Not in role". Changes save as soon as they are made. A **Reset To Role Access** button gives back everything the role allows.
+- **Who changes it:** anyone who can **edit users** (Edit on the Users feature), always inside the person's role. Nobody can change their own access. A System Admin cannot be reduced, so the Access section is not shown for that role.
+- **Changing a user's role clears their custom access**, because the new role has its own limits. It can be narrowed again afterwards.
+- The Users list shows a **Custom Access** tag next to the role of anyone whose access is narrower than their role. The tag shows only when something is actually reduced.
+- The user's effective access is the role's access **and** the user's access. If the role is later reduced, the user loses it too. If the role is later widened, the user does not gain more than their own custom access allows.
+- Tables: `user_access` (user, feature, can view, can edit, can delete). A row exists only where the user is narrower than the role. The same `has_access()` function now combines role and user, so every policy, server check and the menu use the combined access.
+- Not part of this slice: two-factor or sign-in method per user (those stay on the role).
 
 ### Starting Values
 - After the reset, **System Admin is the only role with access**. Every other seeded role starts inactive, with nothing ticked on any feature.
