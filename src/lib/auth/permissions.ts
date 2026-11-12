@@ -35,6 +35,9 @@ export type DashboardFeature =
   | "dash_cash_bank_balances"
   | "dash_receivables"
   | "dash_payables"
+  | "dash_assets"
+  | "dash_liabilities"
+  | "dash_net_valuation"
   | "dash_latest_vouchers"
   | "dash_books_check";
 

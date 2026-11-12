@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useActionState, useId, useState } from "react";
+import { useActionState, useEffect, useId, useState } from "react";
 import { changePassword, signOut, type ChangePasswordState } from "@/lib/auth/actions";
 
 const text = {
@@ -128,6 +128,11 @@ export function ChangePasswordCard({ forced }: { forced: boolean }) {
     changePassword,
     { error: null },
   );
+  // After a saved change, load the dashboard fresh. A full load cannot show a
+  // page the browser kept from before the password was changed.
+  useEffect(() => {
+    if (state.done) window.location.href = "/";
+  }, [state.done]);
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
   const [confirm, setConfirm] = useState("");

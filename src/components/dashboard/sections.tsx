@@ -12,6 +12,7 @@ import {
 import { PALETTE, SERIES_COLORS } from "@/lib/dashboard/palette";
 import {
   byMonth,
+  loadBalanceTotals,
   loadBooksCheck,
   loadLatestVouchers,
   loadMonthly,
@@ -20,6 +21,7 @@ import {
   loadSystemSnapshot,
   monthLabel,
   totalOf,
+  type BalanceGroup,
   type PositionRow,
 } from "@/lib/dashboard/queries";
 import { displayDate } from "@/lib/reports/dates";
@@ -50,14 +52,23 @@ const text = {
   trendsFailed: "Monthly Trends",
   incomeExpenses: "Income And Expenses",
   incomeExpensesSub: "By month, in lakhs",
-  salesByMonth: "Sales By Month",
-  salesByMonthSub: "Split by sales ledger, in lakhs",
+  salesPurchases: "Sales And Purchases",
+  salesPurchasesSub: "By month, in lakhs",
   income: "Income",
   expenses: "Expenses",
   other: "Others",
   month: "Month",
   total: "Total",
   positionsFailed: "Positions",
+  assets: "Assets",
+  assetsSub: "Everything the hotel owns",
+  liabilities: "Liabilities",
+  liabilitiesSub: "Everything the hotel owes, capital left out",
+  netValuation: "Net Valuation",
+  netValuationSub: "Assets minus liabilities",
+  surplus: "Assets are more than liabilities",
+  shortfall: "Liabilities are more than assets",
+  level: "Assets equal liabilities",
   cashBankSub: "Balance of each account today",
   receivables: "Receivables",
   receivablesSub: "Owed to the hotel by customers",
@@ -209,7 +220,7 @@ async function GrossProfitCard({ user, range }: CardProps) {
   return (
     <KpiCard
       name={grossNow < ZERO ? text.grossLoss : text.grossProfit}
-      icon="M12 3v18M16.5 7.5c0-1.9-2-3-4.5-3s-4.5 1.2-4.5 3 2 2.7 4.5 3.3 4.5 1.4 4.5 3.2-2 3-4.5 3-4.5-1.2-4.5-3"
+      icon="M7 5h10M7 10h10M7 5c5 0 7 2 7 5s-2 5-7 5H7l8 5"
       iconBackground="#E3F4EE"
       iconColor={PALETTE.green}
       value={<Amount paise={grossNow < ZERO ? -grossNow : grossNow} />}
@@ -294,6 +305,7 @@ async function IncomeExpensesChart({ user, range }: CardProps) {
       subtitle={`${text.incomeExpensesSub}. ${period}`}
       months={labels}
       stacked={false}
+      kind="lines"
       series={[
         { name: text.income, color: PALETTE.blue, values: incomeBy.map(lakhs) },
         { name: text.expenses, color: PALETTE.orange, values: expenseBy.map(lakhs) },
@@ -305,62 +317,34 @@ async function IncomeExpensesChart({ user, range }: CardProps) {
   );
 }
 
-async function SalesByMonthChart({ user, range }: CardProps) {
+async function SalesPurchasesChart({ user, range }: CardProps) {
   if (!canView(user, "dash_sales_by_month")) {
-    return <LockedCard name={text.salesByMonth} subtitle={text.salesByMonthSub} />;
+    return <LockedCard name={text.salesPurchases} subtitle={text.salesPurchasesSub} />;
   }
-  const sales = await loadRegisterMonthly(
-    "dash_sales_by_month",
-    "sales",
-    range.from,
-    range.to,
-  ).catch(() => null);
-  if (!sales) return <SectionError title={text.salesByMonth} />;
+  const loaded = await Promise.all([
+    loadRegisterMonthly("dash_sales_by_month", "sales", range.from, range.to),
+    loadRegisterMonthly("dash_sales_by_month", "purchase", range.from, range.to),
+  ]).catch(() => null);
+  if (!loaded) return <SectionError title={text.salesPurchases} />;
+  const [sales, purchases] = loaded;
   const labels = range.months.map(monthLabel);
-
-  // The biggest sales ledgers get their own colour. The rest are grouped.
-  const totals = new Map<string, { name: string; total: bigint }>();
-  for (const row of sales) {
-    const entry = totals.get(row.ledgerId) ?? { name: row.ledgerName, total: ZERO };
-    entry.total += row.amount;
-    totals.set(row.ledgerId, entry);
-  }
-  const ranked = [...totals.entries()].sort((a, b) => (b[1].total > a[1].total ? 1 : -1));
-  const top = ranked.slice(0, SERIES_COLORS.length - 1);
-  const rest = ranked.slice(SERIES_COLORS.length - 1);
-
-  const salesSeries = top.map(([ledgerId, info], index) => ({
-    name: info.name,
-    color: SERIES_COLORS[index],
-    amounts: range.months.map((month) =>
-      sumPaise(sales.filter((r) => r.ledgerId === ledgerId && r.month === month).map((r) => r.amount)),
-    ),
-  }));
-  if (rest.length > 0) {
-    const restIds = new Set(rest.map(([id]) => id));
-    salesSeries.push({
-      name: text.other,
-      color: SERIES_COLORS[SERIES_COLORS.length - 1],
-      amounts: range.months.map((month) =>
-        sumPaise(sales.filter((r) => restIds.has(r.ledgerId) && r.month === month).map((r) => r.amount)),
-      ),
-    });
-  }
+  const salesBy = byMonth(sales, range.months);
+  const purchasesBy = byMonth(purchases, range.months);
   const period = `${monthLabel(range.months[0])} to ${monthLabel(range.months[range.months.length - 1])}`;
   return (
     <MonthlyChart
-      title={text.salesByMonth}
-      subtitle={`${text.salesByMonthSub}. ${period}`}
+      title={text.salesPurchases}
+      subtitle={`${text.salesPurchasesSub}. ${period}`}
       months={labels}
-      stacked
-      series={salesSeries.map((s) => ({ name: s.name, color: s.color, values: s.amounts.map(lakhs) }))}
-      tableHead={[text.month, ...salesSeries.map((s) => s.name), text.total]}
-      tableRows={labels.map((label, i) => [
-        label,
-        ...salesSeries.map((s) => formatPaise(s.amounts[i])),
-        formatPaise(sumPaise(salesSeries.map((s) => s.amounts[i]))),
-      ])}
-      describe={`${text.salesByMonth}, ${period}. The table view lists the exact amounts.`}
+      stacked={false}
+      kind="lines"
+      series={[
+        { name: text.sales, color: PALETTE.blue, values: salesBy.map(lakhs) },
+        { name: text.purchases, color: PALETTE.orange, values: purchasesBy.map(lakhs) },
+      ]}
+      tableHead={[text.month, text.sales, text.purchases]}
+      tableRows={labels.map((label, i) => [label, formatPaise(salesBy[i]), formatPaise(purchasesBy[i])])}
+      describe={`${text.salesPurchases}, ${period}. The table view lists the exact amounts.`}
     />
   );
 }
@@ -373,7 +357,7 @@ export function TrendsSection({ user, range }: CardProps) {
         <IncomeExpensesChart user={user} range={range} />
       </Suspense>
       <Suspense fallback={fallback}>
-        <SalesByMonthChart user={user} range={range} />
+        <SalesPurchasesChart user={user} range={range} />
       </Suspense>
     </div>
   );
@@ -511,6 +495,128 @@ async function PayablesPanel({ user, range }: CardProps) {
   );
 }
 
+// The groups behind a total, largest first. Small ones are added together.
+function GroupBars({ groups, color }: { groups: BalanceGroup[]; color: string }) {
+  const sorted = [...groups].sort((a, b) => {
+    const left = a.net < ZERO ? -a.net : a.net;
+    const right = b.net < ZERO ? -b.net : b.net;
+    return right > left ? 1 : -1;
+  });
+  const head = sorted.slice(0, 3);
+  const tail = sorted.slice(3);
+  if (tail.length > 0) head.push({ name: text.other, net: sumPaise(tail.map((g) => g.net)) });
+  const base = sumPaise(sorted.map((g) => (g.net < ZERO ? -g.net : g.net)));
+  return (
+    <div className="grid gap-3">
+      {head.map((group) => (
+        <BalanceBar
+          key={group.name}
+          name={group.name}
+          net={group.net}
+          share={shareOf(group.net, base)}
+          color={color}
+        />
+      ))}
+    </div>
+  );
+}
+
+async function AssetsPanel({ user, range }: CardProps) {
+  if (!canView(user, "dash_assets")) {
+    return <LockedCard name={text.assets} subtitle={text.assetsSub} />;
+  }
+  const groups = await loadBalanceTotals("dash_assets", "assets", range.to).catch(() => null);
+  if (!groups) return <SectionError title={text.assets} />;
+  const total = sumPaise(groups.map((g) => g.net));
+  return (
+    <Panel label={text.assets}>
+      <PanelHeader title={text.assets} subtitle={text.assetsSub} />
+      {groups.length === 0 ? (
+        emptyPosition
+      ) : (
+        <>
+          <div className="mb-3 mt-1 text-[1.5rem] font-bold tracking-[-0.025em] tabular-nums">
+            <span className="mr-0.5 text-[1rem] font-medium text-muted">&#8377;</span>
+            {formatBalance(total)}
+          </div>
+          <GroupBars groups={groups} color={PALETTE.blue} />
+        </>
+      )}
+    </Panel>
+  );
+}
+
+async function LiabilitiesPanel({ user, range }: CardProps) {
+  if (!canView(user, "dash_liabilities")) {
+    return <LockedCard name={text.liabilities} subtitle={text.liabilitiesSub} />;
+  }
+  const groups = await loadBalanceTotals("dash_liabilities", "liabilities", range.to).catch(
+    () => null,
+  );
+  if (!groups) return <SectionError title={text.liabilities} />;
+  const total = sumPaise(groups.map((g) => g.net));
+  return (
+    <Panel label={text.liabilities}>
+      <PanelHeader title={text.liabilities} subtitle={text.liabilitiesSub} />
+      {groups.length === 0 ? (
+        emptyPosition
+      ) : (
+        <>
+          <div className="mb-3 mt-1 text-[1.5rem] font-bold tracking-[-0.025em] tabular-nums">
+            <span className="mr-0.5 text-[1rem] font-medium text-muted">&#8377;</span>
+            {formatBalance(total)}
+          </div>
+          <GroupBars groups={groups} color={PALETTE.orange} />
+        </>
+      )}
+    </Panel>
+  );
+}
+
+// Assets minus liabilities. Green when assets are more, red when liabilities are.
+async function NetValuationPanel({ user, range }: CardProps) {
+  if (!canView(user, "dash_net_valuation")) {
+    return <LockedCard name={text.netValuation} subtitle={text.netValuationSub} />;
+  }
+  const loaded = await Promise.all([
+    loadBalanceTotals("dash_net_valuation", "assets", range.to),
+    loadBalanceTotals("dash_net_valuation", "liabilities", range.to),
+  ]).catch(() => null);
+  if (!loaded) return <SectionError title={text.netValuation} />;
+  const assets = sumPaise(loaded[0].map((g) => g.net));
+  const liabilities = sumPaise(loaded[1].map((g) => g.net));
+  const net = assets - liabilities;
+  const tone =
+    net > ZERO
+      ? { box: "bg-success-bg", figure: "text-success", note: text.surplus }
+      : net < ZERO
+        ? { box: "bg-error-bg", figure: "text-error", note: text.shortfall }
+        : { box: "bg-track", figure: "text-muted", note: text.level };
+  return (
+    <Panel label={text.netValuation}>
+      <PanelHeader title={text.netValuation} subtitle={text.netValuationSub} />
+      <div className={`rounded-[14px] px-3.5 py-3 ${tone.box}`}>
+        <div className={`text-[1.5rem] font-bold tracking-[-0.025em] tabular-nums ${tone.figure}`}>
+          <span className="mr-0.5 text-[1rem] font-medium">&#8377;</span>
+          {net < ZERO ? "-" : ""}
+          {formatPaise(net < ZERO ? -net : net)}
+        </div>
+        <div className={`mt-0.5 text-[0.8rem] font-medium ${tone.figure}`}>{tone.note}</div>
+      </div>
+      <div className="mt-3 grid gap-1.5 text-[0.86rem]">
+        <div className="flex justify-between gap-2">
+          <span>{text.assets}</span>
+          <span className="font-semibold tabular-nums">&#8377;{formatPaise(assets)}</span>
+        </div>
+        <div className="flex justify-between gap-2">
+          <span>{text.liabilities}</span>
+          <span className="font-semibold tabular-nums">&#8377;{formatPaise(liabilities)}</span>
+        </div>
+      </div>
+    </Panel>
+  );
+}
+
 export function PositionsSection({ user, range }: CardProps) {
   const fallback = <SectionSkeleton height="h-56" />;
   return (
@@ -523,6 +629,15 @@ export function PositionsSection({ user, range }: CardProps) {
       </Suspense>
       <Suspense fallback={fallback}>
         <PayablesPanel user={user} range={range} />
+      </Suspense>
+      <Suspense fallback={fallback}>
+        <AssetsPanel user={user} range={range} />
+      </Suspense>
+      <Suspense fallback={fallback}>
+        <LiabilitiesPanel user={user} range={range} />
+      </Suspense>
+      <Suspense fallback={fallback}>
+        <NetValuationPanel user={user} range={range} />
       </Suspense>
     </div>
   );

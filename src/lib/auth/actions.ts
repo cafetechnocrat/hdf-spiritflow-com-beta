@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -77,7 +78,7 @@ export async function signInWithEmail(
   redirect("/");
 }
 
-export type ChangePasswordState = { error: string | null };
+export type ChangePasswordState = { error: string | null; done?: boolean };
 
 // Replaces the user's password. Used for the forced change after a temporary
 // password and for a voluntary change. The current password is checked first.
@@ -122,7 +123,10 @@ export async function changePassword(
     .eq("id", auth.user.id);
 
   await logAuthEvent("password_change", { actorId: auth.user.id });
-  redirect("/");
+  // Forget pages the browser kept from before the change, so the app does not
+  // send the person back here. The screen then opens the dashboard itself.
+  revalidatePath("/", "layout");
+  return { error: null, done: true };
 }
 
 export async function signOut() {

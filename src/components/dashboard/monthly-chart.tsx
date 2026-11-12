@@ -1,7 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { Panel, PanelHeader } from "./ui";
 
 const text = {
@@ -13,7 +23,8 @@ const text = {
 
 export type ChartSeries = { name: string; color: string; values: number[] };
 
-// A bar chart by month with a legend and a table view, as the design rules ask.
+// A bar or line chart by month with a legend and a table view, as the design rules ask.
+// Lines suit two figures that are compared month against month.
 // Chart values are in lakhs and are for drawing only. The table shows the exact
 // amounts as text from the database.
 export function MonthlyChart({
@@ -22,6 +33,7 @@ export function MonthlyChart({
   months,
   series,
   stacked,
+  kind = "bars",
   tableHead,
   tableRows,
   describe,
@@ -31,6 +43,7 @@ export function MonthlyChart({
   months: string[];
   series: ChartSeries[];
   stacked: boolean;
+  kind?: "bars" | "lines";
   tableHead: string[];
   tableRows: string[][];
   describe: string;
@@ -51,7 +64,11 @@ export function MonthlyChart({
         title={title}
         subtitle={subtitle}
         action={
-          <span className="inline-flex flex-none gap-0.5 rounded-[9px] bg-track p-0.5" role="group" aria-label={title}>
+          <span
+            className="inline-flex flex-none gap-0.5 rounded-[9px] bg-track p-0.5"
+            role="group"
+            aria-label={title}
+          >
             {(["chart", "table"] as const).map((option) => (
               <button
                 key={option}
@@ -86,27 +103,108 @@ export function MonthlyChart({
       {view === "chart" ? (
         <div role="img" aria-label={describe} className="h-[250px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data} margin={{ top: 8, right: 8, left: -12, bottom: 0 }}>
-              <CartesianGrid vertical={false} strokeDasharray="3 4" stroke="#E6E9F1" />
-              <XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: "#5B6478" }} />
-              <YAxis tickLine={false} axisLine={false} width={44} tick={{ fontSize: 11, fill: "#5B6478" }} />
-              <Tooltip
-                cursor={{ fill: "rgba(0,0,0,0.04)" }}
-                formatter={(value, name) => [`${Number(value).toFixed(2)} ${text.lakh}`, String(name)]}
-                contentStyle={{ borderRadius: 12, border: "none", boxShadow: "0 6px 24px rgba(0,0,0,0.12)", fontSize: 12 }}
-              />
-              {series.map((item, position) => (
-                <Bar
-                  key={item.name}
-                  dataKey={`s${position}`}
-                  name={item.name}
-                  fill={item.color}
-                  stackId={stacked ? "total" : undefined}
-                  radius={stacked ? (position === series.length - 1 ? [4, 4, 0, 0] : 0) : [4, 4, 0, 0]}
-                  maxBarSize={stacked ? 34 : 18}
+            {kind === "lines" ? (
+              <LineChart
+                data={data}
+                margin={{ top: 8, right: 8, left: -12, bottom: 0 }}
+              >
+                <CartesianGrid
+                  vertical={false}
+                  strokeDasharray="3 4"
+                  stroke="#E6E9F1"
                 />
-              ))}
-            </BarChart>
+                <XAxis
+                  dataKey="label"
+                  tickLine={false}
+                  axisLine={false}
+                  tick={{ fontSize: 11, fill: "#5B6478" }}
+                />
+                <YAxis
+                  tickLine={false}
+                  axisLine={false}
+                  width={44}
+                  tick={{ fontSize: 11, fill: "#5B6478" }}
+                />
+                <Tooltip
+                  formatter={(value, name) => [
+                    `${Number(value).toFixed(2)} ${text.lakh}`,
+                    String(name),
+                  ]}
+                  contentStyle={{
+                    borderRadius: 12,
+                    border: "none",
+                    boxShadow: "0 6px 24px rgba(0,0,0,0.12)",
+                    fontSize: 12,
+                  }}
+                />
+                {series.map((item, position) => (
+                  <Line
+                    key={item.name}
+                    type="monotone"
+                    dataKey={`s${position}`}
+                    name={item.name}
+                    stroke={item.color}
+                    strokeWidth={2.5}
+                    dot={{ r: 3, fill: item.color, strokeWidth: 0 }}
+                    activeDot={{ r: 5 }}
+                    strokeDasharray={position === 1 ? "6 3" : undefined}
+                  />
+                ))}
+              </LineChart>
+            ) : (
+              <BarChart
+                data={data}
+                margin={{ top: 8, right: 8, left: -12, bottom: 0 }}
+              >
+                <CartesianGrid
+                  vertical={false}
+                  strokeDasharray="3 4"
+                  stroke="#E6E9F1"
+                />
+                <XAxis
+                  dataKey="label"
+                  tickLine={false}
+                  axisLine={false}
+                  tick={{ fontSize: 11, fill: "#5B6478" }}
+                />
+                <YAxis
+                  tickLine={false}
+                  axisLine={false}
+                  width={44}
+                  tick={{ fontSize: 11, fill: "#5B6478" }}
+                />
+                <Tooltip
+                  cursor={{ fill: "rgba(0,0,0,0.04)" }}
+                  formatter={(value, name) => [
+                    `${Number(value).toFixed(2)} ${text.lakh}`,
+                    String(name),
+                  ]}
+                  contentStyle={{
+                    borderRadius: 12,
+                    border: "none",
+                    boxShadow: "0 6px 24px rgba(0,0,0,0.12)",
+                    fontSize: 12,
+                  }}
+                />
+                {series.map((item, position) => (
+                  <Bar
+                    key={item.name}
+                    dataKey={`s${position}`}
+                    name={item.name}
+                    fill={item.color}
+                    stackId={stacked ? "total" : undefined}
+                    radius={
+                      stacked
+                        ? position === series.length - 1
+                          ? [4, 4, 0, 0]
+                          : 0
+                        : [4, 4, 0, 0]
+                    }
+                    maxBarSize={stacked ? 34 : 18}
+                  />
+                ))}
+              </BarChart>
+            )}
           </ResponsiveContainer>
         </div>
       ) : (

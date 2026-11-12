@@ -167,7 +167,7 @@ The permission table in section 2 and the fixed list of nine roles are replaced 
 - **Every report and every dashboard card has its own lock.** The System Admin locks or unlocks each one for a role. A lock hides the figures. Nobody but the System Admin sees a locked report's numbers.
 - **What can be locked** (each is a feature in the database with one action, View, where View off means locked):
   - **Reports (7):** Day Book, Ledger Statement, Sales Register, Purchase Register, Trial Balance, Profit And Loss, Balance Sheet. These replace the single Reports feature.
-  - **Dashboard cards (11):** Sales, Purchases, Gross Profit, Cash And Bank (the four headline cards), Income And Expenses, Sales By Month, Cash And Bank Balances, Receivables, Payables, Latest Vouchers, Books Check.
+  - **Dashboard cards (14):** Sales, Purchases, Gross Profit, Cash And Bank (the four headline cards), Income And Expenses, Sales And Purchases, Cash And Bank Balances, Receivables, Payables, Assets, Liabilities, Net Valuation, Latest Vouchers, Books Check.
   - Not locked: the System snapshot (System Admin only), Quick Actions (each link follows the feature it opens), and the Coming Soon cards. The Dashboard feature still decides who sees the dashboard page at all.
 - **The System Admin is always open** and cannot be locked.
 - **Where it is set:** the Roles And Access screen gets a second tab, **Reports And Dashboard Locks**. Rows are the reports and cards, columns are roles, and each cell is a Lock or Open button that saves at once. Each role column has Lock Or Unlock All, and each row has Lock and Open for all roles. On a phone you pick one role and see its list. The Access tab no longer lists reports and cards.

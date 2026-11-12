@@ -129,6 +129,32 @@ export const loadPositions = cache(
   },
 );
 
+export type BalanceGroup = { name: string; net: bigint };
+
+// Assets or liabilities as on a date, added up by the top group they sit under.
+// The amounts come back as the side's own figure: assets are debit positive,
+// liabilities are credit positive. Capital is left out of liabilities.
+export const loadBalanceTotals = cache(
+  async (
+    feature: DashboardFeature,
+    side: "assets" | "liabilities",
+    asOn: string,
+  ): Promise<BalanceGroup[]> => {
+    const supabase = await createClient();
+    const { data, error } = await supabase.rpc("dashboard_balance_totals", {
+      p_feature: feature,
+      p_side: side,
+      p_as_on: asOn,
+    });
+    if (error) throw new Error("balance totals");
+    const sign = side === "assets" ? BigInt(1) : BigInt(-1);
+    return ((data ?? []) as { group_name: string; net_text: string }[]).map((row) => ({
+      name: row.group_name,
+      net: parseSignedPaise(row.net_text) * sign,
+    }));
+  },
+);
+
 export type LatestVoucher = {
   id: string;
   typeName: string;

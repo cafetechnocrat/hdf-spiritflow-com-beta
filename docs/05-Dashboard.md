@@ -31,7 +31,7 @@ Status: built (2026-11-14). Mockup approved: `docs/mockups/phase-2/dashboard.htm
    - **Cash And Bank:** the combined balance of cash and bank ledgers as on today, with how many accounts.
 3. **Monthly trends:** two charts across the months of the financial year.
    - **Income And Expenses:** clustered bars per month.
-   - **Sales By Month:** stacked bars split by sales ledger.
+   - **Sales And Purchases:** two lines by month, so the two can be compared (owner, 2026-11-14). Income And Expenses is drawn the same way, as two lines in two colours.
    - Each has a legend and a Chart or Table switch.
 4. **Positions:**
    - **Cash And Bank:** each account with its balance and a bar showing its share.
@@ -55,7 +55,7 @@ Status: built (2026-11-14). Mockup approved: `docs/mockups/phase-2/dashboard.htm
 | Section | Lock it needs (View) | Source |
 | --- | --- | --- |
 | Sales, Purchases, Gross Profit, Cash And Bank cards | one lock each | the dashboard functions |
-| Income And Expenses, Sales By Month, Cash And Bank Balances, Receivables, Payables | one lock each | the dashboard functions |
+| Income And Expenses, Sales And Purchases, Cash And Bank Balances, Receivables, Payables, Assets, Liabilities, Net Valuation | one lock each | the dashboard functions |
 | Latest Vouchers, Books Check | one lock each | vouchers, trial balance |
 | New Voucher quick action | Transactions (Edit) | the menu rules |
 | Quick action links | the feature of each target | the menu rules |
@@ -76,3 +76,9 @@ A new database function (or views) returns each section's figures in one round t
 - Charts use Recharts with the Okabe-Ito palette. The cash and bank card has no trend line, because the balance at each month end would need a call per month.
 - The change against last year shows only when last year has a figure to compare with. Purchases going up is shown in the warning colour, not the success colour.
 - The Coming Soon cards come from a small list in `sections.tsx`. To light one up, replace its card with a live one when its module is built.
+
+## Assets, Liabilities And Net Valuation (Owner, 2026-11-14)
+- Three more cards in Positions, so Positions has six: Cash And Bank, Receivables, Payables, Assets, Liabilities, Net Valuation. Each has its own lock.
+- **Assets:** every ledger under a group with the assets nature, as on the end of the range, shown by top group.
+- **Liabilities:** every ledger under a group with the liabilities nature, **except the owner's capital**. The capital group is picked by a marker on the group (default: Capital Account and its sub-groups), not by name.
+- **Net Valuation:** assets minus liabilities. It shows green when assets are more and red when liabilities are more.
