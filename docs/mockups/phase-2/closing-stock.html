@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spirit Flow</title>
+<link rel="icon" type="image/png" href="../../../src/app/icon.png">
+<link rel="stylesheet" href="../phase-1/shared.css">
+<style>
+  .acct { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .acct .k { font-size: .74rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); }
+  .acct .v { margin-top: 3px; font-size: 1rem; font-weight: 600; }
+  .acct .v.big { font-size: 1.35rem; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+  .acct .s { font-size: .78rem; color: var(--text-muted); margin-top: 1px; }
+  .rup { font-size: .95rem; font-weight: 500; color: var(--text-muted); margin-right: 2px; }
+  .entry { display: grid; gap: 4px 16px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); align-items: start; }
+  .preview { margin-top: 4px; padding: 12px 14px; border-radius: 14px; font-size: .9rem; }
+  .preview.same { background: var(--track); color: var(--text-muted); }
+  .preview.down { background: var(--warn-bg); color: var(--warn); }
+  .preview.up { background: var(--success-bg); color: var(--success); }
+  .preview .head { font-weight: 600; }
+  .preview .line { margin-top: 4px; font-size: .84rem; font-variant-numeric: tabular-nums; }
+  .preview .later { margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(15,27,61,.12); font-size: .82rem; }
+  .actions-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; margin-top: 14px; }
+  .right { text-align: right; }
+  .num { font-variant-numeric: tabular-nums; font-weight: 600; }
+  .chg.up { color: var(--success); font-weight: 600; }
+  .chg.down { color: var(--warn); font-weight: 600; }
+  .chg.none { color: var(--text-muted); }
+  h3.cap { font-size: .78rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); margin: 26px 2px 10px; }
+  .states { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+  .note { padding: 10px 12px; border-radius: 12px; background: var(--accent-soft); color: var(--link); font-size: .84rem; }
+  .saved { position: fixed; right: 16px; bottom: 16px; z-index: 60; padding: 9px 14px; border-radius: 12px; background: #0F1B3D; color: #fff; font-size: .84rem; opacity: 0; transition: opacity .2s; pointer-events: none; }
+  .saved.show { opacity: 1; }
+  .chip { display: inline-flex; padding: 2px 10px; border-radius: 999px; background: var(--warn-bg); color: var(--warn); font-size: .75rem; font-weight: 600; }
+</style>
+</head>
+<body data-page="closing-stock" data-title="Closing Stock" data-txdate>
+<div class="mock-note">Mockup. Sample data only. Not the real app. The stock account, its ledgers and every figure come from the database in the real screen.</div>
+<div class="shell">
+  <main class="content">
+    <div class="page-head">
+      <div>
+        <h1>Closing Stock</h1>
+        <p>Enter the closing stock value at cost for the day. Spirit Flow posts the difference to the books, so Gross Profit uses the stock that was really consumed.</p>
+      </div>
+    </div>
+
+    <div class="card card-pad" style="margin-bottom:14px">
+      <div class="acct">
+        <div><div class="k">Stock Account</div><div class="v">Liquor</div><div class="s">Stock - Liquor, Stock Adjustment - Liquor</div></div>
+        <div><div class="k">Book Stock Now</div><div class="v big"><span class="rup">&#8377;</span>4,70,000.00</div><div class="s">Balance of Stock - Liquor on 11/11/2026</div></div>
+        <div><div class="k">Last Closing Stock</div><div class="v">11/11/2026</div><div class="s">Next to enter: 12/11/2026</div></div>
+      </div>
+    </div>
+
+    <div class="card card-pad">
+      <h2 style="font-size:1rem;font-weight:600;margin-bottom:10px">Enter Closing Stock</h2>
+      <div class="entry">
+        <div class="field">
+          <label class="lbl" for="cs-date">Date <span class="req">*</span></label>
+          <input id="cs-date" type="date" value="2026-11-12">
+          <p class="hint">Starts on the transaction date in the top bar.</p>
+        </div>
+        <div class="field">
+          <label class="lbl" for="cs-val">Closing Stock Value At Cost <span class="req">*</span></label>
+          <input id="cs-val" type="text" inputmode="decimal" value="4,52,000.00" placeholder="0.00">
+          <p class="hint">At purchase price, never selling price.</p>
+        </div>
+        <div class="field">
+          <label class="lbl" for="cs-note">Note</label>
+          <input id="cs-note" type="text" placeholder="Optional">
+        </div>
+      </div>
+
+      <div id="preview" class="preview down" role="status" aria-live="polite"></div>
+
+      <div class="actions-row">
+        <button class="btn" id="post" type="button">Post Closing Stock</button>
+      </div>
+    </div>
+
+    <h3 class="cap">History</h3>
+    <div class="card table-wrap">
+      <table class="data">
+        <thead><tr><th>Date</th><th class="right">Closing Stock</th><th class="right">Change</th><th>Journal</th><th><span class="sr-only">Actions</span></th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="first"><div class="cell-main">11/11/2026</div></td>
+            <td data-label="Closing Stock" class="right"><span class="num">4,70,000.00</span></td>
+            <td data-label="Change" class="right"><span class="chg down">&minus; 30,000.00</span></td>
+            <td data-label="Journal"><div class="cell-main">Journal No. 41</div><div class="cell-sub">JOU/2026-27/0041</div></td>
+            <td class="act"><div class="actions"><button class="btn secondary small">View</button><button class="btn secondary small">Edit</button></div></td>
+          </tr>
+          <tr>
+            <td class="first"><div class="cell-main">10/11/2026</div></td>
+            <td data-label="Closing Stock" class="right"><span class="num">5,00,000.00</span></td>
+            <td data-label="Change" class="right"><span class="chg none">No change</span></td>
+            <td data-label="Journal"><span class="cell-sub">No journal needed</span></td>
+            <td class="act"><div class="actions"><button class="btn secondary small">Edit</button></div></td>
+          </tr>
+          <tr>
+            <td class="first"><div class="cell-main">Opening</div><div class="cell-sub">01/04/2026</div></td>
+            <td data-label="Closing Stock" class="right"><span class="num">5,00,000.00</span></td>
+            <td data-label="Change" class="right"><span class="chg none">Opening journal</span></td>
+            <td data-label="Journal"><div class="cell-main">Journal No. 1</div><div class="cell-sub">Entered once, against Capital</div></td>
+            <td class="act"><div class="actions"><button class="btn secondary small">View</button></div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="cap">Other things the screen says</h3>
+    <div class="states">
+      <div class="card card-pad">
+        <div class="chip" style="margin-bottom:8px">Already Entered</div>
+        <p style="font-size:.9rem">Closing stock for 11/11/2026 is already entered (Journal No. 41). Use Edit on the history line to change it. An edit needs a reason.</p>
+      </div>
+      <div class="card card-pad">
+        <div class="chip" style="margin-bottom:8px">Later Days Change</div>
+        <p style="font-size:.9rem">You are changing 10/11/2026. The journal of 11/11/2026 will move from &#8377;30,000.00 to &#8377;20,000.00 so the books stay right. You confirm before anything is saved.</p>
+        <div class="actions-row"><button class="btn secondary small" type="button">Cancel</button><button class="btn small" type="button">Save And Update 11/11/2026</button></div>
+      </div>
+      <div class="card card-pad">
+        <div class="chip" style="margin-bottom:8px">Needs A Reason</div>
+        <div class="field" style="margin:0"><label class="lbl" for="why">Reason For The Change <span class="req">*</span></label><input id="why" type="text" placeholder="For example Count corrected"></div>
+      </div>
+    </div>
+
+    <p class="note" style="margin-top:18px">Opening stock is not entered here. The Chief Accountant enters it once as a Journal: Dr Stock - Liquor, Cr Capital, dated 01/04/2026. When the Bar POS and stock module go live, this screen is switched off.</p>
+  </main>
+</div>
+<div class="saved" id="saved" role="status">Closing stock saved. Journal posted.</div>
+
+<script>
+  // Mockup only: the figures below are samples. The real screen reads the book
+  // stock from the database and posts the journal itself.
+  var BOOK = 470000;
+  var el = document.getElementById("preview");
+  var val = document.getElementById("cs-val");
+  function inr(n) {
+    var s = Math.abs(n).toFixed(2).split(".");
+    var x = s[0], last = x.slice(-3), rest = x.slice(0, -3);
+    if (rest) last = rest.replace(/\B(?=(\d{2})+(?!\d))/g, ",") + "," + last;
+    return "₹" + last + "." + s[1];
+  }
+  function render() {
+    var entered = parseFloat(String(val.value).replace(/,/g, ""));
+    if (isNaN(entered) || entered < 0) {
+      el.className = "preview same";
+      el.innerHTML = '<div class="head">Enter the closing stock value.</div>';
+      return;
+    }
+    var diff = entered - BOOK;
+    if (diff === 0) {
+      el.className = "preview same";
+      el.innerHTML = '<div class="head">No change from the book stock of ' + inr(BOOK) + '.</div><div class="line">The value is saved. No journal is posted.</div>';
+    } else if (diff < 0) {
+      el.className = "preview down";
+      el.innerHTML = '<div class="head">Stock went down by ' + inr(diff) + '. Cost goes up.</div>' +
+        '<div class="line">Book stock ' + inr(BOOK) + ' &rarr; closing stock ' + inr(entered) + '</div>' +
+        '<div class="line">Journal: Dr Stock Adjustment - Liquor ' + inr(diff) + ', Cr Stock - Liquor ' + inr(diff) + '</div>';
+    } else {
+      el.className = "preview up";
+      el.innerHTML = '<div class="head">Stock went up by ' + inr(diff) + '. Cost goes down.</div>' +
+        '<div class="line">Book stock ' + inr(BOOK) + ' &rarr; closing stock ' + inr(entered) + '</div>' +
+        '<div class="line">Journal: Dr Stock - Liquor ' + inr(diff) + ', Cr Stock Adjustment - Liquor ' + inr(diff) + '</div>';
+    }
+  }
+  val.addEventListener("input", render);
+  render();
+  document.getElementById("post").addEventListener("click", function () {
+    var s = document.getElementById("saved");
+    s.classList.add("show");
+    setTimeout(function () { s.classList.remove("show"); }, 1800);
+  });
+</script>
+<script src="../phase-1/shell.js"></script>
+</body>
+</html>
