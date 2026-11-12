@@ -1,12 +1,8 @@
 import { z } from "zod";
-import { EMAIL_ROLES, isRole, type Role } from "@/lib/auth/roles";
 
 // Messages are shown on the form, so they are written for the System Admin.
-const roleField = z
-  .string()
-  .refine((value): value is Role => isRole(value) && EMAIL_ROLES.includes(value), {
-    message: "Choose a role.",
-  });
+// A role is chosen from the roles table. The database checks it exists.
+const roleField = z.uuid("Choose a role.");
 
 const fullName = z
   .string()

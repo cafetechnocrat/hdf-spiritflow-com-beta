@@ -20,7 +20,7 @@ const text = {
 
 async function StructureContent() {
   const me = await getCurrentUser();
-  if (!me || !canView("structure", me.role)) notFound();
+  if (!me || !canView(me, "structure")) notFound();
 
   const data = await loadStructure();
 
@@ -32,7 +32,7 @@ async function StructureContent() {
         </h1>
         <p className="mt-0.5 text-[0.88rem] text-muted">{text.subtitle}</p>
       </div>
-      <StructureManager data={data} canEdit={canEdit("structure", me.role)} />
+      <StructureManager data={data} canEdit={canEdit(me, "structure")} />
     </div>
   );
 }

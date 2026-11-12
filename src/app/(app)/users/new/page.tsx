@@ -6,6 +6,7 @@ import { PageLoading } from "@/components/page-loading";
 import { UserForm } from "@/components/users/user-form";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { canEdit } from "@/lib/auth/permissions";
+import { listAssignableRoles } from "@/lib/users/queries";
 
 export const metadata: Metadata = {
   title: "Spirit Flow",
@@ -21,7 +22,9 @@ const text = {
 
 async function NewUserContent() {
   const me = await getCurrentUser();
-  if (!me || !canEdit("users", me.role)) notFound();
+  if (!me || !canEdit(me, "users")) notFound();
+
+  const roles = await listAssignableRoles();
 
   return (
     <div>
@@ -34,7 +37,7 @@ async function NewUserContent() {
         </h1>
         <p className="mt-0.5 text-[0.88rem] text-muted">{text.subtitle}</p>
       </div>
-      <UserForm mode="create" />
+      <UserForm mode="create" roles={roles} />
     </div>
   );
 }

@@ -13,7 +13,7 @@ const XLSX_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.s
 // figures always agree. The person must be signed in and allowed to see reports.
 export async function GET(request: Request) {
   const me = await getCurrentUser();
-  if (!me || !canView("reports", me.role)) {
+  if (!me || !canView(me, "reports")) {
     return new Response("Not allowed", { status: 403 });
   }
 

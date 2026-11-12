@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { logAuthEvent } from "@/lib/auth/audit";
 import { canEdit } from "@/lib/auth/permissions";
+import { getSystemRoleId } from "./queries";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -20,6 +21,7 @@ const text = {
   emailTaken: "A user with this email already exists.",
   notFound: "That user was not found.",
   ownRole: "You cannot change your own role.",
+  roleNotAllowed: "Choose an active role that signs in with email and password.",
   ownStatus: "You cannot deactivate your own account.",
   lastAdmin: "There must always be at least one active System Admin.",
   ownDelete: "You cannot delete your own account.",
@@ -35,15 +37,17 @@ const text = {
 async function requireAdmin() {
   const me = await getCurrentUser();
   // An admin still on a temporary password cannot manage users yet.
-  return me && !me.mustChangePassword && canEdit("users", me.role) ? me : null;
+  return me && !me.mustChangePassword && canEdit(me, "users") ? me : null;
 }
 
 async function otherActiveAdmins(excludeId: string) {
+  const systemRoleId = await getSystemRoleId();
+  if (!systemRoleId) return 0;
   const supabase = await createClient();
   const { count } = await supabase
     .from("profiles")
     .select("id", { count: "exact", head: true })
-    .eq("role", "system_admin")
+    .eq("role_id", systemRoleId)
     .eq("status", "active")
     .neq("id", excludeId);
   return count ?? 0;
@@ -75,6 +79,15 @@ export async function createUser(
   }
   const { email, password, fullName, phone, role } = parsed.data;
 
+  const { data: roleRow } = await (await createClient())
+    .from("roles")
+    .select("is_active, sign_in_method")
+    .eq("id", role)
+    .maybeSingle();
+  if (!roleRow || !roleRow.is_active || roleRow.sign_in_method !== "email") {
+    return { error: text.roleNotAllowed, values };
+  }
+
   // The sign in account is created with the service role. The profile is then
   // written as the signed in System Admin, so the audit log names who did it.
   const admin = createAdminClient();
@@ -94,7 +107,7 @@ export async function createUser(
     id: created.user.id,
     full_name: fullName,
     phone: phone || null,
-    role,
+    role_id: role,
     status: "active",
     must_change_password: true,
     created_by: me.id,
@@ -131,21 +144,30 @@ export async function updateUser(
   const supabase = await createClient();
   const { data: existing } = await supabase
     .from("profiles")
-    .select("role")
+    .select("role_id")
     .eq("id", id)
     .maybeSingle();
   if (!existing) return { error: text.notFound, values };
 
-  if (existing.role !== role) {
+  if (existing.role_id !== role) {
     if (id === me.id) return { error: text.ownRole, values };
-    if (existing.role === "system_admin" && (await otherActiveAdmins(id)) === 0) {
+    const { data: roleRow } = await supabase
+      .from("roles")
+      .select("is_active, sign_in_method")
+      .eq("id", role)
+      .maybeSingle();
+    if (!roleRow || !roleRow.is_active || roleRow.sign_in_method !== "email") {
+      return { error: text.roleNotAllowed, values };
+    }
+    const systemRoleId = await getSystemRoleId();
+    if (existing.role_id === systemRoleId && (await otherActiveAdmins(id)) === 0) {
       return { error: text.lastAdmin, values };
     }
   }
 
   const { error } = await supabase
     .from("profiles")
-    .update({ full_name: fullName, phone: phone || null, role })
+    .update({ full_name: fullName, phone: phone || null, role_id: role })
     .eq("id", id);
   if (error) return { error: text.failed, values };
 
@@ -175,7 +197,7 @@ export async function setUserStatus(
   const supabase = await createClient();
   const { data: target } = await supabase
     .from("profiles")
-    .select("role, status")
+    .select("role_id, status")
     .eq("id", id)
     .maybeSingle();
   if (!target) return { error: text.notFound };
@@ -183,7 +205,7 @@ export async function setUserStatus(
   if (status === "inactive") {
     if (id === me.id) return { error: text.ownStatus };
     if (
-      target.role === "system_admin" &&
+      target.role_id === (await getSystemRoleId()) &&
       target.status === "active" &&
       (await otherActiveAdmins(id)) === 0
     ) {

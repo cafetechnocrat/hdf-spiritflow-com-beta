@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { PageLoading } from "@/components/page-loading";
 import { VoucherManager } from "@/components/vouchers/voucher-manager";
 import { getCurrentUser } from "@/lib/auth/current-user";
-import { canEdit, canView } from "@/lib/auth/permissions";
+import { canEdit, canView, canDelete } from "@/lib/auth/permissions";
 import { loadVoucherData } from "@/lib/vouchers/queries";
 
 export const metadata: Metadata = {
@@ -15,12 +15,12 @@ export const metadata: Metadata = {
 const text = {
   title: "Transactions",
   subtitle:
-    "Vouchers entered against ledgers. Only the Chief Accountant or System Admin can edit or void one, with a reason.",
+    "Vouchers entered against ledgers. Editing or voiding a posted voucher needs a reason.",
 } as const;
 
 async function TransactionsContent() {
   const me = await getCurrentUser();
-  if (!me || !canView("transactions", me.role)) notFound();
+  if (!me || !canView(me, "transactions")) notFound();
 
   const data = await loadVoucherData(me.id);
 
@@ -34,9 +34,9 @@ async function TransactionsContent() {
       </div>
       <VoucherManager
         data={data}
-        canEnter={canEdit("transactions", me.role)}
-        canChange={canEdit("voucher_changes", me.role)}
-        canDelete={canEdit("voucher_delete", me.role)}
+        canEnter={canEdit(me, "transactions")}
+        canChange={canEdit(me, "voucher_changes")}
+        canDelete={canDelete(me, "transactions")}
       />
     </div>
   );

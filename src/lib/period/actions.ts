@@ -20,7 +20,7 @@ export async function setFinancialYear(startYear: number): Promise<PeriodResult>
   if (
     !me ||
     me.mustChangePassword ||
-    !(canView("reports", me.role) || canEdit("transactions", me.role))
+    !(canView(me, "reports") || canEdit(me, "transactions"))
   ) {
     return { error: text.notAllowed };
   }

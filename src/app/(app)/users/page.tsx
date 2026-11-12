@@ -7,7 +7,7 @@ import { UsersTable } from "@/components/users/users-table";
 import { button } from "@/components/ui/styles";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { canEdit, canView } from "@/lib/auth/permissions";
-import { listUsers } from "@/lib/users/queries";
+import { listRoles, listUsers } from "@/lib/users/queries";
 
 export const metadata: Metadata = {
   title: "Spirit Flow",
@@ -24,10 +24,10 @@ const text = {
 
 async function UsersContent() {
   const me = await getCurrentUser();
-  if (!me || !canView("users", me.role)) notFound();
+  if (!me || !canView(me, "users")) notFound();
 
-  const rows = await listUsers();
-  const editable = canEdit("users", me.role);
+  const [rows, roles] = await Promise.all([listUsers(), listRoles()]);
+  const editable = canEdit(me, "users");
 
   return (
     <div>
@@ -57,7 +57,7 @@ async function UsersContent() {
           </Link>
         ) : null}
       </div>
-      <UsersTable rows={rows} canEdit={editable} currentUserId={me.id} />
+      <UsersTable rows={rows} roles={roles} canEdit={editable} currentUserId={me.id} />
     </div>
   );
 }

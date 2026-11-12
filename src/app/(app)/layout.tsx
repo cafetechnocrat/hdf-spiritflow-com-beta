@@ -6,7 +6,6 @@ import { AppShell } from "@/components/app-shell";
 import { NoAccess } from "@/components/no-access";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { canEdit, canView } from "@/lib/auth/permissions";
-import { ROLE_LABELS } from "@/lib/auth/roles";
 import { buildMenu } from "@/lib/nav/menu";
 import { MENU_COOKIE } from "@/lib/nav/menu-cookie";
 import { loadPeriod } from "@/lib/period/queries";
@@ -30,13 +29,13 @@ async function Shell({ children }: { children: ReactNode }) {
   const collapsed = (await cookies()).get(MENU_COOKIE)?.value === "collapsed";
 
   // Roles that enter transactions see the transaction date in the top bar.
-  const transactionDate = canEdit("transactions", user.role)
+  const transactionDate = canEdit(user, "transactions")
     ? { date: await loadTransactionDate(user.id), today: todayInIndia() }
     : null;
 
   // Roles that see the accounts pick the financial year in the top bar.
   const period =
-    canView("reports", user.role) || canEdit("transactions", user.role)
+    canView(user, "reports") || canEdit(user, "transactions")
       ? await loadPeriod(user.id)
       : null;
 
@@ -46,8 +45,8 @@ async function Shell({ children }: { children: ReactNode }) {
       financialYear={
         period ? { selected: period.selected, current: period.current, years: period.years } : null
       }
-      user={{ fullName: user.fullName, roleLabel: ROLE_LABELS[user.role] }}
-      menu={buildMenu(user.role)}
+      user={{ fullName: user.fullName, roleLabel: user.roleName }}
+      menu={buildMenu(user)}
       initialCollapsed={collapsed}
     >
       {children}

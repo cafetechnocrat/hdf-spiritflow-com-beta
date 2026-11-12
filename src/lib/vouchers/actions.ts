@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/auth/current-user";
-import { canEdit, canView } from "@/lib/auth/permissions";
+import { canEdit, canView, canDelete } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
 import {
   balanceRequestSchema,
@@ -28,17 +28,17 @@ const PATH = "/transactions";
 
 async function requireEntry() {
   const me = await getCurrentUser();
-  return me && !me.mustChangePassword && canEdit("transactions", me.role) ? me : null;
+  return me && !me.mustChangePassword && canEdit(me, "transactions") ? me : null;
 }
 
 async function requireChanger() {
   const me = await getCurrentUser();
-  return me && !me.mustChangePassword && canEdit("voucher_changes", me.role) ? me : null;
+  return me && !me.mustChangePassword && canEdit(me, "voucher_changes") ? me : null;
 }
 
 async function requireDeleter() {
   const me = await getCurrentUser();
-  return me && !me.mustChangePassword && canEdit("voucher_delete", me.role) ? me : null;
+  return me && !me.mustChangePassword && canDelete(me, "transactions") ? me : null;
 }
 
 type DbError = { code?: string; message?: string } | null;
@@ -168,7 +168,7 @@ export async function getLedgerBalances(
   excludeVoucherId: string,
 ): Promise<BalancesResult> {
   const me = await getCurrentUser();
-  if (!me || !canView("transactions", me.role)) return { error: text.notAllowed };
+  if (!me || !canView(me, "transactions")) return { error: text.notAllowed };
 
   const parsed = balanceRequestSchema.safeParse({ date, ledgerIds, excludeVoucherId });
   if (!parsed.success) return { error: text.failed };
@@ -195,7 +195,7 @@ export async function getLedgerBalances(
 // The rows of one voucher, for the View and Edit dialogs.
 export async function loadVoucherEntries(voucherId: string): Promise<EntriesResult> {
   const me = await getCurrentUser();
-  if (!me || !canView("transactions", me.role)) return { error: text.notAllowed };
+  if (!me || !canView(me, "transactions")) return { error: text.notAllowed };
   if (!idSchema.safeParse(voucherId).success) return { error: text.notFound };
 
   const supabase = await createClient();

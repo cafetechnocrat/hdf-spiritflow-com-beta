@@ -1,82 +1,41 @@
-import type { Role } from "./roles";
+// What a signed in user may do. The access comes from the database (the roles,
+// features and role_access tables), loaded with the user, never from a list in
+// code. The database policies ask the same data through has_access().
+// Safe to import in browser code.
 
-// The permission matrix for the areas built so far, in one place.
-// The database policies mirror it. The database is the real gate.
-// V = view, E = create and edit.
-type Access = "V" | "E";
+// The features the code checks by name. Each one is a row in the features table.
+export type FeatureKey =
+  | "dashboard"
+  | "users"
+  | "structure"
+  | "ledgers"
+  | "transactions"
+  | "voucher_changes"
+  | "reports";
 
-export const PERMISSIONS = {
-  dashboard: {
-    md: "V",
-    system_admin: "V",
-    chief_accountant: "V",
-    accounts_staff: "V",
-    night_accountant: "V",
-    cashier: "V",
-    stock_keeper: "V",
-    security: "V",
-    kitchen_staff: "V",
-  },
-  users: {
-    md: "V",
-    system_admin: "E",
-    chief_accountant: "V",
-  },
-  // Stock points, outlets and counters. Cashiers get their own outlet later.
-  structure: {
-    md: "V",
-    system_admin: "E",
-    chief_accountant: "V",
-    accounts_staff: "V",
-    night_accountant: "V",
-    stock_keeper: "V",
-    kitchen_staff: "V",
-  },
-  // Ledger groups and ledgers for the Day Book. The Night Accountant gets a
-  // ledger list later, with the entry screens.
-  ledgers: {
-    md: "V",
-    system_admin: "E",
-    chief_accountant: "E",
-    accounts_staff: "V",
-  },
-  // Transaction entry. Edit here means enter new vouchers.
-  transactions: {
-    md: "V",
-    system_admin: "E",
-    chief_accountant: "E",
-    accounts_staff: "E",
-  },
-  // Editing or voiding a posted voucher. While the system is being built the
-  // System Admin has every right, so it is allowed here too.
-  voucher_changes: {
-    system_admin: "E",
-    chief_accountant: "E",
-  },
-  // Day Book reports. The Night Accountant has no reports.
-  reports: {
-    md: "V",
-    system_admin: "V",
-    chief_accountant: "V",
-    accounts_staff: "V",
-  },
-  // Deleting a voucher for real. System Admin only, for development. Review
-  // before the system goes live.
-  voucher_delete: {
-    system_admin: "E",
-  },
-} as const satisfies Record<string, Partial<Record<Role, Access>>>;
+export type Action = "view" | "edit" | "delete";
 
-export type Area = keyof typeof PERMISSIONS;
+// What one role may do on one feature.
+export type FeatureAccess = { view: boolean; edit: boolean; delete: boolean };
 
-function accessFor(area: Area, role: Role): Access | undefined {
-  return (PERMISSIONS[area] as Partial<Record<Role, Access>>)[role];
+// The access of a user's role, by feature key.
+export type AccessMap = Record<string, FeatureAccess>;
+
+// Anything that carries an access map, such as the signed in user.
+type HasAccess = { access: AccessMap };
+
+export function can(user: HasAccess, feature: FeatureKey, action: Action): boolean {
+  return user.access[feature]?.[action] === true;
 }
 
-export function canView(area: Area, role: Role): boolean {
-  return accessFor(area, role) !== undefined;
+export function canView(user: HasAccess, feature: FeatureKey): boolean {
+  return can(user, feature, "view");
 }
 
-export function canEdit(area: Area, role: Role): boolean {
-  return accessFor(area, role) === "E";
+export function canEdit(user: HasAccess, feature: FeatureKey): boolean {
+  return can(user, feature, "edit");
+}
+
+export function canDelete(user: HasAccess, feature: FeatureKey): boolean {
+  return can(user, feature, "delete");
 }

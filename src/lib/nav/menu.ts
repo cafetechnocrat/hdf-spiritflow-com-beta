@@ -1,5 +1,4 @@
-import { canView, type Area } from "@/lib/auth/permissions";
-import type { Role } from "@/lib/auth/roles";
+import { canView, type AccessMap, type FeatureKey } from "@/lib/auth/permissions";
 
 // The side menu as a tree. Groups can hold groups, to any depth.
 // An item with `planned` is shown but switched off until its module is built.
@@ -12,13 +11,15 @@ type MenuDefinition = {
   label: string;
   icon?: MenuIcon;
   href?: string;
-  // The permission area that decides who sees a live item.
-  area?: Area;
+  // The feature that decides who sees a live item.
+  area?: FeatureKey;
+  // Only the System Admin sees this item.
+  systemOnly?: true;
   planned?: true;
   children?: MenuDefinition[];
 };
 
-// What the browser receives for one role. No permission logic travels with it.
+// What the browser receives for one user. No permission logic travels with it.
 export type MenuNode = {
   id: string;
   label: string;
@@ -132,21 +133,24 @@ const MENU: MenuDefinition[] = [
     icon: "cog",
     children: [
       { id: "users", label: "Users", href: "/users", area: "users" },
-      { id: "roles", label: "Roles And Access", planned: true },
+      { id: "roles", label: "Roles And Access", href: "/roles", systemOnly: true },
       { id: "audit", label: "Audit Log", planned: true },
     ],
   },
 ];
 
+// Who the menu is built for: their access and whether they are the System Admin.
+export type MenuUser = { access: AccessMap; isSystemAdmin: boolean };
+
 function prune(
   nodes: MenuDefinition[],
-  role: Role,
+  user: MenuUser,
   showPlanned: boolean,
 ): MenuNode[] {
   const result: MenuNode[] = [];
   for (const node of nodes) {
     if (node.children) {
-      const children = prune(node.children, role, showPlanned);
+      const children = prune(node.children, user, showPlanned);
       // A group with nothing to show is hidden.
       if (children.length > 0) {
         result.push({ id: node.id, label: node.label, icon: node.icon, children });
@@ -155,15 +159,20 @@ function prune(
       if (showPlanned) {
         result.push({ id: node.id, label: node.label, icon: node.icon, planned: true });
       }
-    } else if (node.href && node.area && canView(node.area, role)) {
+    } else if (node.href && node.systemOnly) {
+      if (user.isSystemAdmin) {
+        result.push({ id: node.id, label: node.label, icon: node.icon, href: node.href });
+      }
+    } else if (node.href && node.area && canView(user, node.area)) {
       result.push({ id: node.id, label: node.label, icon: node.icon, href: node.href });
     }
   }
   return result;
 }
 
-// The menu for one role. Live items follow the permission matrix. Planned
-// items show for office roles, so the full shape is visible in a demo.
-export function buildMenu(role: Role): MenuNode[] {
-  return prune(MENU, role, canView("structure", role));
+// The menu for one user. Live items follow the access set on their role.
+// Planned items show for the System Admin and for anyone who can see stock
+// points and outlets, so the full shape is visible in a demo.
+export function buildMenu(user: MenuUser): MenuNode[] {
+  return prune(MENU, user, user.isSystemAdmin || canView(user, "structure"));
 }

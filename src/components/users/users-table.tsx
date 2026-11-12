@@ -3,8 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { badge, button, field } from "@/components/ui/styles";
-import { ROLE_LABELS, ROLES, TWO_FACTOR_ROLES, type Role } from "@/lib/auth/roles";
-import type { UserRow } from "@/lib/users/queries";
+import type { RoleOption, UserRow } from "@/lib/users/queries";
 import { DeleteDialog, type DeleteTarget } from "./delete-dialog";
 import { ResetPasswordDialog, type ResetTarget } from "./reset-password-dialog";
 import {
@@ -55,15 +54,17 @@ function StatusBadge({ status }: { status: UserRow["status"] }) {
 
 export function UsersTable({
   rows,
+  roles,
   canEdit,
   currentUserId,
 }: {
   rows: UserRow[];
+  roles: RoleOption[];
   canEdit: boolean;
   currentUserId: string;
 }) {
   const [query, setQuery] = useState("");
-  const [role, setRole] = useState<"" | Role>("");
+  const [role, setRole] = useState("");
   const [status, setStatus] = useState<"" | UserRow["status"]>("");
   const [target, setTarget] = useState<StatusTarget | null>(null);
   const [deleting, setDeleting] = useState<DeleteTarget | null>(null);
@@ -74,7 +75,7 @@ export function UsersTable({
     const needle = query.trim().toLowerCase();
     return rows.filter(
       (row) =>
-        (!role || row.role === role) &&
+        (!role || row.roleId === role) &&
         (!status || row.status === status) &&
         (!needle ||
           row.fullName.toLowerCase().includes(needle) ||
@@ -112,7 +113,7 @@ export function UsersTable({
             {text.resetPassword}
           </button>
         ) : null}
-        {!isSelf && active && TWO_FACTOR_ROLES.includes(row.role) ? (
+        {!isSelf && active && row.requiresTwoFactor ? (
           <button
             type="button"
             onClick={() => setResettingMfa({ id: row.id, name: row.fullName })}
@@ -144,7 +145,7 @@ export function UsersTable({
   }
 
   const signInKind = (row: UserRow) =>
-    row.role === "cashier" ? text.usernameAndPin : text.emailAndPassword;
+    row.signInMethod === "pin" ? text.usernameAndPin : text.emailAndPassword;
 
   return (
     <>
@@ -181,13 +182,13 @@ export function UsersTable({
           <select
             id="user-role"
             value={role}
-            onChange={(event) => setRole(event.target.value as "" | Role)}
+            onChange={(event) => setRole(event.target.value)}
             className={field.input}
           >
             <option value="">{text.allRoles}</option>
-            {ROLES.map((value) => (
-              <option key={value} value={value}>
-                {ROLE_LABELS[value]}
+            {roles.map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.name}
               </option>
             ))}
           </select>
@@ -249,7 +250,7 @@ export function UsersTable({
                     </td>
                     <td className="px-4 py-3">
                       <span className={`${badge.base} ${badge.role}`}>
-                        {ROLE_LABELS[row.role]}
+                        {row.roleName}
                       </span>
                     </td>
                     <td className="px-4 py-3">{row.signIn}</td>
@@ -285,7 +286,7 @@ export function UsersTable({
                     <dt className="text-[0.72rem] font-semibold uppercase tracking-[0.04em] text-muted">
                       {text.role}
                     </dt>
-                    <dd>{ROLE_LABELS[row.role]}</dd>
+                    <dd>{row.roleName}</dd>
                     <dt className="text-[0.72rem] font-semibold uppercase tracking-[0.04em] text-muted">
                       {text.signIn}
                     </dt>

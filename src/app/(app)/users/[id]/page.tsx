@@ -6,7 +6,7 @@ import { PageLoading } from "@/components/page-loading";
 import { UserForm } from "@/components/users/user-form";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { canEdit } from "@/lib/auth/permissions";
-import { getUser } from "@/lib/users/queries";
+import { getUser, listAssignableRoles } from "@/lib/users/queries";
 
 export const metadata: Metadata = {
   title: "Spirit Flow",
@@ -25,11 +25,12 @@ async function EditUserContent({
   params: Promise<{ id: string }>;
 }) {
   const me = await getCurrentUser();
-  if (!me || !canEdit("users", me.role)) notFound();
+  if (!me || !canEdit(me, "users")) notFound();
 
   const { id } = await params;
   const user = await getUser(id);
   if (!user) notFound();
+  const roles = await listAssignableRoles(user.roleId);
 
   return (
     <div>
@@ -44,12 +45,15 @@ async function EditUserContent({
       </div>
       <UserForm
         mode="edit"
+        roles={roles}
         currentUserId={me.id}
         user={{
           id: user.id,
           fullName: user.fullName,
           phone: user.phone,
-          role: user.role,
+          roleId: user.roleId,
+          requiresTwoFactor: user.requiresTwoFactor,
+          signInMethod: user.signInMethod,
           email: user.signIn,
           status: user.status,
         }}

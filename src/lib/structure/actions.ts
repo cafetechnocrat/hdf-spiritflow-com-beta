@@ -42,7 +42,7 @@ const PATH = "/stock-outlets";
 // through Row Level Security, so this check is the first gate, not the only one.
 async function requireAdmin() {
   const me = await getCurrentUser();
-  return me && !me.mustChangePassword && canEdit("structure", me.role) ? me : null;
+  return me && !me.mustChangePassword && canEdit(me, "structure") ? me : null;
 }
 
 type DbError = { code?: string; message?: string; details?: string } | null;

@@ -4,14 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useActionState, useState } from "react";
 import { badge, button, field } from "@/components/ui/styles";
-import {
-  EMAIL_ROLES,
-  ROLE_HINTS,
-  ROLE_LABELS,
-  TWO_FACTOR_ROLES,
-  isRole,
-  type Role,
-} from "@/lib/auth/roles";
+import type { RoleOption } from "@/lib/users/queries";
 import { createUser, updateUser } from "@/lib/users/actions";
 import type { UserFormState } from "@/lib/users/schemas";
 import { DeleteDialog, type DeleteTarget } from "./delete-dialog";
@@ -65,15 +58,18 @@ const text = {
 } as const;
 
 type Props =
-  | { mode: "create" }
+  | { mode: "create"; roles: RoleOption[] }
   | {
       mode: "edit";
+      roles: RoleOption[];
       currentUserId: string;
       user: {
         id: string;
         fullName: string;
         phone: string;
-        role: Role;
+        roleId: string;
+        requiresTwoFactor: boolean;
+        signInMethod: "email" | "pin";
         email: string;
         status: "active" | "inactive";
       };
@@ -105,7 +101,7 @@ export function UserForm(props: Props) {
     values: {
       fullName: user?.fullName ?? "",
       phone: user?.phone ?? "",
-      role: user?.role ?? "accounts_staff",
+      role: user?.roleId ?? props.roles[0]?.id ?? "",
       email: user?.email ?? "",
     },
   };
@@ -119,9 +115,10 @@ export function UserForm(props: Props) {
   const [resetting, setResetting] = useState<ResetTarget | null>(null);
   const [resettingMfa, setResettingMfa] = useState<ResetTwoFactorTarget | null>(null);
 
-  const isCashier = user?.role === "cashier";
-  const roleKey = isRole(role) ? role : undefined;
-  const roleOptions = isCashier ? [...EMAIL_ROLES, "cashier" as Role] : EMAIL_ROLES;
+  // A role that signs in with a PIN is added with the cashier login.
+  const isCashier = user?.signInMethod === "pin";
+  const roleOptions = props.roles;
+  const chosenRole = roleOptions.find((option) => option.id === role);
 
   return (
     <>
@@ -206,14 +203,13 @@ export function UserForm(props: Props) {
               disabled={isCashier}
               className={`${field.input} appearance-none bg-[url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='12'%20height='8'%20viewBox='0%200%2012%208'%20fill='none'%20stroke='%236E6E73'%20stroke-width='1.8'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M1%201.5l5%205%205-5'/%3E%3C/svg%3E")] bg-[length:12px_8px] bg-[position:right_12px_center] bg-no-repeat pr-[34px]`}
             >
-              {roleOptions.map((value) => (
-                <option key={value} value={value}>
-                  {ROLE_LABELS[value]}
+              {roleOptions.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.name}
                 </option>
               ))}
             </select>
-            {isCashier ? <input type="hidden" name="role" value="cashier" /> : null}
-            {roleKey ? <p className={field.hint}>{ROLE_HINTS[roleKey]}</p> : null}
+            {isCashier ? <input type="hidden" name="role" value={role} /> : null}
           </div>
         </Section>
 
@@ -254,7 +250,7 @@ export function UserForm(props: Props) {
               <p className={field.hint}>{text.passwordHint}</p>
             </div>
           ) : null}
-          {roleKey && TWO_FACTOR_ROLES.includes(roleKey) ? (
+          {chosenRole?.requiresTwoFactor ? (
             <p className="mb-3.5 rounded-xl bg-accent-soft px-3.5 py-3 text-[0.85rem]">
               {text.twoFactorNote}
             </p>
@@ -291,7 +287,7 @@ export function UserForm(props: Props) {
               ) : null}
               {user.status === "active" &&
               user.id !== currentUserId &&
-              TWO_FACTOR_ROLES.includes(user.role) ? (
+              user.requiresTwoFactor ? (
                 <button
                   type="button"
                   onClick={() => setResettingMfa({ id: user.id, name: user.fullName })}

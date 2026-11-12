@@ -15,12 +15,12 @@ export const metadata: Metadata = {
 const text = {
   title: "Ledger Groups And Ledgers",
   subtitle:
-    "Groups organise the ledgers. Ledgers are the accounts that transactions are posted to. Only the Chief Accountant and the System Admin can change either.",
+    "Groups organise the ledgers. Ledgers are the accounts that transactions are posted to.",
 } as const;
 
 async function LedgersContent() {
   const me = await getCurrentUser();
-  if (!me || !canView("ledgers", me.role)) notFound();
+  if (!me || !canView(me, "ledgers")) notFound();
 
   const data = await loadLedgerData();
 
@@ -32,7 +32,7 @@ async function LedgersContent() {
         </h1>
         <p className="mt-0.5 text-[0.88rem] text-muted">{text.subtitle}</p>
       </div>
-      <LedgerManager data={data} canEdit={canEdit("ledgers", me.role)} />
+      <LedgerManager data={data} canEdit={canEdit(me, "ledgers")} />
     </div>
   );
 }

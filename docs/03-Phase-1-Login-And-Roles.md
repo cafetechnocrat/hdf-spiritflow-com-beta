@@ -167,3 +167,8 @@ The permission table in section 2 and the fixed list of nine roles are replaced 
 - Changes take effect on the user's next request. The audit log records every change to roles and access.
 - The Users screen lists only active roles when choosing a role for a user.
 - **Open:** a role switched inactive while users are signed in loses access at once, and those users see a "No Access" page. Confirm that is wanted.
+
+### Built So Far (Roles And Access)
+- Screen at `/roles`, System Admin only, under Administration. Migration `20261114100000_roles_and_access.sql` adds `roles`, `features` and `role_access`, moves `profiles` to `role_id`, and replaces every policy and voucher function with the `has_access(feature, action)` helper. The old `user_role` type and `current_user_role()` are removed.
+- The app loads the user's role, switches and access with the user (`getCurrentUser`). Menu items, pages and server actions check that access. A role switched off cannot sign in. Two-factor is read from the role.
+- Not built yet: access by user inside the role's limit, and a screen to add features (features are seeded by migration).

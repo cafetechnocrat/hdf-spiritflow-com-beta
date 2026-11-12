@@ -37,7 +37,7 @@ async function ReportContent({
   if (!isReportKey(report)) notFound();
 
   const me = await getCurrentUser();
-  if (!me || !canView("reports", me.role)) notFound();
+  if (!me || !canView(me, "reports")) notFound();
 
   const raw = await searchParams;
   const [transactionDate, period] = await Promise.all([
