@@ -33,6 +33,7 @@ const text = {
   cancel: "Cancel",
   enterValue: "Enter the closing stock value.",
   checking: "Checking...",
+  previewFailed: "The check could not be done. Nothing was changed. Try again.",
   noChange: (book: string) => `No change from the book stock of ${book}.`,
   noChangeLine: "The value is saved. No journal is posted.",
   wentDown: (amount: string) => `Stock went down by ${amount}. Cost goes up.`,
@@ -68,6 +69,7 @@ const text = {
     "Opening stock is not entered here. The Chief Accountant enters it once as a Journal: Dr the stock ledger, Cr Capital, dated 01/04/2026. When the Bar POS and stock module go live, this screen is switched off.",
   readOnly: "You can see closing stock but not enter it.",
   saved: "Closing stock saved.",
+  saveFailed: "Something went wrong. Nothing was changed. Try again.",
 } as const;
 
 const displayDate = (date: string) => date.split("-").reverse().join("/");
@@ -128,11 +130,12 @@ export function ClosingStockScreen({ data }: { data: ClosingStockData }) {
     }
     setChecking(true);
     timer.current = window.setTimeout(async () => {
-      const result = await previewClosingStock({
+      // Whatever happens, the screen must stop waiting and say what went wrong.
+      const result: PreviewResult = await previewClosingStock({
         accountId: account.id,
         date: nextDate,
         value: nextValue,
-      });
+      }).catch(() => ({ ok: false as const, error: text.previewFailed }));
       if (mine !== token.current) return;
       setPreview(result);
       setChecking(false);
@@ -181,7 +184,7 @@ export function ClosingStockScreen({ data }: { data: ClosingStockData }) {
         value,
         note,
         reason,
-      });
+      }).catch(() => ({ error: text.saveFailed }));
       if (result.error) {
         setError(result.error);
         return;

@@ -26,13 +26,18 @@ const input = z.object({
   reason: z.string().trim().max(300, "The reason is too long."),
 });
 
+// The database returns numeric columns as plain JSON numbers. They hold at most
+// two decimals, so writing them back out with two decimals loses nothing.
 type Plan = {
   stock_date: string;
-  value: string;
-  diff: string;
-  current_diff: string;
+  value: number | string;
+  diff: number | string;
+  current_diff: number | string;
   is_target: boolean;
 };
+
+const amountText = (value: number | string): string =>
+  typeof value === "number" ? value.toFixed(2) : value;
 
 // Paise back to signed text such as -18000.00.
 function paiseToText(paise: bigint): string {
@@ -79,7 +84,11 @@ export async function previewClosingStock(raw: {
   ]);
   if (plan.error) return { ok: false, error: explain(plan.error) };
 
-  const rows = (plan.data ?? []) as Plan[];
+  const rows = ((plan.data ?? []) as Plan[]).map((row) => ({
+    ...row,
+    diff: amountText(row.diff),
+    current_diff: amountText(row.current_diff),
+  }));
   const target = rows.find((row) => row.is_target);
   if (!target) return { ok: false, error: text.failed };
   return {
