@@ -33,6 +33,9 @@ const text = {
     "Share it with the user in person or by phone. They should change it after they first sign in.",
   twoFactorNote:
     "This role signs in with an authenticator app as well. They set it up the first time they sign in.",
+  notActive: "not active",
+  inactiveRolesHint:
+    "Roles marked not active are switched off. The System Admin switches them on under Roles And Access.",
   outletAccess: "Outlet Access",
   allOutlets: "Can see all outlets.",
   outletHint:
@@ -101,7 +104,7 @@ export function UserForm(props: Props) {
     values: {
       fullName: user?.fullName ?? "",
       phone: user?.phone ?? "",
-      role: user?.roleId ?? props.roles[0]?.id ?? "",
+      role: user?.roleId ?? props.roles.find((option) => option.isActive)?.id ?? "",
       email: user?.email ?? "",
     },
   };
@@ -204,12 +207,20 @@ export function UserForm(props: Props) {
               className={`${field.input} appearance-none bg-[url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='12'%20height='8'%20viewBox='0%200%2012%208'%20fill='none'%20stroke='%236E6E73'%20stroke-width='1.8'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M1%201.5l5%205%205-5'/%3E%3C/svg%3E")] bg-[length:12px_8px] bg-[position:right_12px_center] bg-no-repeat pr-[34px]`}
             >
               {roleOptions.map((option) => (
-                <option key={option.id} value={option.id}>
+                <option
+                  key={option.id}
+                  value={option.id}
+                  disabled={!option.isActive && option.id !== user?.roleId}
+                >
                   {option.name}
+                  {option.isActive ? "" : ` (${text.notActive})`}
                 </option>
               ))}
             </select>
             {isCashier ? <input type="hidden" name="role" value={role} /> : null}
+            {roleOptions.some((option) => !option.isActive) ? (
+              <p className={field.hint}>{text.inactiveRolesHint}</p>
+            ) : null}
           </div>
         </Section>
 

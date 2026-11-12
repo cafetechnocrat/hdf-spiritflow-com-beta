@@ -6,6 +6,8 @@ import { createClient } from "@/lib/supabase/server";
 export type RoleOption = {
   id: string;
   name: string;
+  // A role that is switched off cannot be given to a user.
+  isActive: boolean;
   signInMethod: "email" | "pin";
   requiresTwoFactor: boolean;
 };
@@ -120,24 +122,27 @@ export async function listRoles(): Promise<RoleOption[]> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("roles")
-    .select("id, name, sign_in_method, requires_two_factor")
+    .select("id, name, is_active, sign_in_method, requires_two_factor")
     .order("sort_order")
     .order("name");
   return ((data ?? []) as {
     id: string;
     name: string;
+    is_active: boolean;
     sign_in_method: "email" | "pin";
     requires_two_factor: boolean;
   }[]).map((r) => ({
     id: r.id,
     name: r.name,
+    isActive: r.is_active,
     signInMethod: r.sign_in_method,
     requiresTwoFactor: r.requires_two_factor,
   }));
 }
 
-// The roles a user can be given: active roles that sign in with email. A role
-// that signs in with a PIN is added with the cashier login.
+// The roles that sign in with email, for the role choice on the user form. Roles
+// that are switched off are listed too, so it is clear they exist and where to
+// switch them on. A role that signs in with a PIN is added with the cashier login.
 export async function listAssignableRoles(keepId?: string): Promise<RoleOption[]> {
   const supabase = await createClient();
   const { data } = await supabase
@@ -152,10 +157,11 @@ export async function listAssignableRoles(keepId?: string): Promise<RoleOption[]
     requires_two_factor: boolean;
     is_active: boolean;
   }[])
-    .filter((r) => r.id === keepId || (r.is_active && r.sign_in_method === "email"))
+    .filter((r) => r.id === keepId || r.sign_in_method === "email")
     .map((r) => ({
       id: r.id,
       name: r.name,
+      isActive: r.is_active,
       signInMethod: r.sign_in_method,
       requiresTwoFactor: r.requires_two_factor,
     }));
