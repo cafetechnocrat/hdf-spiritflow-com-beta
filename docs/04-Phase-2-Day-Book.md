@@ -147,6 +147,13 @@ Left out of this slice. When it is added later it will be a restricted form for 
 - Sales Register and Purchase Register at `/reports/sales-register` and `/reports/purchase-register`. Migration `20261113170000_registers.sql` adds the group marker `register_kind` (seeded for Sales Accounts and Purchase Accounts, inherited by sub-groups) and the function `report_register`.
 - Each voucher gets the direction of its register ledgers: a normal sale or purchase has the register side positive and a return is the other way, shown as negative amounts in the same columns. There is no screen yet to change which groups feed a register.
 
+### Financial Year Selector (Owner Decision, 2026-11-12)
+- The top bar has a **Financial Year** selector at the left (the transaction date stays at the right). A financial year runs 1 April to 31 March. The first and last day of the picked year show beside it.
+- With no year picked, the **current financial year** is used. The list of years starts with the year that holds the books begin date (a setting, `books_begin_date`, seeded 01/04/2023) and ends with the current year. The picked year is saved per user in `user_preferences.fy_start_year` the moment it is chosen. Migration `20261113190000_financial_year.sql`.
+- Shown for roles that see the accounts: MD, System Admin, Chief Accountant and Accounts Staff.
+- The reports follow it: Ledger Statement, both registers and Profit And Loss start from the first day to the last day of the picked year, and Trial Balance and Balance Sheet start as on its last day. The Day Book still starts on the transaction date. Every report can still be changed by its own filters.
+- It does not change the transaction date or stop a voucher being dated outside the year. **Suggestion:** when the picked year does not hold the transaction date, move the transaction date into it, which helps back-filling. Not built; say if you want it.
+
 ### Voucher Numbers
 - Each voucher gets its type's prefix, the financial year and a running number for that type and year, for example Payment No. 12 of 2026-27. The database assigns the number when the voucher is saved, so two people saving at once never get the same number.
 - The financial year comes from the voucher date, not from today.

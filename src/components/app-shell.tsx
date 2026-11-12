@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
+import { FinancialYearSelector } from "@/components/financial-year-selector";
 import { TransactionDateSelector } from "@/components/transaction-date-selector";
 import { signOut } from "@/lib/auth/actions";
 import type { MenuIcon, MenuNode } from "@/lib/nav/menu";
@@ -204,6 +205,7 @@ export function AppShell({
   menu,
   initialCollapsed,
   transactionDate,
+  financialYear,
   children,
 }: {
   user: { fullName: string; roleLabel: string };
@@ -211,6 +213,8 @@ export function AppShell({
   initialCollapsed: boolean;
   // Shown for roles that enter transactions. null hides the selector.
   transactionDate: { date: string; today: string } | null;
+  // Shown for roles that see the accounts, at the left of the top bar.
+  financialYear: { selected: number; current: number; years: number[] } | null;
   children: ReactNode;
 }) {
   const pathname = usePathname();
@@ -367,6 +371,13 @@ export function AppShell({
             <path d="M9 4v16" />
           </svg>
         </button>
+        {financialYear ? (
+          <FinancialYearSelector
+            selected={financialYear.selected}
+            current={financialYear.current}
+            years={financialYear.years}
+          />
+        ) : null}
         <span className="flex-1" />
         {transactionDate ? (
           <TransactionDateSelector date={transactionDate.date} today={transactionDate.today} />
@@ -388,7 +399,7 @@ export function AppShell({
             >
               <path d="M9 4H5v16h4M16 8l4 4-4 4M20 12H9" />
             </svg>
-            {text.signOut}
+            <span className="hidden sm:inline">{text.signOut}</span>
           </button>
         </form>
       </header>

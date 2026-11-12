@@ -1,4 +1,4 @@
-import { addDays, financialYearStart, isValidDate } from "./dates";
+import { addDays, isValidDate } from "./dates";
 import type { ReportKey } from "./types";
 
 // What a report is asked for, after checking the filters from the address.
@@ -23,10 +23,18 @@ function one(raw: RawParams, name: string): string | undefined {
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+// What a report starts on: the transaction date for the Day Book, and the
+// picked financial year for everything else.
+export type ReportDefaults = {
+  transactionDate: string;
+  fyStart: string;
+  fyEnd: string;
+};
+
 export function parseReportParams(
   key: ReportKey,
   raw: RawParams,
-  transactionDate: string,
+  defaults: ReportDefaults,
 ): ReportParams {
   const date = (name: string, fallback: string) => {
     const value = one(raw, name);
@@ -37,17 +45,14 @@ export function parseReportParams(
     return value && UUID.test(value) ? value : "";
   };
 
-  // Each report starts on a sensible range around the transaction date.
-  const defaultFrom =
-    key === "day-book" ? transactionDate : financialYearStart(transactionDate);
-
-  const from = date("from", defaultFrom);
-  const to = date("to", transactionDate);
+  const dayBook = key === "day-book";
+  const from = date("from", dayBook ? defaults.transactionDate : defaults.fyStart);
+  const to = date("to", dayBook ? defaults.transactionDate : defaults.fyEnd);
   return {
     // Keep the range the right way round.
     from: from <= to ? from : to,
     to: from <= to ? to : from,
-    asOn: date("asOn", transactionDate),
+    asOn: date("asOn", defaults.fyEnd),
     typeId: id("typeId"),
     ledgerId: id("ledgerId"),
     showVoid: one(raw, "showVoid") === "1",

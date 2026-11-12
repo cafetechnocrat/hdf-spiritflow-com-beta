@@ -5,10 +5,11 @@ import type { ReactNode } from "react";
 import { AppShell } from "@/components/app-shell";
 import { NoAccess } from "@/components/no-access";
 import { getCurrentUser } from "@/lib/auth/current-user";
-import { canEdit } from "@/lib/auth/permissions";
+import { canEdit, canView } from "@/lib/auth/permissions";
 import { ROLE_LABELS } from "@/lib/auth/roles";
 import { buildMenu } from "@/lib/nav/menu";
 import { MENU_COOKIE } from "@/lib/nav/menu-cookie";
+import { loadPeriod } from "@/lib/period/queries";
 import { loadTransactionDate, todayInIndia } from "@/lib/vouchers/transaction-date";
 
 const text = {
@@ -33,9 +34,18 @@ async function Shell({ children }: { children: ReactNode }) {
     ? { date: await loadTransactionDate(user.id), today: todayInIndia() }
     : null;
 
+  // Roles that see the accounts pick the financial year in the top bar.
+  const period =
+    canView("reports", user.role) || canEdit("transactions", user.role)
+      ? await loadPeriod(user.id)
+      : null;
+
   return (
     <AppShell
       transactionDate={transactionDate}
+      financialYear={
+        period ? { selected: period.selected, current: period.current, years: period.years } : null
+      }
       user={{ fullName: user.fullName, roleLabel: ROLE_LABELS[user.role] }}
       menu={buildMenu(user.role)}
       initialCollapsed={collapsed}

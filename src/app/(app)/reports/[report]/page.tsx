@@ -13,6 +13,7 @@ import {
 import { reportFilterFields } from "@/lib/reports/filters";
 import { parseReportParams, type RawParams } from "@/lib/reports/params";
 import { isReportKey, REPORT_TITLES, type ReportDocument } from "@/lib/reports/types";
+import { loadPeriod } from "@/lib/period/queries";
 import { loadTransactionDate } from "@/lib/vouchers/transaction-date";
 
 export const metadata: Metadata = {
@@ -39,8 +40,15 @@ async function ReportContent({
   if (!me || !canView("reports", me.role)) notFound();
 
   const raw = await searchParams;
-  const transactionDate = await loadTransactionDate(me.id);
-  const reportParams = parseReportParams(report, raw, transactionDate);
+  const [transactionDate, period] = await Promise.all([
+    loadTransactionDate(me.id),
+    loadPeriod(me.id),
+  ]);
+  const reportParams = parseReportParams(report, raw, {
+    transactionDate,
+    fyStart: period.start,
+    fyEnd: period.end,
+  });
 
   let doc: ReportDocument | null = null;
   let options: Awaited<ReturnType<typeof loadFilterOptions>> | null = null;
