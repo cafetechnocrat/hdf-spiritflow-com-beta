@@ -512,7 +512,7 @@ function ViewDialog({
       <div className="mb-3 overflow-hidden rounded-xl border border-divider">
         <table className="w-full border-collapse text-[0.88rem]">
           <thead>
-            <tr className="bg-[#fafafb] text-left text-[0.72rem] font-semibold uppercase tracking-[0.04em] text-muted">
+            <tr className="bg-[#f8f9fc] text-left text-[0.72rem] font-semibold uppercase tracking-[0.04em] text-muted">
               <th className="px-3 py-2">{text.debit}</th>
               <th className="px-3 py-2">{text.credit}</th>
               <th className="px-3 py-2 text-right">{text.amount}</th>

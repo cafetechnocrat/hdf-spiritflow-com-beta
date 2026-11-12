@@ -15,11 +15,12 @@ export function NoAccess() {
       <section className="w-full max-w-[420px] rounded-2xl bg-surface px-6 pb-5 pt-5 text-center shadow-card">
         <div className="mb-4 flex justify-center">
           <Image
-            src="/brand/spiritflow-logo.png"
+            src="/brand/spiritflow-logo-horizontal.png"
             alt={text.logoAlt}
-            width={2172}
-            height={724}
-            className="-my-2.5 h-auto w-[150px]"
+            width={1400}
+            height={385}
+            sizes="190px"
+            className="h-auto w-[190px]"
           />
         </div>
         <h1 className="text-[1.25rem] font-semibold tracking-[-0.02em]">
@@ -29,7 +30,7 @@ export function NoAccess() {
         <form action={signOut} className="mt-5">
           <button
             type="submit"
-            className="h-11 w-full rounded-xl bg-accent text-[0.95rem] font-semibold text-white transition-colors hover:bg-accent-hover active:bg-accent-press"
+            className="h-11 w-full rounded-[10px] bg-accent text-[0.95rem] font-semibold text-white transition-colors hover:bg-accent-hover active:bg-accent-press"
           >
             {text.signOut}
           </button>

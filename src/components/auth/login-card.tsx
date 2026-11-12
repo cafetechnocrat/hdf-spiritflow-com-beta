@@ -118,16 +118,18 @@ export function LoginCard() {
   return (
     <section
       aria-labelledby={`${baseId}-title`}
-      className="w-full max-w-[340px] rounded-2xl bg-surface px-4 pb-3 pt-4 shadow-card sm:rounded-[18px] sm:px-[22px] sm:pb-4 sm:pt-5"
+      className="relative overflow-hidden w-full max-w-[340px] rounded-2xl bg-surface px-4 pb-3 pt-4 shadow-card sm:rounded-[18px] sm:px-[22px] sm:pb-4 sm:pt-5"
     >
-      <div className="mb-6 flex justify-center">
+      <span aria-hidden="true" className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-accent via-accent to-brand" />
+      <div className="mb-5 mt-1 flex justify-center">
         <Image
-          src="/brand/spiritflow-logo.png"
+          src="/brand/spiritflow-logo-horizontal.png"
           alt={text.logoAlt}
-          width={2172}
-          height={724}
+          width={1400}
+          height={385}
+          sizes="200px"
           priority
-          className="-my-2.5 h-auto w-[150px]"
+          className="h-auto w-[200px]"
         />
       </div>
       <h1

@@ -226,7 +226,7 @@ export function UsersTable({
             {/* Table from tablet width up */}
             <table className="hidden w-full border-collapse md:table">
               <thead>
-                <tr className="border-b border-divider bg-[#fafafb] text-left text-[0.72rem] font-semibold uppercase tracking-[0.04em] text-muted">
+                <tr className="border-b border-divider bg-[#f8f9fc] text-left text-[0.72rem] font-semibold uppercase tracking-[0.04em] text-muted">
                   <th className="px-4 py-3">{text.name}</th>
                   <th className="px-4 py-3">{text.role}</th>
                   <th className="px-4 py-3">{text.signIn}</th>
@@ -241,7 +241,7 @@ export function UsersTable({
                 {visible.map((row) => (
                   <tr
                     key={row.id}
-                    className="border-b border-divider text-[0.88rem] last:border-b-0 hover:bg-[#fafafb]"
+                    className="border-b border-divider text-[0.88rem] last:border-b-0 hover:bg-[#f8f9fc]"
                   >
                     <td className="px-4 py-3">
                       <div className="font-semibold">{row.fullName}</div>

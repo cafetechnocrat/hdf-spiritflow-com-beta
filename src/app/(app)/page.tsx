@@ -69,7 +69,7 @@ async function DashboardContent() {
   if (!canView(user, "dashboard")) {
     return (
       <div>
-        <h1 className="text-[1.5rem] font-semibold leading-tight tracking-[-0.02em]">
+        <h1 className="text-[1.3rem] font-semibold leading-tight tracking-[-0.02em]">
           {greeting()}, {user.fullName}
         </h1>
         <p className="mt-0.5 text-[0.88rem] text-muted">{user.roleName}</p>

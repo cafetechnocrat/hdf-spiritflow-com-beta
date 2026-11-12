@@ -334,7 +334,7 @@ export function UserForm(props: Props) {
           </Section>
         ) : null}
 
-        <div className="flex flex-wrap justify-end gap-2 border-t border-divider bg-[#fafafb] px-[18px] py-4">
+        <div className="flex flex-wrap justify-end gap-2 border-t border-divider bg-[#f8f9fc] px-[18px] py-4">
           <Link href="/users" className={button.secondary}>
             {text.cancel}
           </Link>

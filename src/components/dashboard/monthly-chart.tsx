@@ -87,9 +87,9 @@ export function MonthlyChart({
         <div role="img" aria-label={describe} className="h-[250px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data} margin={{ top: 8, right: 8, left: -12, bottom: 0 }}>
-              <CartesianGrid vertical={false} strokeDasharray="3 4" stroke="#E8E8ED" />
-              <XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: "#6E6E73" }} />
-              <YAxis tickLine={false} axisLine={false} width={44} tick={{ fontSize: 11, fill: "#6E6E73" }} />
+              <CartesianGrid vertical={false} strokeDasharray="3 4" stroke="#E6E9F1" />
+              <XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: "#5B6478" }} />
+              <YAxis tickLine={false} axisLine={false} width={44} tick={{ fontSize: 11, fill: "#5B6478" }} />
               <Tooltip
                 cursor={{ fill: "rgba(0,0,0,0.04)" }}
                 formatter={(value, name) => [`${Number(value).toFixed(2)} ${text.lakh}`, String(name)]}

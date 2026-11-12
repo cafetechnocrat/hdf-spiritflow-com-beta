@@ -87,8 +87,8 @@ type TreeProps = {
 function MenuLevel({ nodes, depth, pathname, rail, isOpen, onToggle, onNavigate }: TreeProps) {
   const top = depth === 0;
   const row = top
-    ? "min-h-11 gap-3 px-3 text-[0.92rem] font-medium"
-    : "min-h-10 gap-2 px-2.5 text-[0.88rem]";
+    ? "min-h-10 gap-2.5 px-2.5 text-[0.88rem] font-medium"
+    : "min-h-9 gap-2 px-2.5 text-[0.85rem]";
   const hideInRail = rail ? "lg:hidden" : "";
 
   return (
@@ -186,7 +186,7 @@ function MenuLevel({ nodes, depth, pathname, rail, isOpen, onToggle, onNavigate 
                 rail ? "lg:justify-center lg:px-0" : ""
               } ${
                 active
-                  ? "bg-accent-soft font-semibold text-link"
+                  ? "relative bg-accent-soft font-semibold text-accent before:absolute before:bottom-2 before:left-0 before:top-2 before:w-[3px] before:rounded-full before:bg-brand"
                   : "text-text hover:bg-background"
               }`}
             >
@@ -265,7 +265,7 @@ export function AppShell({
   return (
     <div
       className={`min-h-dvh transition-[padding-left] print:!pl-0 ${
-        collapsed ? "lg:pl-[72px]" : "lg:pl-[264px]"
+        collapsed ? "lg:pl-[72px]" : "lg:pl-[248px]"
       }`}
     >
       {drawerOpen ? (
@@ -278,17 +278,18 @@ export function AppShell({
 
       <aside
         aria-label={text.mainNav}
-        className={`print:hidden fixed inset-y-0 left-0 z-30 flex w-[264px] flex-col overflow-hidden border-r border-divider bg-surface px-3 py-4 transition-[transform,width] lg:translate-x-0 ${
-          collapsed ? "lg:w-[72px]" : "lg:w-[264px]"
+        className={`print:hidden fixed inset-y-0 left-0 z-30 flex w-[248px] flex-col overflow-hidden border-r border-divider bg-surface px-3 py-4 transition-[transform,width] lg:translate-x-0 ${
+          collapsed ? "lg:w-[72px]" : "lg:w-[248px]"
         } ${drawerOpen ? "translate-x-0 shadow-card" : "-translate-x-full"}`}
       >
-        <Link href="/" className="mb-1 block h-11 px-2" aria-label={text.logoAlt}>
+        <Link href="/" className="mb-2 block h-11 px-1.5" aria-label={text.logoAlt}>
           <Image
-            src="/brand/spiritflow-logo.png"
+            src="/brand/spiritflow-logo-horizontal.png"
             alt={text.logoAlt}
-            width={2172}
-            height={724}
-            className={`-my-2 h-auto w-[132px] ${collapsed ? "lg:hidden" : ""}`}
+            width={1400}
+            height={385}
+            sizes="160px"
+            className={`h-auto w-[156px] ${collapsed ? "lg:hidden" : ""}`}
           />
           {collapsed ? (
             <span
@@ -330,7 +331,7 @@ export function AppShell({
         </div>
       </aside>
 
-      <header className="print:hidden sticky top-0 z-10 flex h-14 items-center gap-2 border-b border-divider bg-surface/90 pl-3 pr-2 backdrop-blur">
+      <header className="print:hidden sticky top-0 z-10 flex h-12 items-center gap-2 border-b border-divider bg-surface/90 pl-3 pr-2 backdrop-blur">
         <button
           type="button"
           onClick={() => setDrawerOpen((value) => !value)}

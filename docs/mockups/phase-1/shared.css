@@ -1,26 +1,29 @@
 /* Shared styles for the Phase 1 admin mockups. Same tokens as the approved sign in
-   mockup: Apple-inspired, light only, one blue accent. Static mockups only. */
+   mockup: navy and orange from the logo, light only. Static mockups only. */
 :root {
-  --accent: #0071E3;
-  --accent-hover: #0077ED;
-  --accent-press: #0062C4;
-  --accent-soft: #E8F1FC;
-  --link: #0066CC;
-  --background: #F5F5F7;
+  --accent: #102A6B;
+  --accent-hover: #1A3A8A;
+  --accent-press: #0B1F55;
+  --accent-soft: #E9EDF8;
+  --link: #1D3F9A;
+  --brand: #F08A00;
+  --brand-deep: #C45200;
+  --brand-soft: #FFF1DC;
+  --background: #F4F6FA;
   --surface: #FFFFFF;
-  --track: #E8E8ED;
-  --text: #1D1D1F;
-  --text-muted: #6E6E73;
-  --border: #86868B;
-  --border-soft: #D2D2D7;
-  --divider: #E8E8ED;
+  --track: #E7EAF2;
+  --text: #0F1B3D;
+  --text-muted: #5B6478;
+  --border: #8892A6;
+  --border-soft: #D5DAE5;
+  --divider: #E6E9F1;
   --success: #1E7E34;
   --success-bg: #E9F6EC;
-  --warn: #8A5A00;
-  --warn-bg: #FFF4DB;
-  --error: #C9342A;
+  --warn: #9A4B00;
+  --warn-bg: #FFF1DC;
+  --error: #C2332A;
   --error-bg: #FFF1F0;
-  --shadow: 0 2px 8px rgba(0,0,0,.04), 0 12px 40px rgba(0,0,0,.08);
+  --shadow: 0 1px 3px rgba(15,27,61,.05), 0 8px 28px rgba(15,27,61,.08);
   --sidebar: 248px;
   color-scheme: light;
 }

@@ -37,7 +37,7 @@
   shell.insertAdjacentHTML("afterbegin",
     '<div class="scrim" id="scrim"></div>' +
     '<aside class="sidebar" id="sidebar" aria-label="Main">' +
-      '<a class="logo" href="#"><img src="../../../public/brand/spiritflow-logo.png" alt="Spirit Flow"></a>' +
+      '<a class="logo" href="#"><img src="../../../public/brand/spiritflow-logo-horizontal.png" alt="Spirit Flow"></a>' +
       '<nav class="nav">' + nav + "</nav>" +
       '<div class="me"><div class="avatar" aria-hidden="true">SA</div>' +
       '<div class="who"><strong>Sample Admin</strong><span>System Admin</span></div></div>' +

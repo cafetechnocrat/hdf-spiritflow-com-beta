@@ -316,7 +316,7 @@ export function UserAccessSection({ data }: { data: UserAccessData }) {
 
       <div
         role="status"
-        className={`pointer-events-none fixed bottom-4 right-4 z-[60] rounded-xl bg-[#1D1D1F] px-3.5 py-2 text-[0.84rem] text-white transition-opacity ${
+        className={`pointer-events-none fixed bottom-4 right-4 z-[60] rounded-xl bg-[#0F1B3D] px-3.5 py-2 text-[0.84rem] text-white transition-opacity ${
           notice ? "opacity-100" : "opacity-0"
         }`}
       >

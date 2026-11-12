@@ -1,27 +1,30 @@
 @import "tailwindcss";
 
-/* Design tokens. Light theme only for now. Values match the approved login mockup
-   (docs/mockups/phase-1/login.html). */
+/* Design tokens. Light theme only for now. The palette comes from the Spirit Flow
+   logo: a deep navy for actions and text, and an orange for highlights. */
 :root {
-  --accent: #0071e3; /* button fill */
-  --accent-hover: #0077ed;
-  --accent-press: #0062c4;
-  --link: #0066cc; /* link text, 5.6:1 on white */
-  --background: #f5f5f7;
+  --accent: #102a6b; /* navy: button fill, active states */
+  --accent-hover: #1a3a8a;
+  --accent-press: #0b1f55;
+  --link: #1d3f9a; /* link text, 9:1 on white */
+  --brand: #f08a00; /* orange from the logo: highlights, never body text */
+  --brand-deep: #c45200;
+  --brand-soft: #fff1dc;
+  --background: #f4f6fa;
   --surface: #ffffff;
   --field: #ffffff;
-  --track: #e8e8ed; /* segmented control track */
-  --text: #1d1d1f;
-  --text-muted: #6e6e73;
-  --border: #86868b;
-  --border-soft: #d2d2d7;
+  --track: #e7eaf2; /* segmented control track */
+  --text: #0f1b3d;
+  --text-muted: #5b6478;
+  --border: #8892a6;
+  --border-soft: #d5dae5;
   --success: #1e7e34;
   --success-bg: #e9f6ec;
-  --warn: #8a5a00;
-  --warn-bg: #fff4db;
-  --accent-soft: #e8f1fc;
-  --divider: #e8e8ed;
-  --error: #c9342a;
+  --warn: #9a4b00;
+  --warn-bg: #fff1dc;
+  --accent-soft: #e9edf8;
+  --divider: #e6e9f1;
+  --error: #c2332a;
   --error-bg: #fff1f0;
 }
 
@@ -30,6 +33,9 @@
   --color-accent-hover: var(--accent-hover);
   --color-accent-press: var(--accent-press);
   --color-link: var(--link);
+  --color-brand: var(--brand);
+  --color-brand-deep: var(--brand-deep);
+  --color-brand-soft: var(--brand-soft);
   --color-background: var(--background);
   --color-surface: var(--surface);
   --color-field: var(--field);
@@ -48,7 +54,7 @@
   --color-error-bg: var(--error-bg);
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI",
     Roboto, "Helvetica Neue", Arial, sans-serif;
-  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.04), 0 12px 40px rgba(0, 0, 0, 0.08);
+  --shadow-card: 0 1px 3px rgba(15, 27, 61, 0.05), 0 8px 28px rgba(15, 27, 61, 0.08);
 }
 
 html {
@@ -65,8 +71,8 @@ body {
 
 /* Inputs show their own focus ring, so the outline is only for other controls. */
 :focus-visible:not(input) {
-  outline: 3px solid var(--accent);
-  outline-offset: 3px;
+  outline: 3px solid var(--brand);
+  outline-offset: 2px;
 }
 
 button,

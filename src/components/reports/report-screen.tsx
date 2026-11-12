@@ -29,11 +29,11 @@ const text = {
 
 const ROW_CLASS: Record<RowStyle, string> = {
   normal: "",
-  group: "bg-[#f3f3f6] font-semibold",
+  group: "bg-[#eff1f7] font-semibold",
   sub: "font-semibold",
   ledger: "",
   subtotal: "font-semibold",
-  total: "border-t border-border-soft bg-[#fafafb] font-semibold",
+  total: "border-t border-border-soft bg-[#f8f9fc] font-semibold",
   void: "text-muted line-through",
 };
 
@@ -48,7 +48,7 @@ function ReportTable({ table }: { table: DocTable }) {
     <div className="overflow-x-auto">
       <table className="w-full border-collapse text-[0.88rem]">
         <thead>
-          <tr className="border-b border-divider bg-[#fafafb] text-left text-[0.72rem] font-semibold uppercase tracking-[0.04em] text-muted">
+          <tr className="border-b border-divider bg-[#f8f9fc] text-left text-[0.72rem] font-semibold uppercase tracking-[0.04em] text-muted">
             {table.columns.map((column, index) => (
               <th
                 key={`${column.label}-${index}`}
@@ -287,7 +287,7 @@ export function ReportScreen({
                     key={block.voucherId}
                     className={`overflow-hidden rounded-xl border border-divider ${block.void ? "opacity-60" : ""}`}
                   >
-                    <div className="flex flex-wrap justify-between gap-x-3 gap-y-1 bg-[#fafafb] px-3 py-2 text-[0.86rem]">
+                    <div className="flex flex-wrap justify-between gap-x-3 gap-y-1 bg-[#f8f9fc] px-3 py-2 text-[0.86rem]">
                       <span>
                         <strong className="font-semibold">{block.title}</strong>{" "}
                         <span className="text-muted">{block.referenceNo}</span>{" "}

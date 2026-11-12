@@ -65,7 +65,7 @@ async function ReportContent({
   if (!doc || !options) {
     return (
       <div>
-        <h1 className="mb-3 text-[1.5rem] font-semibold leading-tight tracking-[-0.02em]">
+        <h1 className="mb-3 text-[1.3rem] font-semibold leading-tight tracking-[-0.02em]">
           {REPORT_TITLES[report]}
         </h1>
         <div

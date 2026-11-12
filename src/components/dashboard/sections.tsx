@@ -149,7 +149,7 @@ export async function HeadlineSection({ range }: { range: DashboardRange }) {
       <KpiCard
         name={text.sales}
         icon="M3 17l6-6 4 4 8-9M15 6h6v6"
-        iconBackground="#E6F1F8"
+        iconBackground="#E9EDF8"
         iconColor={PALETTE.blue}
         value={<Amount paise={totalOf(salesNow)} />}
         footer={
@@ -196,7 +196,7 @@ export async function HeadlineSection({ range }: { range: DashboardRange }) {
         name={text.cashBank}
         icon="M3 9a3 3 0 013-3h12a3 3 0 013 3v6a3 3 0 01-3 3H6a3 3 0 01-3-3zM12 9.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5z"
         iconBackground="#EAF0F8"
-        iconColor="#35609A"
+        iconColor="#102A6B"
         value={<Amount paise={cashNet < ZERO ? -cashNet : cashNet} side={cashSide} />}
         footer={
           <>
@@ -635,7 +635,7 @@ export function ComingSoonSection() {
               {text.soon}
             </span>
           </div>
-          <div className="mt-2.5 text-[1.5rem] font-bold tracking-[0.05em] text-[#B0B0B6]" aria-hidden="true">
+          <div className="mt-2.5 text-[1.5rem] font-bold tracking-[0.05em] text-[#A8AFC0]" aria-hidden="true">
             &#8212; &#8212; &#8212;
           </div>
           <div className="mt-1.5 text-[0.78rem] text-muted">

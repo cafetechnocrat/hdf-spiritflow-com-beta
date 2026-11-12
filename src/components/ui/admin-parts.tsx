@@ -160,13 +160,13 @@ export function DataList<T extends { id: string }>({
     <div className="overflow-hidden rounded-2xl bg-surface shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
       <table className="hidden w-full border-collapse md:table">
         <thead>
-          <tr className="border-b border-divider bg-[#fafafb] text-left text-[0.72rem] font-semibold uppercase tracking-[0.04em] text-muted">
+          <tr className="border-b border-divider bg-[#f8f9fc] text-left text-[0.72rem] font-semibold uppercase tracking-[0.04em] text-muted">
             {columns.map((column) => (
-              <th key={column.label} className="px-4 py-3">
+              <th key={column.label} className="px-3.5 py-2.5">
                 {column.label}
               </th>
             ))}
-            <th className="px-4 py-3">
+            <th className="px-3.5 py-2.5">
               <span className="sr-only">{actionsLabel}</span>
             </th>
           </tr>
@@ -175,14 +175,14 @@ export function DataList<T extends { id: string }>({
           {rows.map((row) => (
             <tr
               key={row.id}
-              className="border-b border-divider text-[0.88rem] last:border-b-0 hover:bg-[#fafafb]"
+              className="border-b border-divider text-[0.88rem] last:border-b-0 hover:bg-[#f8f9fc]"
             >
               {columns.map((column) => (
-                <td key={column.label} className="px-4 py-3 align-middle">
+                <td key={column.label} className="px-3.5 py-2 align-middle">
                   {column.cell(row)}
                 </td>
               ))}
-              <td className="px-4 py-3">{actions(row)}</td>
+              <td className="px-3.5 py-2.5">{actions(row)}</td>
             </tr>
           ))}
         </tbody>
@@ -191,7 +191,7 @@ export function DataList<T extends { id: string }>({
         {rows.map((row) => (
           <li
             key={row.id}
-            className="border-b border-divider px-4 py-3 text-[0.88rem] last:border-b-0"
+            className="border-b border-divider px-3.5 py-2.5 text-[0.88rem] last:border-b-0"
           >
             <div className="mb-2">{columns[0]?.cell(row)}</div>
             <dl className="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1.5">

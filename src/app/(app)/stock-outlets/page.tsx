@@ -27,7 +27,7 @@ async function StructureContent() {
   return (
     <div>
       <div className="mb-4">
-        <h1 className="text-[1.5rem] font-semibold leading-tight tracking-[-0.02em]">
+        <h1 className="text-[1.3rem] font-semibold leading-tight tracking-[-0.02em]">
           {text.title}
         </h1>
         <p className="mt-0.5 text-[0.88rem] text-muted">{text.subtitle}</p>

@@ -517,13 +517,13 @@ export function RolesManager({ data }: { data: RolesData }) {
           <table className="w-full min-w-[960px] border-separate border-spacing-0 text-[0.86rem]">
             <thead>
               <tr>
-                <th className="sticky left-0 top-0 z-[2] min-w-[230px] border-b border-divider bg-[#fafafb] px-3.5 py-2.5 text-left text-[0.74rem] font-semibold text-muted">
+                <th className="sticky left-0 top-0 z-[2] min-w-[230px] border-b border-divider bg-[#f8f9fc] px-3.5 py-2.5 text-left text-[0.74rem] font-semibold text-muted">
                   {text.feature}
                 </th>
                 {roles.map((role) => (
                   <th
                     key={role.id}
-                    className="sticky top-0 border-b border-divider bg-[#fafafb] px-2 py-2.5 align-top text-[0.78rem] font-semibold"
+                    className="sticky top-0 border-b border-divider bg-[#f8f9fc] px-2 py-2.5 align-top text-[0.78rem] font-semibold"
                   >
                     {role.name}
                     {role.isSystem ? (
@@ -547,7 +547,7 @@ export function RolesManager({ data }: { data: RolesData }) {
               <tr>
                 <td
                   colSpan={columns}
-                  className="bg-[#f3f3f6] px-3.5 py-1.5 text-[0.72rem] font-semibold uppercase tracking-[0.04em] text-muted"
+                  className="bg-[#eff1f7] px-3.5 py-1.5 text-[0.72rem] font-semibold uppercase tracking-[0.04em] text-muted"
                 >
                   {text.roleSettings}
                 </td>
@@ -736,7 +736,7 @@ export function RolesManager({ data }: { data: RolesData }) {
 
       <div
         role="status"
-        className={`pointer-events-none fixed bottom-4 right-4 z-[60] rounded-xl bg-[#1D1D1F] px-3.5 py-2 text-[0.84rem] text-white transition-opacity ${
+        className={`pointer-events-none fixed bottom-4 right-4 z-[60] rounded-xl bg-[#0F1B3D] px-3.5 py-2 text-[0.84rem] text-white transition-opacity ${
           notice ? "opacity-100" : "opacity-0"
         }`}
       >
@@ -777,7 +777,7 @@ function FeatureGroup({
       <tr>
         <td
           colSpan={columns}
-          className="bg-[#f3f3f6] px-3.5 py-1.5 text-[0.72rem] font-semibold uppercase tracking-[0.04em] text-muted"
+          className="bg-[#eff1f7] px-3.5 py-1.5 text-[0.72rem] font-semibold uppercase tracking-[0.04em] text-muted"
         >
           {label}
         </td>

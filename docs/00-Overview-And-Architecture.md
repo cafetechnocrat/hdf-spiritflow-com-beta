@@ -79,22 +79,30 @@ Starting roles (confirmed): MD, System Admin, Chief Accountant, Accounts Staff, 
 
 Style: **simple Material-style admin**. Clean, easy to use, minimal decoration, generous white space, clear hierarchy. Built from shadcn/ui components themed to match.
 
-### 8.1 Colour Tokens (Proposed, Adjust On Owner Feedback)
+### 8.1 Colour Tokens (Navy And Orange From The Logo)
 
-Define as CSS variables, with a dark-mode set derived from the same roles.
+Defined as CSS variables in `src/app/globals.css`. Updated 2026-11-14 to match the new Spirit Flow logo: a deep navy for actions and text, and an orange for highlights.
 
 | Token | Light Value | Use |
 | --- | --- | --- |
-| `--primary` | `#E65100` | Primary buttons, active nav, key accents |
-| `--on-primary` | `#FFFFFF` | Text on primary |
-| `--background` | `#F5F5F5` | Page background |
+| `--accent` | `#102A6B` | Primary buttons, active menu text, key actions (navy) |
+| `--accent-hover` / `--accent-press` | `#1A3A8A` / `#0B1F55` | Button states |
+| `--link` | `#1D3F9A` | Link text |
+| `--brand` | `#F08A00` | Highlights only: active menu mark, focus outline, the line on sign in cards. Never body text |
+| `--brand-deep` / `--brand-soft` | `#C45200` / `#FFF1DC` | Orange for emphasis and its soft background |
+| `--background` | `#F4F6FA` | Page background |
 | `--surface` | `#FFFFFF` | Cards, tables, dialogs |
-| `--text` | `#1F1F1F` | Body text |
-| `--text-muted` | `#616161` | Secondary text |
-| `--border` | `#E0E0E0` | Dividers and outlines |
-| `--success` | `#2E7D32` | Good, matched, in stock |
-| `--warning` | `#F9A825` | Attention, low stock |
-| `--error` | `#C62828` | Short, mismatch, void |
+| `--text` | `#0F1B3D` | Body text |
+| `--text-muted` | `#5B6478` | Secondary text |
+| `--border-soft` / `--divider` | `#D5DAE5` / `#E6E9F1` | Outlines and dividers |
+| `--accent-soft` | `#E9EDF8` | Soft navy background for selected and informational areas |
+| `--success` | `#1E7E34` | Good, matched, balanced |
+| `--warn` / `--warn-bg` | `#9A4B00` / `#FFF1DC` | Attention |
+| `--error` | `#C2332A` | Short, mismatch, void |
+
+Logo files are in `public/brand/` (`spiritflow-logo-horizontal.png` for the app, `spiritflow-stacked.png` for large uses). The favicon, app icon and share image are in `src/app/`.
+
+Compact sizing: controls are 40 px high from the small breakpoint up and 44 px on phones, so touch targets stay large where fingers are used.
 
 ### 8.2 Chart Palette
 

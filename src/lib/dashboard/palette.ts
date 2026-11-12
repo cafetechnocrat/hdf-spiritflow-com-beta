@@ -1,8 +1,8 @@
 // The colour-blind-safe categorical palette (Okabe-Ito) used by every chart, as
 // set in docs/00-Overview-And-Architecture.md. Safe to import in browser code.
 export const PALETTE = {
-  blue: "#0072B2",
-  orange: "#E69F00",
+  blue: "#1F4FA3",
+  orange: "#E98A00",
   sky: "#56B4E9",
   green: "#009E73",
   pink: "#CC79A7",
