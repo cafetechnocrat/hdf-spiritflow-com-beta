@@ -13,8 +13,9 @@ Status: built (2026-11-14). Mockup approved: `docs/mockups/phase-2/dashboard.htm
 
 - **Real data only.** Every figure comes from the database through the same functions the reports use, so the dashboard and the reports always agree. Amounts travel as text and add up in whole paise.
 - **Follows the financial year.** The dashboard shows the financial year picked in the top bar (1 April to 31 March), up to today when it is the current year. Changing the year changes every figure.
-- **Respects access.** Each section is tied to a feature. A user sees a section only if their role and their own access allow it. A section they cannot see is simply not drawn, and the rest of the layout closes up.
+- **Respects access, with locks.** Each section is tied to its own lock (see `docs/03-Phase-1-Login-And-Roles.md`, Reports And Dashboard Locks). A card the user may not see is **not hidden**. It stays in place with its title and a lock, shows no figure, and says: "You do not have access to view this report. Ask the System Admin to unlock it." The System Admin is never locked.
 - **Nothing hardcoded.** Which groups count as sales, purchases, debtors and creditors, which ledgers are cash and bank, and the order of everything come from the ledger groups. Months come from the financial year. Upcoming cards come from a small list of planned modules; each card is switched to live data when its module is built.
+- **Rupee symbol.** Amounts on cards and panels show the rupee symbol, as in ₹48,60,000.00. Report tables keep plain numbers under headings that say amounts are in rupees, and report cards show the symbol.
 - **Colour-blind safe.** Charts use the Okabe-Ito palette from `docs/00-Overview-And-Architecture.md`. Status never relies on red and green alone, there is always a label or an icon. Every chart has a legend and a data-table view.
 - **Responsive.** Phone: one column. Tablet: two columns. Desktop: a grid of up to four columns. Touch targets are at least 44 px. Tables become stacked cards on a phone. No sideways scroll on the page.
 - **States.** Loading (skeleton cards), empty (a clear message and what to do), and error (a message and a retry hint) for every section, so one failing section never blanks the page.
@@ -26,7 +27,7 @@ Status: built (2026-11-14). Mockup approved: `docs/mockups/phase-2/dashboard.htm
 2. **Headline cards (four):** each has the figure, a change against the same period of the previous financial year when that year has data, and a small trend line.
    - **Sales:** posted credits to the sales group for the year to date.
    - **Purchases:** posted debits to the purchase group.
-   - **Net Profit (or Net Loss):** the Profit And Loss result for the same range.
+   - **Gross Profit (or Gross Loss):** trading income minus trading expenses for the same range, the same figure as Gross Profit on the Profit And Loss report. It replaces Net Profit (owner, 2026-11-14). The trading part comes from the section marker on each ledger group.
    - **Cash And Bank:** the combined balance of cash and bank ledgers as on today, with how many accounts.
 3. **Monthly trends:** two charts across the months of the financial year.
    - **Income And Expenses:** clustered bars per month.
@@ -51,10 +52,12 @@ Status: built (2026-11-14). Mockup approved: `docs/mockups/phase-2/dashboard.htm
 
 ## 4. Data And Access
 
-| Section | Feature it needs | Source |
+| Section | Lock it needs (View) | Source |
 | --- | --- | --- |
-| Headline cards, trends, positions | Reports (View) | the report functions and views |
-| Latest vouchers, Books Check, New Voucher | Transactions (View, Edit for New Voucher) | vouchers, trial balance |
+| Sales, Purchases, Gross Profit, Cash And Bank cards | one lock each | the dashboard functions |
+| Income And Expenses, Sales By Month, Cash And Bank Balances, Receivables, Payables | one lock each | the dashboard functions |
+| Latest Vouchers, Books Check | one lock each | vouchers, trial balance |
+| New Voucher quick action | Transactions (Edit) | the menu rules |
 | Quick action links | the feature of each target | the menu rules |
 | System snapshot | System Admin | users, roles, custom access |
 

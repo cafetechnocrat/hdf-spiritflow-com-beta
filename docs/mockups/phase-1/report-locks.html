@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spirit Flow</title>
+<link rel="icon" type="image/png" href="../../../src/app/icon.png">
+<link rel="stylesheet" href="shared.css">
+<style>
+  .tabs2 { display: flex; gap: 2px; padding: 2px; background: var(--track); border-radius: 10px; margin-bottom: 14px; max-width: 460px; }
+  .tabs2 button { flex: 1; min-height: 38px; border: 0; border-radius: 8px; background: transparent; font: inherit; font-size: .84rem; font-weight: 500; color: var(--text-muted); cursor: pointer; white-space: nowrap; }
+  .tabs2 button[aria-selected="true"] { background: var(--surface); color: var(--text); font-weight: 600; box-shadow: 0 1px 3px rgba(15,27,61,.2); }
+  .note { padding: 10px 12px; margin-bottom: 12px; border-radius: 12px; background: var(--accent-soft); color: var(--link); font-size: .84rem; }
+  .saved { position: fixed; right: 16px; bottom: 16px; z-index: 60; padding: 9px 14px; border-radius: 12px; background: #0F1B3D; color: #fff; font-size: .84rem; opacity: 0; transition: opacity .2s; pointer-events: none; }
+  .saved.show { opacity: 1; }
+  .matrix { overflow-x: auto; }
+  table.mx { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 1100px; font-size: .86rem; }
+  table.mx th { padding: 9px 8px; text-align: center; font-size: .76rem; font-weight: 600; background: #f8f9fc; border-bottom: 1px solid var(--divider); vertical-align: top; }
+  table.mx th:first-child, table.mx td:first-child { position: sticky; left: 0; background: var(--surface); text-align: left; min-width: 220px; z-index: 1; }
+  table.mx th:first-child { background: #f8f9fc; color: var(--text-muted); font-size: .72rem; }
+  table.mx td { padding: 7px 8px; border-bottom: 1px solid var(--divider); text-align: center; }
+  table.mx tr.grp td { background: #eff1f7; font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--text-muted); padding: 6px 14px; text-align: left; position: static; }
+  .fl { font-weight: 600; }
+  .lnk { display: block; margin: 3px auto 0; padding: 0; border: 0; background: none; color: var(--link); font: inherit; font-size: .72rem; font-weight: 500; cursor: pointer; }
+  .always { font-size: .72rem; color: var(--text-muted); }
+  .lock { display: inline-flex; align-items: center; gap: 5px; min-height: 32px; padding: 0 10px; border-radius: 999px; border: 1px solid transparent; font: inherit; font-size: .76rem; font-weight: 600; cursor: pointer; }
+  .lock svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .lock[aria-pressed="false"] { background: var(--success-bg); color: var(--success); }
+  .lock[aria-pressed="true"] { background: var(--track); color: var(--text-muted); }
+  .lock:disabled { opacity: .7; cursor: not-allowed; }
+  .rowbtns { display: inline-flex; gap: 4px; }
+  .rowbtns button { min-height: 28px; padding: 0 9px; border-radius: 8px; border: 0; background: var(--track); font: inherit; font-size: .72rem; font-weight: 500; cursor: pointer; }
+  .phone { display: none; }
+  .rolepick { display: grid; gap: 4px; max-width: 320px; margin-bottom: 12px; }
+  .pgrp { padding: 12px 16px 4px; font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--text-muted); }
+  .prow { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 9px 16px; border-top: 1px solid var(--divider); font-size: .88rem; }
+  @media (max-width: 899px) { .desk { display: none; } .phone { display: block; } }
+  .panel-sep { height: 1px; background: var(--divider); margin: 8px 0 0; }
+  h3.cap { font-size: .78rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); margin: 26px 2px 10px; }
+  .demo { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+  .kpi { position: relative; padding: 14px 16px; border-radius: 18px; background: var(--surface); box-shadow: 0 1px 2px rgba(15,27,61,.04), 0 6px 20px rgba(15,27,61,.04); }
+  .kpi .name { font-size: .78rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); }
+  .kpi .val { margin-top: 10px; font-size: 1.7rem; font-weight: 700; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+  .kpi .val small { font-size: .95rem; font-weight: 500; color: var(--text-muted); margin-right: 2px; }
+  .kpi .sub { margin-top: 6px; font-size: .78rem; color: var(--text-muted); }
+  .kpi.locked { background: repeating-linear-gradient(135deg, #fff, #fff 10px, #f8f9fc 10px, #f8f9fc 20px); box-shadow: 0 0 0 1px var(--divider); }
+  .kpi.locked .lockbox { margin-top: 12px; display: flex; gap: 10px; align-items: flex-start; padding: 12px; border-radius: 13px; background: var(--surface); box-shadow: 0 0 0 1px var(--divider); }
+  .lockbox .li { width: 32px; height: 32px; border-radius: 50%; background: var(--track); color: var(--text-muted); display: grid; place-items: center; flex: none; }
+  .lockbox .li svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .lockbox strong { display: block; font-size: .86rem; }
+  .lockbox span.t { font-size: .78rem; color: var(--text-muted); }
+  .menu-demo { padding: 8px; border-radius: 16px; background: var(--surface); box-shadow: 0 1px 2px rgba(15,27,61,.04), 0 6px 20px rgba(15,27,61,.04); }
+  .mi { display: flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 10px; border-radius: 10px; font-size: .88rem; }
+  .mi.on { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  .mi.off { color: var(--text-muted); }
+  .mi .lk { margin-left: auto; width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .page-locked { padding: 36px 16px; text-align: center; border-radius: 18px; background: var(--surface); box-shadow: 0 1px 2px rgba(15,27,61,.04), 0 6px 20px rgba(15,27,61,.04); }
+  .page-locked .big { width: 52px; height: 52px; margin: 0 auto 12px; border-radius: 50%; background: var(--track); color: var(--text-muted); display: grid; place-items: center; }
+  .page-locked .big svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+  .page-locked h2 { font-size: 1.1rem; font-weight: 600; }
+  .page-locked p { margin: 4px auto 0; max-width: 360px; font-size: .88rem; color: var(--text-muted); }
+  .urow { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--divider); font-size: .9rem; }
+  .urow .h { font-size: .76rem; color: var(--text-muted); margin-top: 1px; }
+  .tag { display: inline-flex; padding: 2px 9px; border-radius: 999px; background: var(--warn-bg); color: var(--warn); font-size: .72rem; font-weight: 600; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body data-page="roles" data-title="Roles And Access">
+<div class="mock-note">Mockup. Sample data only. Not the real app. In the real screen the reports, dashboard cards and roles all come from the database.</div>
+<div class="shell">
+  <main class="content">
+    <div class="page-head">
+      <div>
+        <h1>Roles And Access</h1>
+        <p>Create roles, tick what each can do, and lock or unlock reports and dashboard cards. Changes save as soon as you make them.</p>
+      </div>
+    </div>
+
+    <div class="tabs2" role="tablist" aria-label="Section">
+      <button type="button" role="tab" aria-selected="false" id="tabAccess">Access</button>
+      <button type="button" role="tab" aria-selected="true" id="tabLocks">Reports And Dashboard Locks</button>
+    </div>
+
+    <div id="accessNote" class="card card-pad" hidden>The Access tab is the role and feature grid you already have. Reports and dashboard cards are not in it any more. They have their own locks on the next tab.</div>
+
+    <section id="locksTab">
+      <p class="note">A lock hides the figures. People still see the report or card in its place, with a message that it is locked. The System Admin is always open and cannot be locked. Locking is by role here. To lock one person inside a role, use the Access section on that person's Edit User screen.</p>
+
+      <div class="card desk">
+        <div class="matrix">
+          <table class="mx">
+            <thead><tr id="headRow"></tr></thead>
+            <tbody id="body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="phone">
+        <div class="rolepick"><label class="lbl" for="rp">Role</label><select id="rp"></select></div>
+        <div class="card" style="padding:4px 0" id="phoneList"></div>
+      </div>
+    </section>
+
+    <h3 class="cap">What a locked person sees</h3>
+    <div class="demo">
+      <div>
+        <div class="kpi" aria-label="Gross Profit, open"><div class="name">Gross Profit</div><div class="val"><small>&#8377;</small>26,40,000.00</div><div class="sub">Open for this role</div></div>
+      </div>
+      <div>
+        <div class="kpi locked" aria-label="Gross Profit, locked">
+          <div class="name">Gross Profit</div>
+          <div class="lockbox"><span class="li"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg></span><div><strong>Locked</strong><span class="t">You do not have access to view this report. Ask the System Admin to unlock it.</span></div></div>
+        </div>
+      </div>
+      <div>
+        <div class="menu-demo" aria-label="Reports menu with locked items">
+          <div class="mi on">Day Book</div>
+          <div class="mi">Ledger Statement</div>
+          <div class="mi">Sales Register</div>
+          <div class="mi">Purchase Register</div>
+          <div class="mi off">Trial Balance <svg class="lk" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg></div>
+          <div class="mi off">Profit And Loss <svg class="lk" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg></div>
+          <div class="mi off">Balance Sheet <svg class="lk" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg></div>
+        </div>
+      </div>
+    </div>
+
+    <h3 class="cap">A locked report page</h3>
+    <div class="page-locked">
+      <div class="big"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg></div>
+      <h2>Profit And Loss Is Locked</h2>
+      <p>You do not have access to view this report. Ask the System Admin to unlock it for you.</p>
+    </div>
+
+    <h3 class="cap">One person inside a role (Edit User, Access section)</h3>
+    <div class="card card-pad" style="max-width:720px">
+      <div style="font-weight:600;margin-bottom:2px">Access <span class="tag">Custom Access</span></div>
+      <div class="hint" style="margin:0 0 8px">Sample Accountant, Accounting Staff</div>
+      <div class="urow"><div><strong>Sales Register</strong></div><button class="lock" type="button" aria-pressed="false"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a3 3 0 015.5-1.6"/></svg><span class="lt">Open</span></button></div>
+      <div class="urow"><div><strong>Profit And Loss</strong><div class="h">The role gives: Open</div></div><button class="lock" type="button" aria-pressed="true"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg><span class="lt">Locked</span></button></div>
+      <div class="urow"><div><strong>Balance Sheet</strong><div class="h">Locked for the whole role</div></div><span class="always">Not in role</span></div>
+    </div>
+  </main>
+</div>
+<div class="saved" id="saved" role="status">Saved</div>
+<script src="shell.js"></script>
+<script>
+  // Mockup behaviour only. The real screen reads reports, cards, roles and locks from the database.
+  (function () {
+    var roles = [
+      ["system_admin", "System Admin", true], ["md", "Managing Director"], ["chief_accountant", "Chief Accountant"],
+      ["accounting_staff", "Accounting Staff"], ["billing_cashier", "Billing / Cashier"], ["warehouse_manager", "Warehouse Manager"],
+      ["bar_captain", "Bar Captain"], ["restaurant_captain", "Restaurant Captain"]
+    ];
+    var groups = [
+      ["Reports", ["Day Book", "Ledger Statement", "Sales Register", "Purchase Register", "Trial Balance", "Profit And Loss", "Balance Sheet"]],
+      ["Dashboard Cards", ["Sales", "Purchases", "Gross Profit", "Cash And Bank", "Income And Expenses", "Sales By Month", "Cash And Bank Balances", "Receivables", "Payables", "Latest Vouchers", "Books Check"]]
+    ];
+    // Sample: who is open. Everything else is locked.
+    var open = {
+      md: "*",
+      chief_accountant: "*",
+      accounting_staff: ["Day Book", "Ledger Statement", "Sales Register", "Purchase Register", "Sales", "Purchases", "Cash And Bank", "Latest Vouchers", "Books Check"]
+    };
+    var state = {};
+    roles.forEach(function (r) {
+      state[r[0]] = {};
+      groups.forEach(function (g) { g[1].forEach(function (f) {
+        var o = r[2] || open[r[0]] === "*" || (open[r[0]] && open[r[0]].indexOf(f) > -1);
+        state[r[0]][f] = !o; // true = locked
+      }); });
+    });
+    var LOCK = '<svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>';
+    var OPEN = '<svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a3 3 0 015.5-1.6"/></svg>';
+    var saved = document.getElementById("saved"), timer;
+    function flash() { saved.classList.add("show"); clearTimeout(timer); timer = setTimeout(function () { saved.classList.remove("show"); }, 1300); }
+    function btn(role, feat, locked, disabled) {
+      return '<button class="lock" type="button" data-role="' + role + '" data-feat="' + feat + '" aria-pressed="' + locked + '" aria-label="' + feat + ', ' + role + '"' + (disabled ? " disabled" : "") + '>' + (locked ? LOCK : OPEN) + '<span class="lt">' + (locked ? "Locked" : "Open") + '</span></button>';
+    }
+    function draw() {
+      var head = '<th>Report Or Card</th>' + roles.map(function (r) {
+        return '<th>' + r[1] + (r[2] ? '<div class="always">Always open</div>' : '<button type="button" class="lnk" data-all="' + r[0] + '">Lock / Unlock All</button>') + '</th>';
+      }).join("") + '<th>All Roles</th>';
+      document.getElementById("headRow").innerHTML = head;
+      var body = "";
+      groups.forEach(function (g) {
+        body += '<tr class="grp"><td colspan="' + (roles.length + 2) + '">' + g[0] + '</td></tr>';
+        g[1].forEach(function (f) {
+          body += '<tr><td class="fl">' + f + '</td>' + roles.map(function (r) { return '<td>' + btn(r[0], f, state[r[0]][f], r[2]) + '</td>'; }).join("") +
+            '<td><span class="rowbtns"><button type="button" data-rowlock="' + f + '">Lock</button><button type="button" data-rowopen="' + f + '">Open</button></span></td></tr>';
+        });
+      });
+      document.getElementById("body").innerHTML = body;
+      var sel = document.getElementById("rp"), cur = sel.value || "accounting_staff";
+      sel.innerHTML = roles.map(function (r) { return '<option value="' + r[0] + '">' + r[1] + '</option>'; }).join("");
+      sel.value = cur;
+      var role = roles.filter(function (r) { return r[0] === cur; })[0], list = "";
+      groups.forEach(function (g) {
+        list += '<div class="pgrp">' + g[0] + '</div>';
+        g[1].forEach(function (f) { list += '<div class="prow"><strong>' + f + '</strong>' + btn(cur, f, state[cur][f], role[2]) + '</div>'; });
+      });
+      document.getElementById("phoneList").innerHTML = list;
+    }
+    draw();
+    document.getElementById("rp").addEventListener("change", draw);
+    document.addEventListener("click", function (e) {
+      var b = e.target.closest("button.lock[data-role]");
+      if (b && !b.disabled) { state[b.dataset.role][b.dataset.feat] = !state[b.dataset.role][b.dataset.feat]; draw(); flash(); return; }
+      var all = e.target.closest("[data-all]");
+      if (all) {
+        var r = all.dataset.all, anyOpen = false;
+        Object.keys(state[r]).forEach(function (f) { if (!state[r][f]) anyOpen = true; });
+        Object.keys(state[r]).forEach(function (f) { state[r][f] = anyOpen; }); draw(); flash(); return;
+      }
+      var rl = e.target.closest("[data-rowlock]"), ro = e.target.closest("[data-rowopen]");
+      if (rl || ro) {
+        var f = (rl || ro).dataset.rowlock || (rl || ro).dataset.rowopen;
+        roles.forEach(function (r) { if (!r[2]) state[r[0]][f] = !!rl; }); draw(); flash(); return;
+      }
+      var t = e.target.closest(".tabs2 button");
+      if (t) {
+        var locks = t.id === "tabLocks";
+        document.getElementById("tabLocks").setAttribute("aria-selected", String(locks));
+        document.getElementById("tabAccess").setAttribute("aria-selected", String(!locks));
+        document.getElementById("locksTab").hidden = !locks;
+        document.getElementById("accessNote").hidden = locks;
+      }
+      var d = e.target.closest(".urow .lock");
+      if (d) {
+        var on = d.getAttribute("aria-pressed") === "true";
+        d.setAttribute("aria-pressed", String(!on));
+        d.innerHTML = (on ? OPEN : LOCK) + '<span class="lt">' + (on ? "Open" : "Locked") + '</span>';
+        flash();
+      }
+    });
+  })();
+</script>
+</body>
+</html>

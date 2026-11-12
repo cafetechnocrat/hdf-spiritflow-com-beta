@@ -163,6 +163,23 @@ The permission table in section 2 and the fixed list of nine roles are replaced 
 - Tables: `user_access` (user, feature, can view, can edit, can delete). A row exists only where the user is narrower than the role. The same `has_access()` function now combines role and user, so every policy, server check and the menu use the combined access.
 - Not part of this slice: two-factor or sign-in method per user (those stay on the role).
 
+### Reports And Dashboard Locks (Owner Decisions, 2026-11-14)
+- **Every report and every dashboard card has its own lock.** The System Admin locks or unlocks each one for a role. A lock hides the figures. Nobody but the System Admin sees a locked report's numbers.
+- **What can be locked** (each is a feature in the database with one action, View, where View off means locked):
+  - **Reports (7):** Day Book, Ledger Statement, Sales Register, Purchase Register, Trial Balance, Profit And Loss, Balance Sheet. These replace the single Reports feature.
+  - **Dashboard cards (11):** Sales, Purchases, Gross Profit, Cash And Bank (the four headline cards), Income And Expenses, Sales By Month, Cash And Bank Balances, Receivables, Payables, Latest Vouchers, Books Check.
+  - Not locked: the System snapshot (System Admin only), Quick Actions (each link follows the feature it opens), and the Coming Soon cards. The Dashboard feature still decides who sees the dashboard page at all.
+- **The System Admin is always open** and cannot be locked.
+- **Where it is set:** the Roles And Access screen gets a second tab, **Reports And Dashboard Locks**. Rows are the reports and cards, columns are roles, and each cell is a Lock or Open button that saves at once. Each role column has Lock Or Unlock All, and each row has Lock and Open for all roles. On a phone you pick one role and see its list. The Access tab no longer lists reports and cards.
+- **By user inside a role:** the same locks appear in the Access section of Edit User, as a Lock or Open button on each report and card. A user can be locked where their role is open, never opened where the role is locked. Same rules as the rest of user access, so a role change clears them.
+- **What a locked person sees:**
+  - **Dashboard card:** the card stays in place with its title, no figure, a lock icon and the message "You do not have access to view this report. Ask the System Admin to unlock it."
+  - **Menu:** a locked report stays in the Reports menu, greyed with a small lock icon. It is not a link.
+  - **Report page:** opening a locked report by its address shows a lock and "<Report> Is Locked. You do not have access to view this report. Ask the System Admin to unlock it for you." No figures are loaded.
+  - **Excel and PDF:** refused for a locked report.
+- **The database enforces it.** Reports and dashboard cards read through database functions that check the lock for that one report or card, instead of letting any report access read the raw tables. Direct reads of vouchers and ledgers need the Transactions or Ledger Groups And Ledgers feature. So a locked person cannot get the figures by calling the database around the screen.
+- **Existing access carries over.** When this is built, a role that can view Reports today keeps every report and card open, so nothing disappears until the System Admin locks it. The System Admin then locks what should be hidden.
+
 ### Starting Values
 - After the reset, **System Admin is the only role with access**. Every other seeded role starts inactive, with nothing ticked on any feature.
 - Two-factor starts **on for System Admin only**.
