@@ -138,27 +138,32 @@ The permission table in section 2 and the fixed list of nine roles are replaced 
 
 ### Roles Are Data
 - Roles are rows in a `roles` table. The **System Admin creates, renames and deletes roles** on the Roles And Access screen. The fixed role list in the code and the database type is removed.
-- **Starting roles (seeded by migration):** System Admin (locked), MD, Chief Accountant, Accounting Staff, and Billing / Cashier. Any other role, such as Stock Keeper, Security, Kitchen Staff or Night Accountant, is created by the System Admin when needed. **Open:** confirm this starting list. The old Night Accountant, Stock Keeper, Security and Kitchen Staff roles are not seeded.
-- Each role has: name, Active switch, Require Two-Factor switch, and **sign-in method** (Email And Password, or Username And PIN). Billing / Cashier starts with Username And PIN, which is built later with the cashier login. The others start with Email And Password.
+- **Starting roles (seeded by migration):** System Admin (locked), Managing Director, Chief Accountant, Accounting Staff, Billing / Cashier, Warehouse Manager, Bar Captain and Restaurant Captain. Any other role is created by the System Admin when needed. The old Night Accountant, Stock Keeper, Security and Kitchen Staff roles are not seeded.
+- Each role has: name, Active switch, Require Two-Factor switch, and **sign-in method** (Email And Password, or Username And PIN). Billing / Cashier starts with Username And PIN, which is built later with the cashier login. The other roles start with Email And Password. **Open:** confirm the sign-in method for Bar Captain and Restaurant Captain.
 - **System Admin** is the one built-in role. It cannot be renamed, deleted, deactivated or reduced. It always has full access. Only its two-factor switch can change.
 - Any other role, including the seeded ones, can be renamed. A role can be **deleted only when no user has it**. Otherwise the screen says how many users hold it and asks for them to be moved first.
 - A new role can **copy the access of an existing role** when it is created, then be adjusted.
 - Role names are unique and written in Title Case.
 
 ### Access By Role And Feature
-- For every role and every feature the System Admin picks a level: **None, View, Edit or Delete**. Each level includes the ones before it. View is see only. Edit is create and change. Delete is remove records. A feature that cannot be deleted, such as the Dashboard or Reports, does not offer Delete.
-- **Features** are rows in the database: Dashboard, Users, Stock Points And Outlets And Counters, Ledger Groups And Ledgers, Transactions (View, Edit to enter new vouchers, Delete to delete them), Edit Or Void Posted Vouchers (Edit), and Reports. New features are added as new rows when their screens are built.
+- For every role and every feature the System Admin ticks **checkboxes inside a dropdown**: **View, Edit and Delete**, or **Select All**. Each one is ticked on its own, so a role gets exactly what applies. View is see only. Edit is create and change. Delete is remove records.
+- **Edit and Delete need View.** Ticking Edit or Delete ticks View for you, and unticking View clears them, because a role cannot change what it cannot see.
+- A feature offers only the actions that apply to it. The Dashboard and Reports offer View only. Edit Or Void Posted Vouchers is a single Allowed box.
+- **Features** are rows in the database, each with the actions it offers: Dashboard, Users, Stock Points And Outlets And Counters, Ledger Groups And Ledgers, Transactions (View, Edit to enter new vouchers, Delete to delete them), Edit Or Void Posted Vouchers, and Reports. New features are added as new rows when their screens are built.
 - **Role active.** A role that is not active cannot sign in, and no new user can be given it.
 - **Two-factor per role.** A user in a role that requires it must set up and pass an authenticator code at each sign in. This replaces the fixed list of roles in the code and the database.
 
+### Role Access First, User Access Later
+- This slice defines **access by role** only. A role sets the overall limit.
+- **Later (not built now):** each user can get different access **within their role's limit**, with the same View, Edit, Delete and Select All checkboxes on the user. A user can have less than the role, never more. The tables are designed so user access can be added without changing the role tables.
+
 ### Starting Values
-- After the reset, **System Admin is the only role with access**. Every other seeded role starts inactive, with None on every feature.
+- After the reset, **System Admin is the only role with access**. Every other seeded role starts inactive, with nothing ticked on any feature.
 - Two-factor starts **on for System Admin only**.
 - The Roles And Access screen itself is for the System Admin only.
 
 ### Rules
-- Tables: `roles`, `features`, `role_access` (role, feature, level). A function answers "does this user have this level on this feature" and every policy and server check uses it. The `profiles.role` column points at the roles table.
+- Tables: `roles`, `features` (with the actions each offers), and `role_access` (role, feature, can view, can edit, can delete). A function answers "does this user have this action on this feature" and every policy and server check uses it. The `profiles.role` column points at the roles table.
 - Changes take effect on the user's next request. The audit log records every change to roles and access.
 - The Users screen lists only active roles when choosing a role for a user.
 - **Open:** a role switched inactive while users are signed in loses access at once, and those users see a "No Access" page. Confirm that is wanted.
-- **Open:** whether a per-user override is ever needed. Not built. Access is by role only.
