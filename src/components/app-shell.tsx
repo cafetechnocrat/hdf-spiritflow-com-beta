@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { FinancialYearSelector } from "@/components/financial-year-selector";
 import { TransactionDateSelector } from "@/components/transaction-date-selector";
@@ -18,6 +18,10 @@ const text = {
   expand: "Expand Menu",
   mainNav: "Main",
   signOut: "Sign Out",
+  account: "Account",
+  settings: "Settings",
+  soon: "Soon",
+  profileMenu: "Profile Menu",
   logoAlt: "Spirit Flow",
   logoShort: "SF",
   later: "Later",
@@ -71,6 +75,144 @@ function matches(href: string, pathname: string) {
 function containsPath(node: MenuNode, pathname: string): boolean {
   if (node.href) return matches(node.href, pathname);
   return (node.children ?? []).some((child) => containsPath(child, pathname));
+}
+
+// The person's picture block at the bottom of the side menu. Clicking it opens a
+// menu above it with Account, Settings and Sign Out. Account and Settings are
+// switched off until their screens are built. The menu is fixed to the screen so
+// the side menu cannot clip it, also when the side menu is narrowed to icons.
+function ProfileMenu({
+  user,
+  collapsed,
+}: {
+  user: { fullName: string; roleLabel: string };
+  collapsed: boolean;
+}) {
+  const [position, setPosition] = useState<{ left: number; bottom: number } | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const open = position !== null;
+
+  useEffect(() => {
+    if (!open) return;
+    const close = () => setPosition(null);
+    const onClick = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (menuRef.current?.contains(target)) return;
+      if (!target.closest("[data-profile-button]")) close();
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") close();
+    };
+    document.addEventListener("mousedown", onClick);
+    document.addEventListener("keydown", onKey);
+    window.addEventListener("resize", close);
+    return () => {
+      document.removeEventListener("mousedown", onClick);
+      document.removeEventListener("keydown", onKey);
+      window.removeEventListener("resize", close);
+    };
+  }, [open]);
+
+  function toggleMenu(rect: DOMRect) {
+    if (open) {
+      setPosition(null);
+      return;
+    }
+    setPosition({
+      left: Math.max(8, Math.min(rect.left, window.innerWidth - 216)),
+      bottom: window.innerHeight - rect.top + 6,
+    });
+  }
+
+  const item = "flex min-h-10 w-full items-center gap-2.5 rounded-lg px-2.5 text-left text-[0.88rem]";
+  return (
+    <>
+      <button
+        type="button"
+        data-profile-button
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={text.profileMenu}
+        onClick={(event) => toggleMenu(event.currentTarget.getBoundingClientRect())}
+        className={`mt-2 flex w-full items-center gap-2.5 rounded-xl border-t border-divider px-2 pb-1 pt-3 text-left hover:bg-background ${
+          collapsed ? "lg:justify-center lg:px-0" : ""
+        }`}
+      >
+        <span
+          aria-hidden="true"
+          className="grid h-9 w-9 flex-none place-items-center rounded-full bg-accent-soft text-[0.85rem] font-semibold text-link"
+        >
+          {initials(user.fullName)}
+        </span>
+        <span className={`min-w-0 flex-1 leading-tight ${collapsed ? "lg:hidden" : ""}`}>
+          <strong className="block truncate text-[0.85rem] font-semibold">{user.fullName}</strong>
+          <span className="text-xs text-muted">{user.roleLabel}</span>
+        </span>
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+          className={`h-4 w-4 flex-none text-muted ${collapsed ? "lg:hidden" : ""} ${
+            open ? "" : "rotate-180"
+          }`}
+        >
+          <path d="M6 15l6-6 6 6" />
+        </svg>
+      </button>
+
+      {position ? (
+        <div
+          ref={menuRef}
+          role="menu"
+          aria-label={text.profileMenu}
+          style={{ left: position.left, bottom: position.bottom }}
+          className="fixed z-[70] w-[208px] rounded-xl bg-surface p-1.5 text-left shadow-card"
+        >
+          <span
+            role="menuitem"
+            aria-disabled="true"
+            className={`${item} cursor-not-allowed text-muted`}
+          >
+            <span className="flex-1">{text.account}</span>
+            <span className="rounded-full bg-track px-2 py-px text-[0.68rem] font-semibold">
+              {text.soon}
+            </span>
+          </span>
+          <span
+            role="menuitem"
+            aria-disabled="true"
+            className={`${item} cursor-not-allowed text-muted`}
+          >
+            <span className="flex-1">{text.settings}</span>
+            <span className="rounded-full bg-track px-2 py-px text-[0.68rem] font-semibold">
+              {text.soon}
+            </span>
+          </span>
+          <form action={signOut} className="mt-1 border-t border-divider pt-1">
+            <button type="submit" role="menuitem" className={`${item} font-medium hover:bg-background`}>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+                className="h-[18px] w-[18px]"
+              >
+                <path d="M9 4H5v16h4M16 8l4 4-4 4M20 12H9" />
+              </svg>
+              {text.signOut}
+            </button>
+          </form>
+        </div>
+      ) : null}
+    </>
+  );
 }
 
 type TreeProps = {
@@ -340,24 +482,7 @@ export function AppShell({
             onNavigate={() => setDrawerOpen(false)}
           />
         </nav>
-        <div
-          className={`mt-2 flex items-center gap-2.5 border-t border-divider px-2 pt-3 ${
-            collapsed ? "lg:justify-center lg:px-0" : ""
-          }`}
-        >
-          <div
-            aria-hidden="true"
-            className="grid h-9 w-9 flex-none place-items-center rounded-full bg-accent-soft text-[0.85rem] font-semibold text-link"
-          >
-            {initials(user.fullName)}
-          </div>
-          <div className={`min-w-0 leading-tight ${collapsed ? "lg:hidden" : ""}`}>
-            <strong className="block truncate text-[0.85rem] font-semibold">
-              {user.fullName}
-            </strong>
-            <span className="text-xs text-muted">{user.roleLabel}</span>
-          </div>
-        </div>
+        <ProfileMenu user={user} collapsed={collapsed} />
       </aside>
 
       <header className="print:hidden sticky top-0 z-10 flex h-12 items-center gap-2 border-b border-divider bg-surface/90 pl-3 pr-2 backdrop-blur">
@@ -412,26 +537,6 @@ export function AppShell({
         {transactionDate ? (
           <TransactionDateSelector date={transactionDate.date} today={transactionDate.today} />
         ) : null}
-        <form action={signOut}>
-          <button
-            type="submit"
-            className="inline-flex h-11 items-center gap-2 rounded-[10px] px-3 text-[0.88rem] font-medium text-text hover:bg-background"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-              className="h-5 w-5"
-            >
-              <path d="M9 4H5v16h4M16 8l4 4-4 4M20 12H9" />
-            </svg>
-            <span className="hidden sm:inline">{text.signOut}</span>
-          </button>
-        </form>
       </header>
 
       <main className="mx-auto max-w-[1180px] px-4 pb-10 pt-4 lg:px-8 lg:pb-12 lg:pt-6">
