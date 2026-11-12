@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spirit Flow</title>
+<link rel="icon" type="image/png" href="../../../src/app/icon.png">
+<link rel="stylesheet" href="../phase-1/shared.css">
+<style>
+  :root { --c-blue: #0072B2; --c-orange: #E69F00; --c-sky: #56B4E9; --c-green: #009E73; --c-pink: #CC79A7; --c-verm: #D55E00; }
+  .content { max-width: 1320px; }
+  .greet { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 10px 16px; margin-bottom: 16px; }
+  .greet h1 { font-size: 1.6rem; font-weight: 600; letter-spacing: -.025em; line-height: 1.15; }
+  .greet p { margin-top: 3px; color: var(--text-muted); font-size: .88rem; }
+  .meta-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 999px; background: var(--surface); box-shadow: 0 0 0 1px var(--divider); font-size: .8rem; color: var(--text-muted); }
+  .chip strong { color: var(--text); font-weight: 600; }
+  .chip svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .ghost { min-height: 34px; padding: 0 12px; border: 0; border-radius: 999px; background: var(--surface); box-shadow: 0 0 0 1px var(--divider); font: inherit; font-size: .8rem; font-weight: 500; color: var(--text); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+  .ghost:hover { background: var(--background); }
+  .ghost svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  .grid { display: grid; gap: 14px; margin-bottom: 14px; }
+  .g4 { grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+  .g2 { grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); }
+  .g3 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+  .panel { background: var(--surface); border-radius: 18px; box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 6px 20px rgba(0,0,0,.04); padding: 16px 18px; min-width: 0; }
+  .panel h2 { font-size: .98rem; font-weight: 600; letter-spacing: -.01em; }
+  .panel .sub { color: var(--text-muted); font-size: .78rem; margin-top: 1px; }
+  .ph { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+  @media (min-width: 1040px) { .span2 { grid-column: span 2; } }
+  .section-label { margin: 22px 2px 10px; font-size: .74rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); display: flex; align-items: center; gap: 8px; }
+
+  /* Headline cards */
+  .kpi { position: relative; overflow: hidden; }
+  .kpi .top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .kpi .name { font-size: .78rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); }
+  .kpi .ico { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; }
+  .kpi .ico svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+  .kpi .val { margin-top: 10px; font-size: 1.75rem; font-weight: 650; letter-spacing: -.03em; font-variant-numeric: tabular-nums; line-height: 1.1; }
+  .kpi .val small { font-size: .95rem; font-weight: 500; color: var(--text-muted); margin-right: 2px; }
+  .kpi .delta { margin-top: 6px; display: flex; align-items: center; gap: 6px; font-size: .78rem; color: var(--text-muted); flex-wrap: wrap; }
+  .pill { display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; border-radius: 999px; font-size: .74rem; font-weight: 600; }
+  .pill svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+  .pill.up { background: var(--success-bg); color: var(--success); }
+  .pill.down { background: var(--warn-bg); color: var(--warn); }
+  .pill.flat { background: var(--track); color: var(--text-muted); }
+  .spark { display: block; width: 100%; height: 38px; margin-top: 10px; }
+
+  /* Charts */
+  .seg3 { display: inline-flex; gap: 2px; padding: 2px; border-radius: 9px; background: var(--track); flex: none; }
+  .seg3 button { min-height: 30px; padding: 0 11px; border: 0; border-radius: 7px; background: transparent; color: var(--text-muted); font: inherit; font-size: .76rem; font-weight: 500; cursor: pointer; }
+  .seg3 button[aria-pressed="true"] { background: var(--surface); color: var(--text); font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,.18); }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 0 0 8px; font-size: .78rem; color: var(--text-muted); }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+  .chart svg { width: 100%; height: auto; display: block; overflow: visible; }
+  .chart .axis { stroke: var(--divider); }
+  .chart text { font-family: inherit; fill: var(--text-muted); font-size: 11px; }
+  .chart .bar { transition: opacity .15s; }
+  .chart .bar:hover { opacity: .8; }
+  .tview { display: none; overflow-x: auto; }
+  .tview table { width: 100%; border-collapse: collapse; font-size: .84rem; }
+  .tview th, .tview td { padding: 7px 8px; text-align: right; border-bottom: 1px solid var(--divider); font-variant-numeric: tabular-nums; }
+  .tview th:first-child, .tview td:first-child { text-align: left; }
+  .tview th { font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--text-muted); }
+  .showtable .chart-view { display: none; }
+  .showtable .tview { display: block; }
+
+  /* Positions */
+  .bal { display: grid; gap: 12px; }
+  .bal .r { display: grid; gap: 5px; }
+  .bal .rt { display: flex; justify-content: space-between; gap: 8px; font-size: .88rem; }
+  .bal .rt span:last-child { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .bar-track { height: 7px; border-radius: 99px; background: var(--track); overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 99px; }
+  .big { font-size: 1.5rem; font-weight: 650; letter-spacing: -.025em; font-variant-numeric: tabular-nums; margin: 4px 0 12px; }
+  .big small { font-size: .8rem; font-weight: 500; color: var(--text-muted); margin-left: 4px; }
+  .more { margin-top: 12px; font-size: .8rem; }
+
+  /* Activity */
+  table.v { width: 100%; border-collapse: collapse; font-size: .86rem; }
+  table.v th { padding: 8px 10px; text-align: left; font-size: .7rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); border-bottom: 1px solid var(--divider); }
+  table.v td { padding: 10px; border-bottom: 1px solid var(--divider); vertical-align: top; }
+  table.v tr:last-child td { border-bottom: 0; }
+  table.v .r { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
+  table.v .m { color: var(--text-muted); font-size: .78rem; }
+  .checks { display: grid; gap: 10px; }
+  .check { display: flex; gap: 11px; align-items: flex-start; padding: 11px 12px; border-radius: 13px; background: var(--background); }
+  .check .ci { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; flex: none; }
+  .check .ci svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+  .ok-i { background: var(--success-bg); color: var(--success); }
+  .info-i { background: var(--accent-soft); color: var(--link); }
+  .warn-i { background: var(--warn-bg); color: var(--warn); }
+  .check strong { font-size: .88rem; font-weight: 600; display: block; }
+  .check span.t { font-size: .78rem; color: var(--text-muted); }
+  .quick { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .quick a { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 10px 12px; border-radius: 14px; background: var(--background); color: var(--text); font-size: .86rem; font-weight: 600; text-decoration: none; }
+  .quick a:hover { background: var(--accent-soft); color: var(--link); text-decoration: none; }
+  .quick a svg { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; color: var(--accent); }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .stat { padding: 12px; border-radius: 13px; background: var(--background); text-align: center; }
+  .stat b { display: block; font-size: 1.35rem; font-weight: 650; letter-spacing: -.02em; }
+  .stat span { font-size: .72rem; color: var(--text-muted); }
+
+  /* Coming soon */
+  .soon { position: relative; background: transparent; border: 1.5px dashed var(--border-soft); box-shadow: none; }
+  .soon .name { color: var(--text-muted); }
+  .soon .ico { background: var(--track); color: var(--text-muted); }
+  .soon .val { color: #B0B0B6; letter-spacing: .05em; }
+  .soon .delta { color: var(--text-muted); }
+  .soon .tag { display: inline-flex; padding: 2px 9px; border-radius: 999px; background: var(--track); color: var(--text-muted); font-size: .68rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+  .ghostbars { display: flex; align-items: flex-end; gap: 5px; height: 38px; margin-top: 10px; }
+  .ghostbars i { flex: 1; border-radius: 4px 4px 0 0; background: var(--track); }
+
+  /* Loading skeleton demo */
+  .skel { background: linear-gradient(90deg, var(--track) 25%, #F1F1F4 37%, var(--track) 63%); background-size: 400% 100%; animation: sh 1.4s ease infinite; border-radius: 8px; }
+  @keyframes sh { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+  .mockbar { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; padding: 8px 12px; margin-bottom: 14px; border-radius: 12px; background: #1D1D1F; color: #fff; font-size: .76rem; }
+  .mockbar button { min-height: 28px; padding: 0 11px; border: 0; border-radius: 999px; background: #3A3A3C; color: #fff; font: inherit; font-size: .76rem; cursor: pointer; }
+  .mockbar button[aria-pressed="true"] { background: var(--accent); }
+  [data-state="loading"] .live-content, [data-state="error"] .live-content { display: none; }
+  .state-card { display: none; }
+  [data-state="loading"] .loading-card, [data-state="error"] .error-card { display: block; }
+  .error-card { text-align: center; padding: 28px 16px; color: var(--text-muted); font-size: .88rem; }
+  .error-card strong { display: block; margin-bottom: 2px; color: var(--error); font-size: .95rem; }
+
+  @media (max-width: 560px) {
+    .greet h1 { font-size: 1.35rem; }
+    .panel { padding: 14px; border-radius: 16px; }
+    .g2, .g3 { grid-template-columns: 1fr; }
+    .g4 { grid-template-columns: 1fr 1fr; }
+    .kpi .val { font-size: 1.35rem; }
+    .kpi .ico { display: none; }
+    table.v thead { display: none; }
+    table.v, table.v tbody, table.v tr, table.v td { display: block; width: 100%; }
+    table.v tr { padding: 10px 0; border-bottom: 1px solid var(--divider); }
+    table.v td { border: 0; padding: 2px 0; }
+    table.v td.r { text-align: left; }
+    .quick { grid-template-columns: 1fr 1fr; }
+  }
+  @media print {
+    .sidebar, .topbar, .scrim, .mockbar, .mock-note, .ghost, .seg3 { display: none !important; }
+    .shell { padding-left: 0 !important; }
+    body { background: #fff; }
+    .panel { box-shadow: none; border: 1px solid #ccc; break-inside: avoid; }
+  }
+</style>
+</head>
+<body data-page="dashboard" data-title="Dashboard" data-txdate data-fy>
+<div class="mock-note">Mockup. Sample data only. Not the real app. Every figure comes from the database in the real screen, and each section appears only for users whose access allows it.</div>
+<div class="shell">
+  <main class="content">
+
+    <div class="mockbar">
+      <b>Preview</b>
+      <span id="stateBtns"></span>
+    </div>
+
+    <div id="root" data-state="data">
+
+      <!-- Header -->
+      <div class="greet">
+        <div>
+          <h1>Good evening, Sample Admin</h1>
+          <p>Here is how Hotel Diamond Fort is doing.</p>
+        </div>
+        <div class="meta-row">
+          <span class="chip"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M8 2v4M16 2v4M3 10h18"/></svg><span>Financial Year <strong>2026-27</strong>, 01/04/2026 to 12/11/2026</span></span>
+          <span class="chip">Updated <strong>14:35 IST</strong></span>
+          <button class="ghost" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 11-2.3-5.6M20 4v5h-5"/></svg>Refresh</button>
+        </div>
+      </div>
+
+      <div class="panel state-card loading-card">
+        <div class="skel" style="height:22px;width:40%;margin-bottom:12px"></div>
+        <div class="grid g4" style="margin-bottom:0">
+          <div class="skel" style="height:120px"></div><div class="skel" style="height:120px"></div>
+          <div class="skel" style="height:120px"></div><div class="skel" style="height:120px"></div>
+        </div>
+      </div>
+      <div class="panel state-card error-card"><strong>The Dashboard Could Not Be Loaded</strong>Nothing was changed. Press Refresh to try again. Other sections still work.</div>
+
+      <div class="live-content">
+        <!-- Headline cards -->
+        <div class="grid g4">
+          <section class="panel kpi" aria-label="Sales">
+            <div class="top"><span class="name">Sales</span><span class="ico" style="background:#E6F1F8;color:var(--c-blue)"><svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-9M15 6h6v6"/></svg></span></div>
+            <div class="val"><small>&#8377;</small>48,60,000.00</div>
+            <div class="delta"><span class="pill up"><svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>12.4%</span> against the same period last year</div>
+            <svg class="spark" data-spark="5.1,5.8,4.9,5.6,6.2,6.0,7.1,7.9" data-color="#0072B2" viewBox="0 0 200 38" preserveAspectRatio="none"></svg>
+          </section>
+          <section class="panel kpi" aria-label="Purchases">
+            <div class="top"><span class="name">Purchases</span><span class="ico" style="background:#FDF1D9;color:#A46A00"><svg viewBox="0 0 24 24"><path d="M3 4h2l2 11h11l2-8H6M9 20h.01M17 20h.01"/></svg></span></div>
+            <div class="val"><small>&#8377;</small>21,36,000.00</div>
+            <div class="delta"><span class="pill down"><svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>8.1%</span> against the same period last year</div>
+            <svg class="spark" data-spark="2.3,2.6,2.2,2.5,2.8,2.7,3.0,3.2" data-color="#E69F00" viewBox="0 0 200 38" preserveAspectRatio="none"></svg>
+          </section>
+          <section class="panel kpi" aria-label="Net Profit">
+            <div class="top"><span class="name">Net Profit</span><span class="ico" style="background:#E3F4EE;color:var(--c-green)"><svg viewBox="0 0 24 24"><path d="M12 3v18M16.5 7.5c0-1.9-2-3-4.5-3s-4.5 1.2-4.5 3 2 2.7 4.5 3.3 4.5 1.4 4.5 3.2-2 3-4.5 3-4.5-1.2-4.5-3"/></svg></span></div>
+            <div class="val"><small>&#8377;</small>19,40,000.00</div>
+            <div class="delta"><span class="pill up"><svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>18.2%</span> against the same period last year</div>
+            <svg class="spark" data-spark="1.9,2.3,1.8,2.2,2.4,2.3,3.0,3.5" data-color="#009E73" viewBox="0 0 200 38" preserveAspectRatio="none"></svg>
+          </section>
+          <section class="panel kpi" aria-label="Cash And Bank">
+            <div class="top"><span class="name">Cash And Bank</span><span class="ico" style="background:#EAF0F8;color:#35609A"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="3"/><circle cx="12" cy="12" r="2.5"/></svg></span></div>
+            <div class="val"><small>&#8377;</small>8,71,850.00 <small>Dr</small></div>
+            <div class="delta"><span class="pill flat">3 accounts</span> as on 12/11/2026</div>
+            <svg class="spark" data-spark="4.2,5.1,4.8,5.9,6.4,6.1,7.5,8.7" data-color="#56B4E9" viewBox="0 0 200 38" preserveAspectRatio="none"></svg>
+          </section>
+        </div>
+
+        <!-- Trends -->
+        <div class="section-label">Monthly Trends</div>
+        <div class="grid g2">
+          <section class="panel" aria-labelledby="t1">
+            <div class="ph">
+              <div><h2 id="t1">Income And Expenses</h2><p class="sub">By month, April 2026 to November 2026, in lakhs</p></div>
+              <span class="seg3" data-switch><button type="button" aria-pressed="true" data-v="chart">Chart</button><button type="button" aria-pressed="false" data-v="table">Table</button></span>
+            </div>
+            <div class="legend"><span><i style="background:#0072B2"></i>Income</span><span><i style="background:#E69F00"></i>Expenses</span></div>
+            <div class="chart chart-view" id="chart1"></div>
+            <div class="tview" id="table1"></div>
+          </section>
+          <section class="panel" aria-labelledby="t2">
+            <div class="ph">
+              <div><h2 id="t2">Sales By Month</h2><p class="sub">Split by sales ledger, in lakhs</p></div>
+              <span class="seg3" data-switch><button type="button" aria-pressed="true" data-v="chart">Chart</button><button type="button" aria-pressed="false" data-v="table">Table</button></span>
+            </div>
+            <div class="legend"><span><i style="background:#0072B2"></i>Sales - Liquor</span><span><i style="background:#CC79A7"></i>Sales - Food</span></div>
+            <div class="chart chart-view" id="chart2"></div>
+            <div class="tview" id="table2"></div>
+          </section>
+        </div>
+
+        <!-- Positions -->
+        <div class="section-label">Positions</div>
+        <div class="grid g3">
+          <section class="panel" aria-labelledby="p1">
+            <div class="ph"><div><h2 id="p1">Cash And Bank</h2><p class="sub">Balance of each account today</p></div></div>
+            <div class="bal">
+              <div class="r"><div class="rt"><span>Cash</span><span>2,57,550.00 Dr</span></div><div class="bar-track"><div class="bar-fill" style="width:30%;background:#0072B2"></div></div></div>
+              <div class="r"><div class="rt"><span>SBI</span><span>4,14,300.00 Dr</span></div><div class="bar-track"><div class="bar-fill" style="width:47%;background:#56B4E9"></div></div></div>
+              <div class="r"><div class="rt"><span>Federal Bank</span><span>2,00,000.00 Dr</span></div><div class="bar-track"><div class="bar-fill" style="width:23%;background:#E69F00"></div></div></div>
+            </div>
+            <div class="more"><a href="#">Open the Ledger Statement</a></div>
+          </section>
+          <section class="panel" aria-labelledby="p2">
+            <div class="ph"><div><h2 id="p2">Receivables</h2><p class="sub">Owed to the hotel by customers</p></div></div>
+            <div class="big">&#8377;3,45,000.00<small>Dr</small></div>
+            <div class="bal">
+              <div class="r"><div class="rt"><span>Corporate Client</span><span>2,10,000.00</span></div><div class="bar-track"><div class="bar-fill" style="width:61%;background:#009E73"></div></div></div>
+              <div class="r"><div class="rt"><span>Event Client</span><span>85,000.00</span></div><div class="bar-track"><div class="bar-fill" style="width:25%;background:#009E73"></div></div></div>
+              <div class="r"><div class="rt"><span>Others</span><span>50,000.00</span></div><div class="bar-track"><div class="bar-fill" style="width:14%;background:#009E73"></div></div></div>
+            </div>
+          </section>
+          <section class="panel" aria-labelledby="p3">
+            <div class="ph"><div><h2 id="p3">Payables</h2><p class="sub">Owed by the hotel to vendors</p></div></div>
+            <div class="big">&#8377;6,80,000.00<small>Cr</small></div>
+            <div class="bal">
+              <div class="r"><div class="rt"><span>KSBC</span><span>4,50,000.00</span></div><div class="bar-track"><div class="bar-fill" style="width:66%;background:#D55E00"></div></div></div>
+              <div class="r"><div class="rt"><span>Food Vendor</span><span>1,60,000.00</span></div><div class="bar-track"><div class="bar-fill" style="width:24%;background:#D55E00"></div></div></div>
+              <div class="r"><div class="rt"><span>Others</span><span>70,000.00</span></div><div class="bar-track"><div class="bar-fill" style="width:10%;background:#D55E00"></div></div></div>
+            </div>
+          </section>
+        </div>
+
+        <!-- Activity -->
+        <div class="section-label">Activity And Checks</div>
+        <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(340px, 1fr))">
+          <section class="panel span2" aria-labelledby="a1">
+            <div class="ph"><div><h2 id="a1">Latest Vouchers</h2><p class="sub">The six most recent</p></div><a class="ghost" href="#">View All</a></div>
+            <table class="v">
+              <thead><tr><th>Voucher</th><th>Date</th><th>Details</th><th style="text-align:right">Amount</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Payment No. 12</strong><div class="m">PAY/2026-27/0012</div></td><td>12/11/2026</td><td>Electricity Charges, from Cash</td><td class="r">12,450.00</td></tr>
+                <tr><td><strong>Receipt No. 8</strong><div class="m">RCT/2026-27/0008</div></td><td>12/11/2026</td><td>Banquet Advance, in SBI</td><td class="r">50,000.00</td></tr>
+                <tr><td><strong>Sales No. 33</strong><div class="m">SAL/2026-27/0033</div></td><td>12/11/2026</td><td>Sales - Liquor, Liquor Cess</td><td class="r">16,500.00</td></tr>
+                <tr><td><strong>Sales No. 32</strong><div class="m">SAL/2026-27/0032</div></td><td>12/11/2026</td><td>Sales - Food, GST Output</td><td class="r">21,000.00</td></tr>
+                <tr><td><strong>Contra No. 4</strong><div class="m">CON/2026-27/0004</div></td><td>11/11/2026</td><td>Cash to Federal Bank</td><td class="r">1,00,000.00</td></tr>
+                <tr><td><strong>Sales No. 31</strong><div class="m">SAL/2026-27/0031</div></td><td>11/11/2026</td><td>Sales - Liquor, Sales - Food</td><td class="r">1,84,300.00</td></tr>
+              </tbody>
+            </table>
+          </section>
+          <section class="panel" aria-labelledby="a2">
+            <div class="ph"><div><h2 id="a2">Books Check</h2><p class="sub">Quick health of the accounts</p></div></div>
+            <div class="checks">
+              <div class="check"><span class="ci ok-i"><svg viewBox="0 0 24 24"><path d="M5 12l4 4 10-10"/></svg></span><div><strong>Trial Balance Matches</strong><span class="t">Debit and credit differ by 0.00</span></div></div>
+              <div class="check"><span class="ci info-i"><svg viewBox="0 0 24 24"><path d="M12 8v5M12 17h.01"/></svg></span><div><strong>3 Vouchers Entered Today</strong><span class="t">Latest at 14:12 IST</span></div></div>
+              <div class="check"><span class="ci warn-i"><svg viewBox="0 0 24 24"><path d="M12 8v5M12 17h.01"/></svg></span><div><strong>1 Void Voucher This Month</strong><span class="t">Left out of every total</span></div></div>
+            </div>
+          </section>
+          <section class="panel" aria-labelledby="a3">
+            <div class="ph"><div><h2 id="a3">Quick Actions</h2><p class="sub">Only what your access allows</p></div></div>
+            <div class="quick">
+              <a href="#"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New Voucher</a>
+              <a href="#"><svg viewBox="0 0 24 24"><path d="M5 4h11a3 3 0 013 3v13H8a3 3 0 01-3-3V4zM5 17a3 3 0 013-3h11"/></svg>Day Book</a>
+              <a href="#"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Trial Balance</a>
+              <a href="#"><svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-9"/></svg>Profit And Loss</a>
+            </div>
+          </section>
+          <section class="panel span2" aria-labelledby="a4">
+            <div class="ph"><div><h2 id="a4">System</h2><p class="sub">Shown to the System Admin only</p></div></div>
+            <div class="stats">
+              <div class="stat"><b>4</b><span>Active Users</span></div>
+              <div class="stat"><b>3</b><span>Active Roles</span></div>
+              <div class="stat"><b>1</b><span>Custom Access</span></div>
+            </div>
+          </section>
+        </div>
+
+        <!-- Coming soon -->
+        <div class="section-label">Coming Soon <span class="tag" style="display:inline-flex;padding:2px 9px;border-radius:999px;background:var(--track);color:var(--text-muted);font-size:.66rem;letter-spacing:.05em">Lights up when each module is live</span></div>
+        <div class="grid g3">
+          <section class="panel kpi soon" aria-label="Bar Sales Today (coming soon)">
+            <div class="top"><span class="name">Bar Sales Today</span><span class="tag">Coming Soon</span></div>
+            <div class="val">&#8377; &#8212; &#8212; &#8212;</div>
+            <div class="delta">Live bar sales by outlet. Needs the Bar POS.</div>
+            <div class="ghostbars"><i style="height:40%"></i><i style="height:65%"></i><i style="height:50%"></i><i style="height:80%"></i><i style="height:60%"></i><i style="height:90%"></i></div>
+          </section>
+          <section class="panel kpi soon" aria-label="Stock Value (coming soon)">
+            <div class="top"><span class="name">Stock Value</span><span class="tag">Coming Soon</span></div>
+            <div class="val">&#8377; &#8212; &#8212; &#8212;</div>
+            <div class="delta">Stock at cost by category and stock point. Needs the stock reports.</div>
+            <div class="ghostbars"><i style="height:70%"></i><i style="height:55%"></i><i style="height:85%"></i><i style="height:45%"></i><i style="height:65%"></i><i style="height:75%"></i></div>
+          </section>
+          <section class="panel kpi soon" aria-label="Low Stock Items (coming soon)">
+            <div class="top"><span class="name">Low Stock Items</span><span class="tag">Coming Soon</span></div>
+            <div class="val">&#8212; &#8212;</div>
+            <div class="delta">Items below their reorder level. Needs stock operations.</div>
+            <div class="ghostbars"><i style="height:30%"></i><i style="height:50%"></i><i style="height:35%"></i><i style="height:60%"></i><i style="height:40%"></i><i style="height:55%"></i></div>
+          </section>
+          <section class="panel kpi soon" aria-label="Outlet-Wise Sales (coming soon)">
+            <div class="top"><span class="name">Outlet-Wise Sales</span><span class="tag">Coming Soon</span></div>
+            <div class="val">&#8377; &#8212; &#8212; &#8212;</div>
+            <div class="delta">Each outlet's sales this month. Needs outlets and the POS.</div>
+            <div class="ghostbars"><i style="height:85%"></i><i style="height:60%"></i><i style="height:45%"></i><i style="height:70%"></i><i style="height:35%"></i><i style="height:50%"></i></div>
+          </section>
+          <section class="panel kpi soon" aria-label="Room Occupancy (coming soon)">
+            <div class="top"><span class="name">Room Occupancy</span><span class="tag">Coming Soon</span></div>
+            <div class="val">&#8212; &#8212; %</div>
+            <div class="delta">Rooms in use today. Needs Guest Flow.</div>
+            <div class="ghostbars"><i style="height:55%"></i><i style="height:75%"></i><i style="height:65%"></i><i style="height:85%"></i><i style="height:70%"></i><i style="height:60%"></i></div>
+          </section>
+          <section class="panel kpi soon" aria-label="Staff Attendance (coming soon)">
+            <div class="top"><span class="name">Staff Attendance</span><span class="tag">Coming Soon</span></div>
+            <div class="val">&#8212; &#8212;</div>
+            <div class="delta">Who is on duty today. Needs HR Flow.</div>
+            <div class="ghostbars"><i style="height:80%"></i><i style="height:80%"></i><i style="height:70%"></i><i style="height:90%"></i><i style="height:75%"></i><i style="height:85%"></i></div>
+          </section>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="../phase-1/shell.js"></script>
+<script>
+  // Mockup behaviour only. The real screen reads every figure from the database and draws the charts with Recharts.
+  (function () {
+    var NS = "http://www.w3.org/2000/svg";
+    var months = ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov"];
+    var income = [5.1, 5.8, 4.9, 5.6, 6.2, 6.0, 7.1, 7.9];
+    var expense = [3.2, 3.5, 3.1, 3.4, 3.8, 3.7, 4.1, 4.4];
+    var liquor = [3.1, 3.5, 2.9, 3.4, 3.8, 3.6, 4.3, 4.8];
+    var food = [2.0, 2.3, 2.0, 2.2, 2.4, 2.4, 2.8, 3.1];
+
+    function el(name, attrs, parent) {
+      var n = document.createElementNS(NS, name);
+      for (var k in attrs) n.setAttribute(k, attrs[k]);
+      if (parent) parent.appendChild(n);
+      return n;
+    }
+
+    // Small trend lines in the headline cards.
+    document.querySelectorAll("svg.spark").forEach(function (svg) {
+      var vals = svg.getAttribute("data-spark").split(",").map(Number), color = svg.getAttribute("data-color");
+      var max = Math.max.apply(null, vals), min = Math.min.apply(null, vals), w = 200, h = 38, pad = 4;
+      var pts = vals.map(function (v, i) { return [i * (w / (vals.length - 1)), h - pad - ((v - min) / (max - min || 1)) * (h - pad * 2)]; });
+      var d = pts.map(function (p, i) { return (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1); }).join(" ");
+      var id = "g" + Math.random().toString(36).slice(2, 7);
+      var defs = el("defs", {}, svg), g = el("linearGradient", { id: id, x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
+      el("stop", { offset: "0%", "stop-color": color, "stop-opacity": ".22" }, g);
+      el("stop", { offset: "100%", "stop-color": color, "stop-opacity": "0" }, g);
+      el("path", { d: d + " L" + w + " " + h + " L0 " + h + " Z", fill: "url(#" + id + ")" }, svg);
+      el("path", { d: d, fill: "none", stroke: color, "stroke-width": 2, "stroke-linecap": "round", "stroke-linejoin": "round", "vector-effect": "non-scaling-stroke" }, svg);
+    });
+
+    // A bar chart. series: [{name,color,data}], stacked or grouped.
+    function chart(host, series, stacked) {
+      var W = 560, H = 250, L = 34, R = 8, T = 10, B = 26, iw = W - L - R, ih = H - T - B;
+      var totals = months.map(function (_, i) { return stacked ? series.reduce(function (s, x) { return s + x.data[i]; }, 0) : Math.max.apply(null, series.map(function (x) { return x.data[i]; })); });
+      var max = Math.ceil(Math.max.apply(null, totals) / 2) * 2;
+      var svg = el("svg", { viewBox: "0 0 " + W + " " + H, role: "img", "aria-label": host.id });
+      for (var t = 0; t <= 4; t++) {
+        var y = T + ih - (ih * t) / 4;
+        el("line", { x1: L, x2: W - R, y1: y, y2: y, class: "axis", "stroke-dasharray": t ? "3 4" : "" }, svg);
+        var tx = el("text", { x: L - 6, y: y + 4, "text-anchor": "end" }, svg); tx.textContent = (max * t) / 4;
+      }
+      var step = iw / months.length, bw = stacked ? step * 0.52 : (step * 0.66) / series.length;
+      months.forEach(function (m, i) {
+        var x0 = L + i * step + (step - (stacked ? bw : bw * series.length)) / 2, acc = 0;
+        series.forEach(function (s, j) {
+          var v = s.data[i], bh = (v / max) * ih, x = stacked ? x0 : x0 + j * bw, y = stacked ? T + ih - ((acc + v) / max) * ih : T + ih - bh;
+          var r = el("rect", { x: x, y: y, width: bw - (stacked ? 0 : 3), height: bh, rx: 3, fill: s.color, class: "bar" }, svg);
+          var tt = el("title", {}, r); tt.textContent = m + ", " + s.name + ": " + v.toFixed(1) + " lakh";
+          acc += v;
+        });
+        var lb = el("text", { x: L + i * step + step / 2, y: H - 8, "text-anchor": "middle" }, svg); lb.textContent = m;
+      });
+      host.appendChild(svg);
+    }
+    function table(host, series, total) {
+      var h = "<table><thead><tr><th>Month</th>" + series.map(function (s) { return "<th>" + s.name + "</th>"; }).join("") + (total ? "<th>Total</th>" : "") + "</tr></thead><tbody>";
+      months.forEach(function (m, i) {
+        h += "<tr><td>" + m + "</td>" + series.map(function (s) { return "<td>" + s.data[i].toFixed(1) + "</td>"; }).join("") + (total ? "<td>" + series.reduce(function (a, s) { return a + s.data[i]; }, 0).toFixed(1) + "</td>" : "") + "</tr>";
+      });
+      host.innerHTML = h + "</tbody></table>";
+    }
+    var s1 = [{ name: "Income", color: "#0072B2", data: income }, { name: "Expenses", color: "#E69F00", data: expense }];
+    var s2 = [{ name: "Sales - Liquor", color: "#0072B2", data: liquor }, { name: "Sales - Food", color: "#CC79A7", data: food }];
+    chart(document.getElementById("chart1"), s1, false); table(document.getElementById("table1"), s1, false);
+    chart(document.getElementById("chart2"), s2, true); table(document.getElementById("table2"), s2, true);
+
+    document.querySelectorAll("[data-switch]").forEach(function (sw) {
+      sw.addEventListener("click", function (e) {
+        var b = e.target.closest("button"); if (!b) return;
+        sw.querySelectorAll("button").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); });
+        sw.closest(".panel").classList.toggle("showtable", b.dataset.v === "table");
+      });
+    });
+
+    // Preview of the loading and error states.
+    var root = document.getElementById("root");
+    [["data", "Data"], ["loading", "Loading"], ["error", "Error"]].forEach(function (s) {
+      var b = document.createElement("button"); b.type = "button"; b.textContent = s[1]; b.dataset.id = s[0];
+      b.setAttribute("aria-pressed", String(s[0] === "data"));
+      b.addEventListener("click", function () {
+        root.setAttribute("data-state", s[0]);
+        document.querySelectorAll("#stateBtns button").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); });
+      });
+      document.getElementById("stateBtns").appendChild(b); document.getElementById("stateBtns").appendChild(document.createTextNode(" "));
+    });
+  })();
+</script>
+</body>
+</html>

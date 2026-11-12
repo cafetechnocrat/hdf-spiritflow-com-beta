@@ -109,6 +109,14 @@ h1, h2, h3, p { margin: 0; }
 .txdate input:hover { border-color: var(--border); }
 .txdate .txbd { width: 8px; height: 8px; border-radius: 50%; background: var(--warn); flex: none; }
 .txdate .txbd[hidden] { display: none; }
+
+/* Financial year: a small label, a dropdown and the first and last day. Phase 2 pages only. */
+.fysel { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.fysel .fyl { font-size: .72rem; font-weight: 500; color: var(--text-muted); white-space: nowrap; }
+.fysel select { height: 34px; padding: 0 8px; border: 1px solid var(--border-soft); border-radius: 9px; background: var(--surface); color: var(--text); font: inherit; font-size: .82rem; }
+.fysel .fyd { font-size: .74rem; color: var(--text-muted); white-space: nowrap; }
+@media (max-width: 1279px) { .fysel .fyl { display: none; } }
+@media (max-width: 1023px) { .fysel .fyd { display: none; } }
 @media (max-width: 560px) {
   .txdate .txl { display: none; }
   .txdate input { width: 124px; }

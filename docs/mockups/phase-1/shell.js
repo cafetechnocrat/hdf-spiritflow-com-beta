@@ -26,6 +26,13 @@
       '<span class="txbd" id="txBd" title="Back-dated" aria-label="Back-dated"></span></label>'
     : "";
 
+  // Phase 2 pages add data-fy. The financial year selector at the left of the top bar.
+  var fy = body.hasAttribute("data-fy")
+    ? '<label class="fysel"><span class="fyl">Financial Year</span>' +
+      '<select aria-label="Financial Year"><option>2026-27 (current)</option><option>2025-26</option><option>2024-25</option><option>2023-24</option></select>' +
+      '<span class="fyd">01/04/2026 to 31/03/2027</span></label>'
+    : "";
+
   var shell = document.querySelector(".shell");
   shell.insertAdjacentHTML("afterbegin",
     '<div class="scrim" id="scrim"></div>' +
@@ -38,7 +45,7 @@
     '<header class="topbar">' +
       '<button class="icon-btn menu-btn" id="menuBtn" aria-label="Open Menu" aria-expanded="false">' +
         '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>' +
-      '<span class="title">' + title + "</span>" +
+      (fy || '<span class="title">' + title + "</span>") +
       '<span class="spacer"></span>' +
       txdate +
       '<button class="icon-btn" aria-label="Sign Out"><svg viewBox="0 0 24 24" aria-hidden="true">' +
