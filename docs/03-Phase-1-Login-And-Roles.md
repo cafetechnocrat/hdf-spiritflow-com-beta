@@ -134,22 +134,31 @@ Day Book ledgers and transactions (Phase 2), item master, stock, POS, attendance
 
 ## 11. Roles And Access (Owner Decisions, 2026-11-12)
 
-The permission table in section 2 is replaced by settings the System Admin controls on a **Roles And Access** screen. Nothing about who can do what stays in code. The menu, the screens and the database rules all read the same settings.
+The permission table in section 2 and the fixed list of nine roles are replaced by data the System Admin controls on a **Roles And Access** screen. Nothing about roles or who can do what stays in code. The menu, the screens and the database rules all read the same tables.
 
-### What The System Admin Controls
-- **Access by role and feature.** For every role and every feature the System Admin picks a level: **None, View, Edit or Delete**. Each level includes the ones before it. View is see only. Edit is create and change. Delete is remove records. A feature that cannot be deleted, such as the Dashboard or Reports, does not offer Delete.
+### Roles Are Data
+- Roles are rows in a `roles` table. The **System Admin creates, renames and deletes roles** on the Roles And Access screen. The fixed role list in the code and the database type is removed.
+- **Starting roles (seeded by migration):** System Admin (locked), MD, Chief Accountant, Accounting Staff, and Billing / Cashier. Any other role, such as Stock Keeper, Security, Kitchen Staff or Night Accountant, is created by the System Admin when needed. **Open:** confirm this starting list. The old Night Accountant, Stock Keeper, Security and Kitchen Staff roles are not seeded.
+- Each role has: name, Active switch, Require Two-Factor switch, and **sign-in method** (Email And Password, or Username And PIN). Billing / Cashier starts with Username And PIN, which is built later with the cashier login. The others start with Email And Password.
+- **System Admin** is the one built-in role. It cannot be renamed, deleted, deactivated or reduced. It always has full access. Only its two-factor switch can change.
+- Any other role, including the seeded ones, can be renamed. A role can be **deleted only when no user has it**. Otherwise the screen says how many users hold it and asks for them to be moved first.
+- A new role can **copy the access of an existing role** when it is created, then be adjusted.
+- Role names are unique and written in Title Case.
+
+### Access By Role And Feature
+- For every role and every feature the System Admin picks a level: **None, View, Edit or Delete**. Each level includes the ones before it. View is see only. Edit is create and change. Delete is remove records. A feature that cannot be deleted, such as the Dashboard or Reports, does not offer Delete.
 - **Features** are rows in the database: Dashboard, Users, Stock Points And Outlets And Counters, Ledger Groups And Ledgers, Transactions (View, Edit to enter new vouchers, Delete to delete them), Edit Or Void Posted Vouchers (Edit), and Reports. New features are added as new rows when their screens are built.
-- **Role active.** Each role has an Active switch. A role that is not active cannot sign in, and no new user can be given it.
-- **Two-factor per role.** Each role has a Require Two-Factor switch. A user in that role must set up and pass an authenticator code at each sign in. This replaces the fixed list of roles in the code and the database.
+- **Role active.** A role that is not active cannot sign in, and no new user can be given it.
+- **Two-factor per role.** A user in a role that requires it must set up and pass an authenticator code at each sign in. This replaces the fixed list of roles in the code and the database.
 
 ### Starting Values
-- After the reset, **System Admin is the only role with access**. Every other role starts inactive, with None on every feature.
-- Two-factor starts **on for System Admin only**. Every other role starts off.
-- The System Admin always has full access to every feature and cannot be switched off or reduced, so it can never lock itself out. Only its two-factor switch can be changed. The Roles And Access screen itself is for the System Admin only.
+- After the reset, **System Admin is the only role with access**. Every other seeded role starts inactive, with None on every feature.
+- Two-factor starts **on for System Admin only**.
+- The Roles And Access screen itself is for the System Admin only.
 
 ### Rules
-- The settings live in the database: a features table, a role access table (role, feature, level) and a role settings table (role, active, two-factor). A function answers "does this user have this level on this feature" and every policy and server check uses it.
-- Changes take effect on the user's next request. The audit log records every change to these settings.
+- Tables: `roles`, `features`, `role_access` (role, feature, level). A function answers "does this user have this level on this feature" and every policy and server check uses it. The `profiles.role` column points at the roles table.
+- Changes take effect on the user's next request. The audit log records every change to roles and access.
 - The Users screen lists only active roles when choosing a role for a user.
-- **Open:** a role that is switched inactive while users are signed in loses access at once, and those users see a "No Access" page. Confirm that is wanted.
+- **Open:** a role switched inactive while users are signed in loses access at once, and those users see a "No Access" page. Confirm that is wanted.
 - **Open:** whether a per-user override is ever needed. Not built. Access is by role only.
