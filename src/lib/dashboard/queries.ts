@@ -74,6 +74,53 @@ export const loadMonthly = cache(
   },
 );
 
+export type DayRow = { day: string; income: bigint; expense: bigint };
+
+// Income and expenses for each day that has entries, for the chart views.
+export const loadDaily = cache(
+  async (feature: DashboardFeature, from: string, to: string): Promise<DayRow[]> => {
+    const supabase = await createClient();
+    const { data, error } = await supabase.rpc("dashboard_daily", {
+      p_feature: feature,
+      p_from: from,
+      p_to: to,
+    });
+    if (error) throw new Error("daily");
+    return ((data ?? []) as { day: string; income_text: string; expense_text: string }[]).map(
+      (row) => ({
+        day: row.day,
+        income: parseAmountToPaise(row.income_text) ?? parseSignedPaise(row.income_text),
+        expense: parseAmountToPaise(row.expense_text) ?? parseSignedPaise(row.expense_text),
+      }),
+    );
+  },
+);
+
+export type RegisterDayRow = { day: string; amount: bigint };
+
+// Sales or purchases for each day that has entries, for the chart views.
+export const loadRegisterDaily = cache(
+  async (
+    feature: DashboardFeature,
+    kind: "sales" | "purchase",
+    from: string,
+    to: string,
+  ): Promise<RegisterDayRow[]> => {
+    const supabase = await createClient();
+    const { data, error } = await supabase.rpc("dashboard_register_daily", {
+      p_feature: feature,
+      p_kind: kind,
+      p_from: from,
+      p_to: to,
+    });
+    if (error) throw new Error("register daily");
+    return ((data ?? []) as { day: string; amount_text: string }[]).map((row) => ({
+      day: row.day,
+      amount: parseSignedPaise(row.amount_text),
+    }));
+  },
+);
+
 export type RegisterRow = { month: string; ledgerId: string; ledgerName: string; amount: bigint };
 
 export const loadRegisterMonthly = cache(

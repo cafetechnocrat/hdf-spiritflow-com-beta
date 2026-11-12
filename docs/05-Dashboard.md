@@ -82,3 +82,13 @@ A new database function (or views) returns each section's figures in one round t
 - **Assets:** every ledger under a group with the assets nature, as on the end of the range, shown by top group.
 - **Liabilities:** every ledger under a group with the liabilities nature, **except the owner's capital**. The capital group is picked by a marker on the group (default: Capital Account and its sub-groups), not by name.
 - **Net Valuation:** assets minus liabilities. It shows green when assets are more and red when liabilities are more.
+
+## Chart Ranges (Owner, 2026-11-14)
+- Both Monthly Trends charts, **Income And Expenses** and **Sales And Purchases**, have a **Day, Week, Month, Year** toggle for the report range. The default is Month.
+- Every range ends on the **transaction date** in the top bar and looks back from there. The last bucket stops at that date, so a later day is not counted.
+  - **Day:** the transaction day and the six days before it (7 bars).
+  - **Week:** the week of the transaction date and the four before it (5 bars). A week runs Monday to Sunday.
+  - **Month:** the month of the transaction date and the five before it (6 bars).
+  - **Year:** the financial year (April to March) of the transaction date and the four before it (5 bars). The owner wrote "four months" and the context points to years, so this reads as years. Confirm with the owner.
+- The charts no longer follow the financial year selector. The cards above them still do.
+- All four ranges are added up from daily figures read through the same lock as the card (`dashboard_daily`, `dashboard_register_daily`).

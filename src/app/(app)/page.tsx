@@ -18,7 +18,7 @@ import { monthKeys, shiftYears } from "@/lib/dashboard/queries";
 import { displayDate } from "@/lib/reports/dates";
 import { loadPeriod } from "@/lib/period/queries";
 import { financialYearLabel } from "@/lib/period/financial-year";
-import { todayInIndia } from "@/lib/vouchers/transaction-date";
+import { loadTransactionDate, todayInIndia } from "@/lib/vouchers/transaction-date";
 
 export const metadata: Metadata = {
   title: "Spirit Flow",
@@ -82,6 +82,8 @@ async function DashboardContent() {
   const period = await loadPeriod(user.id);
   const today = todayInIndia();
   const to = period.end < today ? period.end : today;
+  // The chart ranges end on the transaction date, as the person set it in the top bar.
+  const anchor = await loadTransactionDate(user.id);
   const range: DashboardRange = {
     from: period.start,
     to,
@@ -89,6 +91,7 @@ async function DashboardContent() {
     prevTo: shiftYears(to, -1),
     months: monthKeys(period.start, to),
     today,
+    anchor,
   };
 
   return (

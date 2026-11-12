@@ -9,23 +9,32 @@ import {
   formatPaise,
   sumPaise,
 } from "@/lib/format/money";
+import {
+  CHART_RANGES,
+  chartBuckets,
+  chartSpan,
+  sumByBucket,
+  type ChartRange,
+  type DayFigures,
+} from "@/lib/dashboard/buckets";
 import { PALETTE, SERIES_COLORS } from "@/lib/dashboard/palette";
 import {
   byMonth,
   loadBalanceTotals,
   loadBooksCheck,
   loadLatestVouchers,
+  loadDaily,
   loadMonthly,
   loadPositions,
+  loadRegisterDaily,
   loadRegisterMonthly,
   loadSystemSnapshot,
-  monthLabel,
   totalOf,
   type BalanceGroup,
   type PositionRow,
 } from "@/lib/dashboard/queries";
 import { displayDate } from "@/lib/reports/dates";
-import { MonthlyChart } from "./monthly-chart";
+import { MonthlyChart, type ChartView } from "./monthly-chart";
 import {
   DeltaPill,
   Icon,
@@ -51,9 +60,16 @@ const text = {
   asOn: "as on",
   trendsFailed: "Monthly Trends",
   incomeExpenses: "Income And Expenses",
-  incomeExpensesSub: "By month, in lakhs",
+  incomeExpensesSub: "In lakhs",
+  rangeName: { day: "Day", week: "Week", month: "Month", year: "Year" },
+  rangeNote: {
+    day: (to: string) => `Last 7 days up to ${to}`,
+    week: (to: string) => `This week and the 4 before, Monday to Sunday, up to ${to}`,
+    month: (to: string) => `This month and the 5 before, up to ${to}`,
+    year: (to: string) => `This financial year and the 4 before, up to ${to}`,
+  },
   salesPurchases: "Sales And Purchases",
-  salesPurchasesSub: "By month, in lakhs",
+  salesPurchasesSub: "In lakhs",
   income: "Income",
   expenses: "Expenses",
   other: "Others",
@@ -120,6 +136,8 @@ export type DashboardRange = {
   prevTo: string;
   months: string[];
   today: string;
+  // The date the chart ranges end on: the transaction date.
+  anchor: string;
 };
 
 const rupees = (paise: bigint) => Number(paise) / 100;
@@ -287,32 +305,56 @@ export function HeadlineSection({ user, range }: CardProps) {
 // ---------------------------------------------------------------------------
 // Monthly trends. The two charts have their own locks.
 
+// Builds every range of a chart from the daily figures. Each series is a column
+// of paise per day. The amounts shown as text are exact, the drawn ones are lakhs.
+function buildViews(
+  anchor: string,
+  rows: DayFigures[],
+  names: string[],
+  colors: string[],
+  title: string,
+): Record<ChartRange, ChartView> {
+  const views = {} as Record<ChartRange, ChartView>;
+  for (const range of CHART_RANGES) {
+    const buckets = chartBuckets(range, anchor);
+    const sums = sumByBucket(buckets, rows, names.length);
+    const labels = buckets.map((bucket) => bucket.label);
+    const note = text.rangeNote[range](displayDate(anchor));
+    views[range] = {
+      subtitle: `${note}. ${text.incomeExpensesSub}`,
+      labels,
+      series: names.map((name, i) => ({
+        name,
+        color: colors[i],
+        values: sums.map((row) => lakhs(row[i])),
+      })),
+      tableHead: [text.rangeName[range], ...names],
+      tableRows: labels.map((label, index) => [label, ...sums[index].map((value) => formatPaise(value))]),
+      describe: `${title}, ${note}. The table view lists the exact amounts.`,
+    };
+  }
+  return views;
+}
+
 async function IncomeExpensesChart({ user, range }: CardProps) {
   if (!canView(user, "dash_income_expenses")) {
     return <LockedCard name={text.incomeExpenses} subtitle={text.incomeExpensesSub} />;
   }
-  const monthly = await loadMonthly("dash_income_expenses", range.from, range.to, false).catch(
-    () => null,
-  );
-  if (!monthly) return <SectionError title={text.incomeExpenses} />;
-  const labels = range.months.map(monthLabel);
-  const incomeBy = range.months.map((m) => monthly.find((r) => r.month === m)?.income ?? ZERO);
-  const expenseBy = range.months.map((m) => monthly.find((r) => r.month === m)?.expense ?? ZERO);
-  const period = `${monthLabel(range.months[0])} to ${monthLabel(range.months[range.months.length - 1])}`;
+  const span = chartSpan(range.anchor);
+  const daily = await loadDaily("dash_income_expenses", span.from, span.to).catch(() => null);
+  if (!daily) return <SectionError title={text.incomeExpenses} />;
+  const rows = daily.map((row) => ({ day: row.day, values: [row.income, row.expense] }));
   return (
     <MonthlyChart
       title={text.incomeExpenses}
-      subtitle={`${text.incomeExpensesSub}. ${period}`}
-      months={labels}
-      stacked={false}
       kind="lines"
-      series={[
-        { name: text.income, color: PALETTE.blue, values: incomeBy.map(lakhs) },
-        { name: text.expenses, color: PALETTE.orange, values: expenseBy.map(lakhs) },
-      ]}
-      tableHead={[text.month, text.income, text.expenses]}
-      tableRows={labels.map((label, i) => [label, formatPaise(incomeBy[i]), formatPaise(expenseBy[i])])}
-      describe={`${text.incomeExpenses}, ${period}. The table view lists the exact amounts.`}
+      views={buildViews(
+        range.anchor,
+        rows,
+        [text.income, text.expenses],
+        [PALETTE.blue, PALETTE.orange],
+        text.incomeExpenses,
+      )}
     />
   );
 }
@@ -321,30 +363,31 @@ async function SalesPurchasesChart({ user, range }: CardProps) {
   if (!canView(user, "dash_sales_by_month")) {
     return <LockedCard name={text.salesPurchases} subtitle={text.salesPurchasesSub} />;
   }
+  const span = chartSpan(range.anchor);
   const loaded = await Promise.all([
-    loadRegisterMonthly("dash_sales_by_month", "sales", range.from, range.to),
-    loadRegisterMonthly("dash_sales_by_month", "purchase", range.from, range.to),
+    loadRegisterDaily("dash_sales_by_month", "sales", span.from, span.to),
+    loadRegisterDaily("dash_sales_by_month", "purchase", span.from, span.to),
   ]).catch(() => null);
   if (!loaded) return <SectionError title={text.salesPurchases} />;
   const [sales, purchases] = loaded;
-  const labels = range.months.map(monthLabel);
-  const salesBy = byMonth(sales, range.months);
-  const purchasesBy = byMonth(purchases, range.months);
-  const period = `${monthLabel(range.months[0])} to ${monthLabel(range.months[range.months.length - 1])}`;
+  const byDay = new Map<string, bigint[]>();
+  for (const row of sales) byDay.set(row.day, [row.amount, ZERO]);
+  for (const row of purchases) {
+    const existing = byDay.get(row.day) ?? [ZERO, ZERO];
+    byDay.set(row.day, [existing[0], row.amount]);
+  }
+  const rows = [...byDay.entries()].map(([day, values]) => ({ day, values }));
   return (
     <MonthlyChart
       title={text.salesPurchases}
-      subtitle={`${text.salesPurchasesSub}. ${period}`}
-      months={labels}
-      stacked={false}
       kind="lines"
-      series={[
-        { name: text.sales, color: PALETTE.blue, values: salesBy.map(lakhs) },
-        { name: text.purchases, color: PALETTE.orange, values: purchasesBy.map(lakhs) },
-      ]}
-      tableHead={[text.month, text.sales, text.purchases]}
-      tableRows={labels.map((label, i) => [label, formatPaise(salesBy[i]), formatPaise(purchasesBy[i])])}
-      describe={`${text.salesPurchases}, ${period}. The table view lists the exact amounts.`}
+      views={buildViews(
+        range.anchor,
+        rows,
+        [text.sales, text.purchases],
+        [PALETTE.blue, PALETTE.orange],
+        text.salesPurchases,
+      )}
     />
   );
 }
