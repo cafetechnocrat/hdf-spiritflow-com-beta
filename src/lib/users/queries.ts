@@ -18,6 +18,8 @@ export type UserRow = {
   roleName: string;
   requiresTwoFactor: boolean;
   signInMethod: "email" | "pin";
+  // True when the person has less access than their role.
+  customAccess: boolean;
   status: "active" | "inactive";
   // Email for office staff. Cashiers have an internal address that is not shown.
   signIn: string;
@@ -40,7 +42,11 @@ const PROFILE_COLUMNS =
 
 const CASHIER_DOMAIN = "@cashier.internal";
 
-function toRow(profile: ProfileRecord, email: string | undefined): UserRow | null {
+function toRow(
+  profile: ProfileRecord,
+  email: string | undefined,
+  customAccess: boolean,
+): UserRow | null {
   const role = Array.isArray(profile.roles) ? profile.roles[0] : profile.roles;
   if (!role) return null;
   const address = email ?? "";
@@ -52,6 +58,7 @@ function toRow(profile: ProfileRecord, email: string | undefined): UserRow | nul
     roleName: role.name,
     requiresTwoFactor: role.requires_two_factor,
     signInMethod: role.sign_in_method,
+    customAccess,
     status: profile.status === "active" ? "active" : "inactive",
     signIn: address.endsWith(CASHIER_DOMAIN)
       ? address.slice(0, -CASHIER_DOMAIN.length)
@@ -77,8 +84,12 @@ export async function listUsers(): Promise<UserRow[]> {
     (authList?.users ?? []).map((user) => [user.id, user.email]),
   );
 
+  // People with a row in user_access have less than their role.
+  const { data: custom } = await supabase.from("user_access").select("user_id");
+  const customIds = new Set(((custom ?? []) as { user_id: string }[]).map((r) => r.user_id));
+
   return (profiles as ProfileRecord[])
-    .map((profile) => toRow(profile, emails.get(profile.id)))
+    .map((profile) => toRow(profile, emails.get(profile.id), customIds.has(profile.id)))
     .filter((row): row is UserRow => row !== null);
 }
 
@@ -97,7 +108,11 @@ export async function getUser(id: string): Promise<UserRow | null> {
 
   const admin = createAdminClient();
   const { data: authUser } = await admin.auth.admin.getUserById(id);
-  return toRow(profile as ProfileRecord, authUser?.user?.email);
+  const { count } = await supabase
+    .from("user_access")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", id);
+  return toRow(profile as ProfileRecord, authUser?.user?.email, (count ?? 0) > 0);
 }
 
 // Every role, for the filter on the users list.

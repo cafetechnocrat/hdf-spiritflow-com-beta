@@ -6,6 +6,8 @@ import { PageLoading } from "@/components/page-loading";
 import { UserForm } from "@/components/users/user-form";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { canEdit } from "@/lib/auth/permissions";
+import { UserAccessSection } from "@/components/users/user-access-section";
+import { loadUserAccess } from "@/lib/users/access-queries";
 import { getUser, listAssignableRoles } from "@/lib/users/queries";
 
 export const metadata: Metadata = {
@@ -30,7 +32,10 @@ async function EditUserContent({
   const { id } = await params;
   const user = await getUser(id);
   if (!user) notFound();
-  const roles = await listAssignableRoles(user.roleId);
+  const [roles, access] = await Promise.all([
+    listAssignableRoles(user.roleId),
+    loadUserAccess(user.id),
+  ]);
 
   return (
     <div>
@@ -58,6 +63,7 @@ async function EditUserContent({
           status: user.status,
         }}
       />
+      {access && !access.isSystem && me.id !== user.id ? <UserAccessSection data={access} /> : null}
     </div>
   );
 }

@@ -36,6 +36,7 @@ const text = {
   resetTwoFactor: "Reset Two-Factor",
   emailAndPassword: "Email And Password",
   usernameAndPin: "Username And PIN",
+  customAccess: "Custom Access",
   noMatch: "No Users Found",
   noMatchHint: "Try a different search or clear the filters.",
   showing: (shown: number, total: number) =>
@@ -252,6 +253,11 @@ export function UsersTable({
                       <span className={`${badge.base} ${badge.role}`}>
                         {row.roleName}
                       </span>
+                      {row.customAccess ? (
+                        <span className={`${badge.base} ${badge.warn} ml-1.5`}>
+                          {text.customAccess}
+                        </span>
+                      ) : null}
                     </td>
                     <td className="px-4 py-3">{row.signIn}</td>
                     <td className="px-4 py-3">{text.allOutlets}</td>
@@ -286,7 +292,14 @@ export function UsersTable({
                     <dt className="text-[0.72rem] font-semibold uppercase tracking-[0.04em] text-muted">
                       {text.role}
                     </dt>
-                    <dd>{row.roleName}</dd>
+                    <dd>
+                      {row.roleName}
+                      {row.customAccess ? (
+                        <span className={`${badge.base} ${badge.warn} ml-1.5`}>
+                          {text.customAccess}
+                        </span>
+                      ) : null}
+                    </dd>
                     <dt className="text-[0.72rem] font-semibold uppercase tracking-[0.04em] text-muted">
                       {text.signIn}
                     </dt>

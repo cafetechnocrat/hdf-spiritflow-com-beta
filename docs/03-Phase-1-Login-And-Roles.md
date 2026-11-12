@@ -177,4 +177,5 @@ The permission table in section 2 and the fixed list of nine roles are replaced 
 ### Built So Far (Roles And Access)
 - Screen at `/roles`, System Admin only, under Administration. Migration `20261114100000_roles_and_access.sql` adds `roles`, `features` and `role_access`, moves `profiles` to `role_id`, and replaces every policy and voucher function with the `has_access(feature, action)` helper. The old `user_role` type and `current_user_role()` are removed.
 - The app loads the user's role, switches and access with the user (`getCurrentUser`). Menu items, pages and server actions check that access. A role switched off cannot sign in. Two-factor is read from the role.
-- Not built yet: access by user inside the role's limit, and a screen to add features (features are seeded by migration).
+- Access by user (built 2026-11-14): migration `20261114110000_user_access.sql` adds `user_access` and makes `has_access()` combine the role and the user. The Edit User screen has an Access section, the Users list shows a Custom Access tag, and changing a user's role clears their custom access.
+- Not built yet: a screen to add features (features are seeded by migration).

@@ -77,20 +77,27 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
       access[feature.key] = { view: true, edit: true, delete: true };
     }
   } else {
-    const { data: rows } = await supabase
-      .from("role_access")
-      .select("feature_key, can_view, can_edit, can_delete")
-      .eq("role_id", role.id);
-    for (const row of (rows ?? []) as {
-      feature_key: string;
-      can_view: boolean;
-      can_edit: boolean;
-      can_delete: boolean;
-    }[]) {
+    const [roleRows, userRows] = await Promise.all([
+      supabase
+        .from("role_access")
+        .select("feature_key, can_view, can_edit, can_delete")
+        .eq("role_id", role.id),
+      // A user can be given less than their role, never more.
+      supabase
+        .from("user_access")
+        .select("feature_key, can_view, can_edit, can_delete")
+        .eq("user_id", auth.user.id),
+    ]);
+    type Flags = { feature_key: string; can_view: boolean; can_edit: boolean; can_delete: boolean };
+    const narrower = new Map(
+      ((userRows.data ?? []) as Flags[]).map((row) => [row.feature_key, row]),
+    );
+    for (const row of (roleRows.data ?? []) as Flags[]) {
+      const own = narrower.get(row.feature_key);
       access[row.feature_key] = {
-        view: row.can_view,
-        edit: row.can_edit,
-        delete: row.can_delete,
+        view: row.can_view && (own ? own.can_view : true),
+        edit: row.can_edit && (own ? own.can_edit : true),
+        delete: row.can_delete && (own ? own.can_delete : true),
       };
     }
   }
