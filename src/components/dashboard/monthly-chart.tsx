@@ -51,7 +51,7 @@ export type ChartView = {
 export function MonthlyChart({
   title,
   views,
-  defaultRange = "month",
+  defaultRange = "day",
   kind = "bars",
   stacked = false,
 }: {

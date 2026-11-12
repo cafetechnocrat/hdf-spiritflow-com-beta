@@ -84,7 +84,7 @@ A new database function (or views) returns each section's figures in one round t
 - **Net Valuation:** assets minus liabilities. It shows green when assets are more and red when liabilities are more.
 
 ## Chart Ranges (Owner, 2026-11-14)
-- Both Monthly Trends charts, **Income And Expenses** and **Sales And Purchases**, have a **Day, Week, Month, Year** toggle for the report range. The default is Month.
+- Both Monthly Trends charts, **Income And Expenses** and **Sales And Purchases**, have a **Day, Week, Month, Year** toggle for the report range. The default is Day.
 - Every range ends on the **transaction date** in the top bar and looks back from there. The last bucket stops at that date, so a later day is not counted.
   - **Day:** the transaction day and the six days before it (7 bars).
   - **Week:** the week of the transaction date and the four before it (5 bars). A week runs Monday to Sunday.
