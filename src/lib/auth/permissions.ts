@@ -11,6 +11,7 @@ export type FeatureKey =
   | "ledgers"
   | "transactions"
   | "voucher_changes"
+  | "closing_stock"
   | ReportFeature
   | DashboardFeature;
 

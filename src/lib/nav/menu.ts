@@ -87,6 +87,12 @@ const MENU: MenuDefinition[] = [
         area: "transactions",
       },
       {
+        id: "closing-stock",
+        label: "Closing Stock",
+        href: "/closing-stock",
+        area: "closing_stock",
+      },
+      {
         id: "reports",
         label: "Reports",
         children: [
