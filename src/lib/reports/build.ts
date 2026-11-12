@@ -324,6 +324,7 @@ async function buildDayBook(
   ];
   doc.tables = [
     {
+      paged: true,
       columns: [
         { label: "Date", align: "left" },
         { label: "Voucher", align: "left" },
@@ -340,7 +341,7 @@ async function buildDayBook(
     "Total amount is the sum of every row. Each row is one debit and one credit of the same amount.",
   ];
   if (truncated) {
-    doc.notes.push(`Only the first ${DAY_BOOK_LIMIT} rows are shown. Narrow the dates to see the rest.`);
+    doc.notes.push(`Only the newest ${DAY_BOOK_LIMIT} rows are shown. Narrow the dates to see the rest.`);
   }
   doc.empty = records.length === 0;
   doc.emptyTitle = "No Vouchers In This Range";
@@ -397,16 +398,16 @@ async function buildLedgerStatement(
   let running = opening;
   let debitTotal = ZERO;
   let creditTotal = ZERO;
-  const rows: DocRow[] = [
-    row("normal", blank, text("Opening Balance"), blank, blank, blank, text(formatBalance(opening))),
-  ];
+  // Worked out oldest first so the running balance is right, then listed newest
+  // first. The opening balance is the oldest line, so it comes last.
+  const entries: DocRow[] = [];
   for (const r of records) {
     const debit = r.debit_text ? (parseAmountToPaise(r.debit_text) ?? ZERO) : ZERO;
     const credit = r.credit_text ? (parseAmountToPaise(r.credit_text) ?? ZERO) : ZERO;
     debitTotal += debit;
     creditTotal += credit;
     running += debit - credit;
-    rows.push(
+    entries.push(
       row(
         "normal",
         text(displayDate(r.voucher_date)),
@@ -418,6 +419,10 @@ async function buildLedgerStatement(
       ),
     );
   }
+  const rows: DocRow[] = [
+    ...entries.reverse(),
+    row("normal", blank, text("Opening Balance"), blank, blank, blank, text(formatBalance(opening))),
+  ];
   rows.push(
     row("total", blank, text("Total"), blank, amount(debitTotal), amount(creditTotal), blank),
   );
@@ -431,6 +436,7 @@ async function buildLedgerStatement(
   ];
   doc.tables = [
     {
+      paged: true,
       columns: [
         { label: "Date", align: "left" },
         { label: "Particulars", align: "left" },
@@ -580,7 +586,7 @@ async function buildRegister(
   );
   const grand = sumPaise(lines.map(rowTotal));
 
-  const listRows: DocRow[] = lines.map((line) =>
+  const listRows: DocRow[] = [...lines].reverse().map((line) =>
     row(
       "normal",
       text(displayDate(line.voucher.date)),
@@ -605,7 +611,7 @@ async function buildRegister(
     const monthKey = line.voucher.date.slice(0, 7);
     months.set(monthKey, [...(months.get(monthKey) ?? []), line]);
   }
-  const monthRows: DocRow[] = [...months.entries()].map(([monthKey, monthLines]) =>
+  const monthRows: DocRow[] = [...months.entries()].reverse().map(([monthKey, monthLines]) =>
     row(
       "normal",
       text(monthName(monthKey)),
@@ -660,6 +666,7 @@ async function buildRegister(
     },
     {
       heading: "Vouchers",
+      paged: true,
       columns: [
         { label: "Date", align: "left" },
         { label: "Voucher", align: "left" },

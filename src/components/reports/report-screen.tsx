@@ -1,7 +1,8 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useId, useState, useTransition } from "react";
+import { flushSync } from "react-dom";
 import type { ReactNode } from "react";
 import { badge, button, field } from "@/components/ui/styles";
 import type {
@@ -25,7 +26,107 @@ const text = {
   on: "on",
   updating: "Updating the report...",
   void: "Void",
+  rowsPerPage: "Rows per page",
+  showing: (from: number, to: number, total: number) =>
+    `Showing ${from} to ${to} of ${total}`,
+  first: "First",
+  previous: "Previous",
+  next: "Next",
+  last: "Last",
+  pageOf: (page: number, pages: number) => `Page ${page} of ${pages}`,
+  pagerLabel: "Pages",
+  totalsNote: "Totals cover every row, not only this page.",
 } as const;
+
+// Rows per page. Entries are listed newest first.
+const PAGE_SIZES = [10, 25, 50, 100, 200];
+const DEFAULT_SIZE = 50;
+
+type PagerState = { page: number; size: number };
+
+// Rows per page, and First, Previous, Next and Last, under a paged list.
+function Pager({
+  total,
+  state,
+  onChange,
+}: {
+  total: number;
+  state: PagerState;
+  onChange: (next: PagerState) => void;
+}) {
+  const selectId = useId();
+  const pages = Math.max(1, Math.ceil(total / state.size));
+  const page = Math.min(state.page, pages - 1);
+  const from = total === 0 ? 0 : page * state.size + 1;
+  const to = Math.min(total, (page + 1) * state.size);
+  const nav = `${button.secondary} ${button.small} min-w-[72px]`;
+  return (
+    <nav
+      aria-label={text.pagerLabel}
+      className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2.5 border-t border-divider px-3.5 py-3 text-[0.84rem] print:hidden"
+    >
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+        <label htmlFor={selectId} className="text-muted">
+          {text.rowsPerPage}
+        </label>
+        <select
+          id={selectId}
+          value={state.size}
+          onChange={(event) =>
+            onChange({ page: 0, size: Number(event.target.value) })
+          }
+          className={`${field.input} !h-10 !w-auto min-w-[84px] sm:!h-9`}
+        >
+          {PAGE_SIZES.map((size) => (
+            <option key={size} value={size}>
+              {size}
+            </option>
+          ))}
+        </select>
+        <span className="text-muted tabular-nums">
+          {text.showing(from, to, total)}
+        </span>
+      </div>
+      <div className="flex flex-wrap items-center gap-1.5">
+        <button
+          type="button"
+          className={nav}
+          disabled={page === 0}
+          onClick={() => onChange({ ...state, page: 0 })}
+        >
+          {text.first}
+        </button>
+        <button
+          type="button"
+          className={nav}
+          disabled={page === 0}
+          onClick={() => onChange({ ...state, page: page - 1 })}
+        >
+          {text.previous}
+        </button>
+        <span className="px-1.5 text-muted tabular-nums">
+          {text.pageOf(page + 1, pages)}
+        </span>
+        <button
+          type="button"
+          className={nav}
+          disabled={page >= pages - 1}
+          onClick={() => onChange({ ...state, page: page + 1 })}
+        >
+          {text.next}
+        </button>
+        <button
+          type="button"
+          className={nav}
+          disabled={page >= pages - 1}
+          onClick={() => onChange({ ...state, page: pages - 1 })}
+        >
+          {text.last}
+        </button>
+      </div>
+    </nav>
+  );
+}
 
 const ROW_CLASS: Record<RowStyle, string> = {
   normal: "",
@@ -43,7 +144,7 @@ const INDENT: Partial<Record<RowStyle, string>> = {
   ledger: "pl-[50px]",
 };
 
-function ReportTable({ table }: { table: DocTable }) {
+function ReportTable({ table, rows }: { table: DocTable; rows?: DocRow[] }) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full border-collapse text-[0.88rem]">
@@ -60,8 +161,11 @@ function ReportTable({ table }: { table: DocTable }) {
           </tr>
         </thead>
         <tbody>
-          {table.rows.map((rowItem: DocRow, rowIndex) => (
-            <tr key={rowIndex} className={`border-b border-divider ${ROW_CLASS[rowItem.style]}`}>
+          {(rows ?? table.rows).map((rowItem: DocRow, rowIndex) => (
+            <tr
+              key={rowIndex}
+              className={`border-b border-divider ${ROW_CLASS[rowItem.style]}`}
+            >
               {rowItem.cells.map((cell, cellIndex) => {
                 const column = table.columns[cellIndex];
                 const right = column?.align === "right";
@@ -84,6 +188,47 @@ function ReportTable({ table }: { table: DocTable }) {
   );
 }
 
+// A table drawn in a card. A paged table shows one page of its entries, keeps
+// its Total rows under every page and has the pager at the bottom. When the page
+// is printed every row is drawn.
+function TableCard({
+  table,
+  pager,
+  onPager,
+  printAll,
+}: {
+  table: DocTable;
+  pager: PagerState;
+  onPager: (next: PagerState) => void;
+  printAll: boolean;
+}) {
+  if (!table.paged) {
+    return (
+      <div className="overflow-hidden rounded-2xl bg-surface shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
+        <ReportTable table={table} />
+      </div>
+    );
+  }
+  const entries = table.rows.filter((item) => item.style !== "total");
+  const totals = table.rows.filter((item) => item.style === "total");
+  const pages = Math.max(1, Math.ceil(entries.length / pager.size));
+  const page = Math.min(pager.page, pages - 1);
+  const shown = printAll
+    ? entries
+    : entries.slice(page * pager.size, (page + 1) * pager.size);
+  return (
+    <div className="overflow-hidden rounded-2xl bg-surface shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
+      <ReportTable table={table} rows={[...shown, ...totals]} />
+      {totals.length > 0 ? (
+        <p className="px-3.5 pb-2 pt-1 text-[0.76rem] text-muted print:hidden">
+          {text.totalsNote}
+        </p>
+      ) : null}
+      <Pager total={entries.length} state={pager} onChange={onPager} />
+    </div>
+  );
+}
+
 function FilterBar({
   fields,
   values,
@@ -99,12 +244,18 @@ function FilterBar({
         const id = `rf-${item.name}`;
         if (item.kind === "check") {
           return (
-            <label key={item.name} htmlFor={id} className="inline-flex min-h-11 items-center gap-1.5 text-[0.85rem]">
+            <label
+              key={item.name}
+              htmlFor={id}
+              className="inline-flex min-h-11 items-center gap-1.5 text-[0.85rem]"
+            >
               <input
                 id={id}
                 type="checkbox"
                 checked={values[item.name] === "1"}
-                onChange={(event) => onChange(item.name, event.target.checked ? "1" : "")}
+                onChange={(event) =>
+                  onChange(item.name, event.target.checked ? "1" : "")
+                }
                 className="h-[18px] w-[18px]"
               />
               {item.label}
@@ -113,7 +264,10 @@ function FilterBar({
         }
         return (
           <div key={item.name} className="grid min-w-0 gap-0.5">
-            <label htmlFor={id} className="ml-0.5 text-[0.72rem] font-medium text-muted">
+            <label
+              htmlFor={id}
+              className="ml-0.5 text-[0.72rem] font-medium text-muted"
+            >
               {item.label}
             </label>
             {item.kind === "date" ? (
@@ -122,7 +276,8 @@ function FilterBar({
                 type="date"
                 value={values[item.name] ?? ""}
                 onChange={(event) => {
-                  if (event.target.value) onChange(item.name, event.target.value);
+                  if (event.target.value)
+                    onChange(item.name, event.target.value);
                 }}
                 className={`${field.input} sm:max-w-[170px]`}
               />
@@ -160,6 +315,31 @@ export function ReportScreen({
   const pathname = usePathname();
   const [pending, startTransition] = useTransition();
   const [layout, setLayout] = useState<"rows" | "blocks">("rows");
+  const [pager, setPager] = useState<PagerState>({
+    page: 0,
+    size: DEFAULT_SIZE,
+  });
+  const [printAll, setPrintAll] = useState(false);
+
+  // A new report, or another layout, starts on the first page.
+  const reportKey = `${doc.key}|${doc.period}|${doc.filters}|${doc.tables.map((t) => t.rows.length).join(",")}|${layout}`;
+  const [seenReport, setSeenReport] = useState(reportKey);
+  if (seenReport !== reportKey) {
+    setSeenReport(reportKey);
+    setPager((current) => ({ ...current, page: 0 }));
+  }
+
+  // Printing lists every row, not just the page on the screen.
+  useEffect(() => {
+    const before = () => flushSync(() => setPrintAll(true));
+    const after = () => setPrintAll(false);
+    window.addEventListener("beforeprint", before);
+    window.addEventListener("afterprint", after);
+    return () => {
+      window.removeEventListener("beforeprint", before);
+      window.removeEventListener("afterprint", after);
+    };
+  }, []);
 
   const initialValues = () =>
     Object.fromEntries(
@@ -171,7 +351,9 @@ export function ReportScreen({
   const [values, setValues] = useState<Record<string, string>>(initialValues);
 
   // When the server sends a report for new filters, show those filters.
-  const fieldsKey = JSON.stringify(fields.map((item) => [item.name, item.value]));
+  const fieldsKey = JSON.stringify(
+    fields.map((item) => [item.name, item.value]),
+  );
   const [seenKey, setSeenKey] = useState(fieldsKey);
   if (seenKey !== fieldsKey) {
     setSeenKey(fieldsKey);
@@ -205,7 +387,9 @@ export function ReportScreen({
     <div>
       <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-[1.35rem] font-semibold tracking-[-0.02em]">{doc.title}</h2>
+          <h2 className="text-[1.35rem] font-semibold tracking-[-0.02em]">
+            {doc.title}
+          </h2>
           <p className="mt-0.5 text-[0.85rem] text-muted">
             {[doc.hotelName, doc.period].filter(Boolean).join(". ")}.{" "}
             {doc.filters ? `${doc.filters} ` : ""}
@@ -220,10 +404,16 @@ export function ReportScreen({
           >
             {text.print}
           </button>
-          <a href={exportHref("xlsx")} className={`${button.secondary} ${button.small}`}>
+          <a
+            href={exportHref("xlsx")}
+            className={`${button.secondary} ${button.small}`}
+          >
             {text.excel}
           </a>
-          <a href={exportHref("pdf")} className={`${button.secondary} ${button.small}`}>
+          <a
+            href={exportHref("pdf")}
+            className={`${button.secondary} ${button.small}`}
+          >
             {text.pdf}
           </a>
         </div>
@@ -232,7 +422,11 @@ export function ReportScreen({
       <FilterBar fields={fields} values={values} onChange={change} />
 
       {doc.key === "day-book" && !doc.empty ? (
-        <div className="mb-3 inline-flex gap-0.5 rounded-[10px] bg-track p-0.5 print:hidden" role="group" aria-label={text.layout}>
+        <div
+          className="mb-3 inline-flex gap-0.5 rounded-[10px] bg-track p-0.5 print:hidden"
+          role="group"
+          aria-label={text.layout}
+        >
           {(["rows", "blocks"] as const).map((option) => (
             <button
               key={option}
@@ -251,14 +445,21 @@ export function ReportScreen({
         </div>
       ) : null}
 
-      <div aria-busy={pending} className={pending ? "opacity-60 transition-opacity" : "transition-opacity"}>
+      <div
+        aria-busy={pending}
+        className={
+          pending ? "opacity-60 transition-opacity" : "transition-opacity"
+        }
+      >
         <span role="status" className="sr-only">
           {pending ? text.updating : ""}
         </span>
 
         {doc.empty ? (
           <div className="rounded-2xl bg-surface px-4 py-9 text-center text-[0.9rem] text-muted shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
-            <strong className="mb-0.5 block text-[1rem] text-text">{doc.emptyTitle}</strong>
+            <strong className="mb-0.5 block text-[1rem] text-text">
+              {doc.emptyTitle}
+            </strong>
             {doc.emptyHint}
           </div>
         ) : (
@@ -276,45 +477,82 @@ export function ReportScreen({
                     {item.money ? "₹" : ""}
                     {item.value}
                   </div>
-                  {item.sub ? <div className="text-[0.75rem] text-muted">{item.sub}</div> : null}
+                  {item.sub ? (
+                    <div className="text-[0.75rem] text-muted">{item.sub}</div>
+                  ) : null}
                 </div>
               ))}
             </div>
 
             {doc.key === "day-book" && layout === "blocks" && doc.blocks ? (
-              <div className="grid gap-2.5 rounded-2xl bg-surface p-3 shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
-                {doc.blocks.map((block) => (
-                  <div
-                    key={block.voucherId}
-                    className={`overflow-hidden rounded-xl border border-divider ${block.void ? "opacity-60" : ""}`}
-                  >
-                    <div className="flex flex-wrap justify-between gap-x-3 gap-y-1 bg-[#f8f9fc] px-3 py-2 text-[0.86rem]">
-                      <span>
-                        <strong className="font-semibold">{block.title}</strong>{" "}
-                        <span className="text-muted">{block.referenceNo}</span>{" "}
-                        {block.void ? (
-                          <span className={`${badge.base} ${badge.off}`}>{text.void}</span>
-                        ) : null}
-                      </span>
-                      <span>{block.date}</span>
+              <div className="overflow-hidden rounded-2xl bg-surface shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
+                <div className="grid gap-2.5 p-3">
+                  {(printAll
+                    ? doc.blocks
+                    : doc.blocks.slice(
+                        Math.min(
+                          pager.page,
+                          Math.max(
+                            0,
+                            Math.ceil(doc.blocks.length / pager.size) - 1,
+                          ),
+                        ) * pager.size,
+                        (Math.min(
+                          pager.page,
+                          Math.max(
+                            0,
+                            Math.ceil(doc.blocks.length / pager.size) - 1,
+                          ),
+                        ) +
+                          1) *
+                          pager.size,
+                      )
+                  ).map((block) => (
+                    <div
+                      key={block.voucherId}
+                      className={`overflow-hidden rounded-xl border border-divider ${block.void ? "opacity-60" : ""}`}
+                    >
+                      <div className="flex flex-wrap justify-between gap-x-3 gap-y-1 bg-[#f8f9fc] px-3 py-2 text-[0.86rem]">
+                        <span>
+                          <strong className="font-semibold">
+                            {block.title}
+                          </strong>{" "}
+                          <span className="text-muted">
+                            {block.referenceNo}
+                          </span>{" "}
+                          {block.void ? (
+                            <span className={`${badge.base} ${badge.off}`}>
+                              {text.void}
+                            </span>
+                          ) : null}
+                        </span>
+                        <span>{block.date}</span>
+                      </div>
+                      {block.lines.map((line, index) => (
+                        <div
+                          key={index}
+                          className="grid grid-cols-[34px_1fr_auto] gap-2 border-t border-divider px-3 py-1.5 text-[0.88rem]"
+                        >
+                          <span className="font-semibold text-muted">
+                            {line.side}
+                          </span>
+                          <span>{line.name}</span>
+                          <span className="tabular-nums">{line.amount}</span>
+                        </div>
+                      ))}
+                      {block.note ? (
+                        <div className="border-t border-divider px-3 py-1.5 text-[0.8rem] text-muted">
+                          {block.note}
+                        </div>
+                      ) : null}
                     </div>
-                    {block.lines.map((line, index) => (
-                      <div
-                        key={index}
-                        className="grid grid-cols-[34px_1fr_auto] gap-2 border-t border-divider px-3 py-1.5 text-[0.88rem]"
-                      >
-                        <span className="font-semibold text-muted">{line.side}</span>
-                        <span>{line.name}</span>
-                        <span className="tabular-nums">{line.amount}</span>
-                      </div>
-                    ))}
-                    {block.note ? (
-                      <div className="border-t border-divider px-3 py-1.5 text-[0.8rem] text-muted">
-                        {block.note}
-                      </div>
-                    ) : null}
-                  </div>
-                ))}
+                  ))}
+                </div>
+                <Pager
+                  total={doc.blocks.length}
+                  state={pager}
+                  onChange={setPager}
+                />
               </div>
             ) : sideBySide ? (
               <div className="grid gap-3 min-[900px]:grid-cols-2">
@@ -331,11 +569,16 @@ export function ReportScreen({
               doc.tables.map((table, index) => (
                 <div key={index} className="mb-3 last:mb-0">
                   {table.heading ? (
-                    <h3 className="mb-1.5 ml-0.5 text-[0.9rem] font-semibold">{table.heading}</h3>
+                    <h3 className="mb-1.5 ml-0.5 text-[0.9rem] font-semibold">
+                      {table.heading}
+                    </h3>
                   ) : null}
-                  <div className="overflow-hidden rounded-2xl bg-surface shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
-                    <ReportTable table={table} />
-                  </div>
+                  <TableCard
+                    table={table}
+                    pager={pager}
+                    onPager={setPager}
+                    printAll={printAll}
+                  />
                 </div>
               ))
             )}

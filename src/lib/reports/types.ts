@@ -34,7 +34,14 @@ export type RowStyle = "normal" | "group" | "sub" | "ledger" | "subtotal" | "tot
 
 export type DocRow = { cells: Cell[]; style: RowStyle };
 export type DocColumn = { label: string; align: "left" | "right" };
-export type DocTable = { heading?: string; columns: DocColumn[]; rows: DocRow[] };
+// A paged table lists entries newest first. The screen shows it a page at a time
+// and keeps the Total rows under every page. Excel, PDF and print list every row.
+export type DocTable = {
+  heading?: string;
+  columns: DocColumn[];
+  rows: DocRow[];
+  paged?: boolean;
+};
 export type DocKpi = { label: string; value: string; sub?: string; money?: boolean };
 
 // The Tally style layout of the Day Book.

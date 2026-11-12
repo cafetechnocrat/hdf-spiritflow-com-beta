@@ -261,3 +261,11 @@ Inventory, stock, item master, POS and bills, GST returns, bank reconciliation, 
 9. Attachments (bills, receipts) on transactions: now or later.
 10. The first reports needed.
 
+
+## Newest First And Paging (Owner, 2026-11-14)
+- Reports that list entries show the **newest first, then backward**: Day Book, Ledger Statement, Sales Register and Purchase Register (and the monthly summary of the registers). The Ledger Statement is still worked out oldest first so each running balance is right. Its Opening Balance line comes last, as the oldest line.
+- Those lists are shown a page at a time. **Rows per page** is a drop-down (10, 25, 50, 100, 200, starting at 50). **First, Previous, Next and Last** buttons sit at the bottom, with the page number and "Showing x to y of z".
+- Total and Closing Balance rows stay under every page and cover the whole list.
+- The Day Book Voucher Blocks layout is paged the same way, by voucher.
+- Print, Excel and PDF always include every row, newest first.
+- The Day Book row limit keeps the newest rows.
