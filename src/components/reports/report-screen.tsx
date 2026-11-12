@@ -40,7 +40,7 @@ const text = {
 
 // Rows per page. Entries are listed newest first.
 const PAGE_SIZES = [10, 25, 50, 100, 200];
-const DEFAULT_SIZE = 50;
+const DEFAULT_SIZE = 10;
 
 type PagerState = { page: number; size: number };
 
