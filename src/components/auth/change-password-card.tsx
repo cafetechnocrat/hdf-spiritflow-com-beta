@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useId, useState } from "react";
 import { changePassword, signOut, type ChangePasswordState } from "@/lib/auth/actions";
 
@@ -124,15 +125,16 @@ function Rule({ ok, children }: { ok: boolean; children: string }) {
 // Change Password screen later (forced = false).
 export function ChangePasswordCard({ forced }: { forced: boolean }) {
   const baseId = useId();
+  const router = useRouter();
   const [state, action, pending] = useActionState<ChangePasswordState, FormData>(
     changePassword,
     { error: null },
   );
-  // After a saved change, load the dashboard fresh. A full load cannot show a
-  // page the browser kept from before the password was changed.
+  // After a saved change, load the dashboard fresh. The server has already
+  // cleared what the browser kept from before the password was changed.
   useEffect(() => {
-    if (state.done) window.location.href = "/";
-  }, [state.done]);
+    if (state.done) router.replace("/");
+  }, [state.done, router]);
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
   const [confirm, setConfirm] = useState("");
