@@ -51,7 +51,12 @@ const MENU: MenuDefinition[] = [
     label: "Inventory Management",
     icon: "box",
     children: [
-      { id: "items", label: "Item Master", planned: true },
+      {
+        id: "items",
+        label: "Liquor Items",
+        href: "/liquor-items",
+        area: "liquor_items",
+      },
       {
         id: "structure",
         label: "Stock Points, Outlets And Counters",

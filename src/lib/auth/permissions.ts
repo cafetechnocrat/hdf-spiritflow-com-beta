@@ -12,6 +12,8 @@ export type FeatureKey =
   | "transactions"
   | "voucher_changes"
   | "closing_stock"
+  | "liquor_items"
+  | "liquor_rates"
   | ReportFeature
   | DashboardFeature;
 
