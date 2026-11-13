@@ -51,6 +51,13 @@
   .btn:disabled { opacity: .5; pointer-events: none; }
   .asrole { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 14px; padding: 8px 12px; border-radius: 12px; background: var(--track); font-size: .8rem; color: var(--text-muted); }
   .asrole select { max-width: 360px; min-height: 36px; }
+  .valcard { margin-top: 12px; }
+  .valcard h2 { font-size: 1rem; font-weight: 600; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .valcard h2 small { font-size: .76rem; font-weight: 500; color: var(--text-muted); }
+  .valrow { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--divider); font-size: .9rem; font-variant-numeric: tabular-nums; }
+  .valrow:last-child { border-bottom: 0; }
+  .valrow .l span { display: block; font-size: .74rem; color: var(--text-muted); }
+  .valrow.tot { font-weight: 600; font-size: 1rem; }
   .hintline { margin: 8px 0 0; font-size: .78rem; color: var(--text-muted); text-align: right; }
   .saved { position: fixed; right: 16px; bottom: 76px; z-index: 60; padding: 9px 14px; border-radius: 12px; background: #0F1B3D; color: #fff; font-size: .84rem; opacity: 0; transition: opacity .2s; pointer-events: none; }
   .saved.show { opacity: 1; }
@@ -73,7 +80,7 @@
       <span>Mockup only. Viewing as:</span>
       <select id="role" aria-label="Viewing as">
         <option value="fb" selected>F &amp; B Manager (stock taking, saving, PDF and Excel)</option>
-        <option value="acc">Accountant (all four rights)</option>
+        <option value="acc">Accountant (all five rights)</option>
         <option value="view">Viewer only (no rights)</option>
       </select>
     </div>
@@ -106,6 +113,11 @@
         </div>
       </div>
 
+      <div class="card card-pad valcard" id="valcard" hidden>
+        <h2>Stock Value <small id="valsub">As on 12/11/2026, from the saved counts, at cost</small></h2>
+        <div id="valrows"></div>
+      </div>
+
       <div class="tools">
         <input type="search" id="q" placeholder="Search Name Or Code" aria-label="Search">
         <div class="chips" id="chips"></div>
@@ -124,7 +136,7 @@
       </div>
       <p class="hintline" id="postHint"></p>
       <p class="note">Items are the Active liquor items. A stock point that allows pegs shows a Pegs box for items that allow peg sale. Beer, and the Liquor Store, are counted in bottles only. Enter at least 0 for every item, to show every item was handled. Entries save as you type. Press Save at the end: if any item is blank the Save button shows how many are left, and nothing is marked Complete; if none are blank it shows Saved. PDF and Excel open once a count is Complete. This screen shows counts only, never values.</p>
-      <p class="note" style="margin-top:8px">Rights, each set on the Roles screen: Stock Taking (enter counts), Save Stock Count, Export PDF And Excel, and Post To Closing Stock. The F &amp; B Manager gets the first three. Post To Closing Stock goes to the Chief Accountant, Accountant and System Admin only; others see the button switched off. Posting is the only link to the accounts: it posts the total closing stock value of all the stock points for the date. The counts themselves change no other figure.</p>
+      <p class="note" style="margin-top:8px">Five rights, each set on the Roles screen: Stock Taking (enter counts), Save Stock Count, Export PDF And Excel, View Stock Value, and Post To Closing Stock. The F &amp; B Manager gets the first three and never sees a value. View Stock Value and Post To Closing Stock go to the Chief Accountant, Accountant and System Admin; without them the value panel is hidden and the Post button is switched off. Stock points are not fixed anywhere in the code: the switch lists the active Liquor stock points from the Stock Points screen, so a new one appears here by itself. Posting is the only link to the accounts: it posts the total closing stock value of all the stock points for the date. The counts themselves change no other figure.</p>
     </section>
 
     <!-- PAST COUNTS -->
@@ -137,12 +149,12 @@
       </div>
       <div class="card table-wrap">
         <table class="data">
-          <thead><tr><th>Date</th><th>Stock Point</th><th class="right">Items Counted</th><th class="right">Bottles</th><th class="right">Pegs</th><th>Counted By</th><th>Status</th><th><span class="sr-only">Actions</span></th></tr></thead>
+          <thead><tr><th>Date</th><th>Stock Point</th><th class="right">Items Counted</th><th class="right">Bottles</th><th class="right">Pegs</th><th class="right valcol">Value</th><th>Counted By</th><th>Status</th><th><span class="sr-only">Actions</span></th></tr></thead>
           <tbody>
-            <tr><td class="first"><div class="cell-main">12/11/2026</div></td><td data-label="Stock Point">Spadikam</td><td data-label="Items Counted" class="right"><span class="num">142 of 142</span></td><td data-label="Bottles" class="right"><span class="num">1,061</span></td><td data-label="Pegs" class="right"><span class="num">398.5</span></td><td data-label="Counted By">Sample Admin</td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Complete</span></td><td class="act"><div class="actions"><button class="btn secondary small">Open</button><button class="btn secondary small">PDF</button><button class="btn secondary small">Excel</button></div></td></tr>
-            <tr><td class="first"><div class="cell-main">12/11/2026</div></td><td data-label="Stock Point">Dhruvam</td><td data-label="Items Counted" class="right"><span class="num">142 of 142</span></td><td data-label="Bottles" class="right"><span class="num">702</span></td><td data-label="Pegs" class="right"><span class="num">361</span></td><td data-label="Counted By">Sample Admin</td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Complete</span></td><td class="act"><div class="actions"><button class="btn secondary small">Open</button><button class="btn secondary small">PDF</button><button class="btn secondary small">Excel</button></div></td></tr>
-            <tr><td class="first"><div class="cell-main">12/11/2026</div></td><td data-label="Stock Point">Liquor Store</td><td data-label="Items Counted" class="right"><span class="num">97 of 142</span></td><td data-label="Bottles" class="right"><span class="num">3,310</span></td><td data-label="Pegs" class="right"><span class="dash">-</span></td><td data-label="Counted By">Sample Admin</td><td data-label="Status"><span class="badge warn">Draft</span></td><td class="act"><div class="actions"><button class="btn secondary small">Continue</button></div></td></tr>
-            <tr><td class="first"><div class="cell-main">10/11/2026</div></td><td data-label="Stock Point">Liquor Store</td><td data-label="Items Counted" class="right"><span class="num">142 of 142</span></td><td data-label="Bottles" class="right"><span class="num">4,733</span></td><td data-label="Pegs" class="right"><span class="dash">-</span></td><td data-label="Counted By">Imported</td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Complete</span></td><td class="act"><div class="actions"><button class="btn secondary small">Open</button><button class="btn secondary small">PDF</button><button class="btn secondary small">Excel</button></div></td></tr>
+            <tr><td class="first"><div class="cell-main">12/11/2026</div></td><td data-label="Stock Point">Spadikam</td><td data-label="Items Counted" class="right"><span class="num">142 of 142</span></td><td data-label="Bottles" class="right"><span class="num">1,061</span></td><td data-label="Pegs" class="right"><span class="num">398.5</span></td><td data-label="Value" class="right valcol"><span class="num">4,07,318.60</span></td><td data-label="Counted By">Sample Admin</td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Complete</span></td><td class="act"><div class="actions"><button class="btn secondary small">Open</button><button class="btn secondary small">PDF</button><button class="btn secondary small">Excel</button></div></td></tr>
+            <tr><td class="first"><div class="cell-main">12/11/2026</div></td><td data-label="Stock Point">Dhruvam</td><td data-label="Items Counted" class="right"><span class="num">142 of 142</span></td><td data-label="Bottles" class="right"><span class="num">702</span></td><td data-label="Pegs" class="right"><span class="num">361</span></td><td data-label="Value" class="right valcol"><span class="num">3,48,201.45</span></td><td data-label="Counted By">Sample Admin</td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Complete</span></td><td class="act"><div class="actions"><button class="btn secondary small">Open</button><button class="btn secondary small">PDF</button><button class="btn secondary small">Excel</button></div></td></tr>
+            <tr><td class="first"><div class="cell-main">12/11/2026</div></td><td data-label="Stock Point">Liquor Store</td><td data-label="Items Counted" class="right"><span class="num">97 of 142</span></td><td data-label="Bottles" class="right"><span class="num">3,310</span></td><td data-label="Pegs" class="right"><span class="dash">-</span></td><td data-label="Value" class="right valcol"><span class="dash">Not saved</span></td><td data-label="Counted By">Sample Admin</td><td data-label="Status"><span class="badge warn">Draft</span></td><td class="act"><div class="actions"><button class="btn secondary small">Continue</button></div></td></tr>
+            <tr><td class="first"><div class="cell-main">10/11/2026</div></td><td data-label="Stock Point">Liquor Store</td><td data-label="Items Counted" class="right"><span class="num">142 of 142</span></td><td data-label="Bottles" class="right"><span class="num">4,733</span></td><td data-label="Pegs" class="right"><span class="dash">-</span></td><td data-label="Value" class="right valcol"><span class="num">22,42,040.00</span></td><td data-label="Counted By">Imported</td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Complete</span></td><td class="act"><div class="actions"><button class="btn secondary small">Open</button><button class="btn secondary small">PDF</button><button class="btn secondary small">Excel</button></div></td></tr>
           </tbody>
         </table>
       </div>
@@ -193,11 +205,16 @@
     var savedFlag = [false, true, true];
     var lastSave = ""; // "", "short" or "ok"
     var RIGHTS = {
-      fb: { take: true, save: true, exp: true, post: false },
-      acc: { take: true, save: true, exp: true, post: true },
-      view: { take: false, save: false, exp: false, post: false }
+      fb: { take: true, save: true, exp: true, val: false, post: false },
+      acc: { take: true, save: true, exp: true, val: true, post: true },
+      view: { take: false, save: false, exp: false, val: false, post: false }
     };
     function R() { return RIGHTS[role]; }
+    function inr(n) {
+      var x = n.toFixed(2).split("."), w = x[0], last = w.slice(-3), rest = w.slice(0, -3);
+      if (rest) last = rest.replace(/\B(?=(\d{2})+(?!\d))/g, ",") + "," + last;
+      return last + "." + x[1];
+    }
     var qty = {};   // per stock point: code -> {b, p}
     POINTS.forEach(function (p, i) { qty[i] = {}; });
     // A few sample entries so the states show.
@@ -273,6 +290,20 @@
       $("#postBtn").disabled = !(r.post && all);
       $("#postHint").textContent = !r.post ? "Post To Closing Stock needs the Post right (Chief Accountant, Accountant or System Admin)." : (all ? "" : "Post To Closing Stock needs a saved, Complete count for every stock point on this date.");
       document.querySelectorAll("#list input").forEach(function (i) { i.disabled = !r.take; });
+      // Stock value, stock point by stock point and in total. Only with the View Stock Value right.
+      var vc = $("#valcard"); vc.hidden = !r.val;
+      document.querySelectorAll(".valcol").forEach(function (e) { e.style.display = r.val ? "" : "none"; });
+      if (r.val) {
+        // Sample figures. The real screen works them out from the saved counts and the rate ledger.
+        var vals = [2242040.00, 360541.01, 433582.72], done = 0, total = 0, out = "";
+        POINTS.forEach(function (p, i) {
+          var ok = savedFlag[i];
+          if (ok) { done++; total += vals[i]; }
+          out += '<div class="valrow"><div class="l">' + p.id + "<span>" + (ok ? "Complete" : "Draft, not saved yet") + '</span></div><div>' + (ok ? "&#8377;" + inr(vals[i]) : "-") + "</div></div>";
+        });
+        out += '<div class="valrow tot"><div class="l">Total<span>' + done + " of " + POINTS.length + " stock points saved</span></div><div>&#8377;" + inr(total) + "</div></div>";
+        $("#valrows").innerHTML = out;
+      }
     }
     function renderAll() { renderSeg(); renderChips(); renderList(); renderProgress(); }
 
