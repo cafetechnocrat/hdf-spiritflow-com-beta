@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { LoadingPopup } from "@/components/loading-popup";
+import { useDownload } from "@/components/use-download";
 import { DataList } from "@/components/ui/admin-parts";
 import { badge, button, field } from "@/components/ui/styles";
 import { formatAmountText, formatDate } from "@/lib/format/money";
@@ -67,6 +68,7 @@ export function PastPanel({
   const [rows, setRows] = useState<PastCount[] | null>(null);
   const [failed, setFailed] = useState(false);
   const [version, setVersion] = useState(0);
+  const { download, popup: downloadPopup, error: downloadError } = useDownload();
   const [rowError, setRowError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -131,10 +133,11 @@ export function PastPanel({
 
   return (
     <div>
-      <div className="mb-3 flex flex-wrap items-center gap-2">
+      {downloadPopup}
+      <div className="mb-3 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
         <select
           aria-label={text.colPoint}
-          className={`${field.input} !w-auto min-w-[170px]`}
+          className={`${field.input} col-span-2 !w-full sm:!w-auto sm:min-w-[170px]`}
           value={filters.pointId}
           onChange={(event) => change({ pointId: event.target.value })}
         >
@@ -148,20 +151,20 @@ export function PastPanel({
         <input
           type="date"
           aria-label={text.from}
-          className={`${field.input} !w-[150px]`}
+          className={`${field.input} !w-full sm:!w-[150px]`}
           value={filters.from}
           onChange={(event) => event.target.value && change({ from: event.target.value })}
         />
         <input
           type="date"
           aria-label={text.to}
-          className={`${field.input} !w-[150px]`}
+          className={`${field.input} !w-full sm:!w-[150px]`}
           value={filters.to}
           onChange={(event) => event.target.value && change({ to: event.target.value })}
         />
         <select
           aria-label={text.colStatus}
-          className={`${field.input} !w-auto min-w-[120px]`}
+          className={`${field.input} col-span-2 !w-full sm:!w-auto sm:min-w-[120px]`}
           value={filters.status}
           onChange={(event) => change({ status: event.target.value as CountStatus | "" })}
         >
@@ -198,20 +201,24 @@ export function PastPanel({
               </button>
               {r.status === "complete" && rights.exportFiles ? (
                 <>
-                  <a
+                  <button
+                    type="button"
                     className={`${button.secondary} ${button.small}`}
-                    href={`/stock-count/export?point=${r.pointId}&date=${r.date}&format=pdf`}
-                    download
+                    onClick={() =>
+                      download(`/stock-count/export?point=${r.pointId}&date=${r.date}&format=pdf`, "PDF")
+                    }
                   >
                     {text.pdf}
-                  </a>
-                  <a
+                  </button>
+                  <button
+                    type="button"
                     className={`${button.secondary} ${button.small}`}
-                    href={`/stock-count/export?point=${r.pointId}&date=${r.date}&format=xlsx`}
-                    download
+                    onClick={() =>
+                      download(`/stock-count/export?point=${r.pointId}&date=${r.date}&format=xlsx`, "Excel")
+                    }
                   >
                     {text.excel}
-                  </a>
+                  </button>
                 </>
               ) : null}
               {rights.remove && !r.posted ? (
@@ -227,6 +234,11 @@ export function PastPanel({
           )}
         />
       )}
+      {downloadError ? (
+        <p role="alert" className="mt-2 rounded-[10px] bg-error-bg px-3 py-2.5 text-[0.85rem] text-error">
+          {downloadError}
+        </p>
+      ) : null}
       {rowError ? (
         <p role="alert" className="mt-2 rounded-[10px] bg-error-bg px-3 py-2.5 text-[0.85rem] text-error">
           {rowError}

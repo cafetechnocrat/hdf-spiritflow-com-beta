@@ -3,6 +3,7 @@
 import { useEffect, useId, useState } from "react";
 import type { KeyboardEvent } from "react";
 import { LoadingPopup } from "@/components/loading-popup";
+import { useDownload } from "@/components/use-download";
 import { ErrorLine, Modal } from "@/components/ui/admin-parts";
 import { button, field } from "@/components/ui/styles";
 import { formatAmountText, formatDate } from "@/lib/format/money";
@@ -282,6 +283,7 @@ export function CountPanel({
   const [toast, setToast] = useState<string | null>(null);
   const dateId = useId();
   const byId = useId();
+  const { download, popup: downloadPopup, error: downloadError } = useDownload();
 
   const [saver] = useState(() =>
     createSaver(
@@ -449,12 +451,13 @@ export function CountPanel({
     .filter((g) => g.rows.length > 0);
 
   const chipClass = (on: boolean) =>
-    `inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 text-[0.8rem] ${
+    `inline-flex min-h-10 items-center gap-1.5 rounded-full px-3.5 text-[0.82rem] ${
       on ? "bg-accent-soft font-semibold text-link" : "bg-track font-medium text-muted hover:text-text"
     }`;
 
   return (
     <div>
+      {downloadPopup}
       {busy ? <LoadingPopup message={text.saveWait} /> : null}
       {removeBusy ? <LoadingPopup message={text.removeWait} /> : null}
       <div
@@ -566,7 +569,7 @@ export function CountPanel({
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder={text.search}
-          className={`${field.input} !w-[240px]`}
+          className={`${field.input} !w-full sm:!w-[240px]`}
         />
         <div className="flex flex-wrap gap-1.5">
           <button type="button" aria-pressed={filter === "all"} className={chipClass(filter === "all")} onClick={() => setFilter("all")}>
@@ -614,15 +617,15 @@ export function CountPanel({
                     const ok = isCounted(point, item, entry);
                     const bMiss = entry.b === "" || !isBottle(entry.b);
                     const pMiss = entry.p === "" || !isPeg(entry.p);
-                    const box = `${field.input} !h-11 !w-[92px] text-center font-semibold tabular-nums`;
+                    const box = `${field.input} !h-12 !w-full text-center text-[1rem] font-semibold tabular-nums sm:!h-11 sm:!w-[92px]`;
                     return (
                       <div
                         key={item.id}
-                        className={`grid grid-cols-[1fr_auto_auto] items-center gap-x-3.5 gap-y-2 border-b border-divider px-3.5 py-2.5 last:border-b-0 ${
+                        className={`grid grid-cols-2 items-end gap-x-3 gap-y-2 border-b border-divider px-3.5 py-3 last:border-b-0 sm:grid-cols-[1fr_auto_auto] sm:items-center sm:gap-x-3.5 sm:py-2.5 ${
                           ok ? "bg-success-bg/40" : ""
                         }`}
                       >
-                        <div className="min-w-0">
+                        <div className="col-span-2 min-w-0 sm:col-span-1">
                           <div className="text-[0.92rem] font-semibold">
                             {itemTitle(item.stockName, item.volumeMl)}
                           </div>
@@ -669,7 +672,7 @@ export function CountPanel({
                             />
                           </div>
                         ) : (
-                          <div className="w-[92px] pt-4 text-center text-[0.8rem] text-muted">
+                          <div className="pb-3 text-center text-[0.8rem] text-muted sm:w-[92px] sm:pb-0 sm:pt-4">
                             {point.pegAllowed ? text.bottleSaleOnly : text.bottlesOnly}
                           </div>
                         )}
@@ -683,67 +686,41 @@ export function CountPanel({
         )}
       </div>
 
-      <div className="sticky bottom-0 -mx-4 mt-5 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-divider bg-surface px-4 py-3 shadow-[0_-4px_18px_rgba(0,0,0,0.05)]">
-        <div className="text-[0.84rem]" role="status">
-          <span
-            className={`mr-1.5 inline-flex rounded-full px-2.5 py-0.5 text-[0.74rem] font-semibold ${
-              complete ? "bg-success-bg text-success" : "bg-warn-bg text-warn"
-            }`}
-          >
-            {posted ? text.posted : complete ? text.complete : text.draft}
-          </span>
-          <b className="font-semibold">{point.name}</b>
-          {` · ${blank ? text.blank(blank) : text.allFilled}`}
-          <br />
-          <span className="text-muted">{auto === "saving" ? text.saving : text.savedAuto}</span>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {exportOn ? (
-            <>
-              <a href={`${exportBase}&format=xlsx`} className={button.secondary} download>
-                {text.excel}
-              </a>
-              <a href={`${exportBase}&format=pdf`} className={button.secondary} download>
-                {text.pdf}
-              </a>
-            </>
-          ) : (
-            <>
-              <button type="button" disabled className={button.secondary}>
-                {text.excel}
-              </button>
-              <button type="button" disabled className={button.secondary}>
-                {text.pdf}
-              </button>
-            </>
-          )}
-          {rights.remove ? (
-            <button
-              type="button"
-              className={button.danger}
-              disabled={!canRemove}
-              onClick={() => setRemoving(true)}
-            >
-              {text.remove}
-            </button>
-          ) : null}
+      <div className="mt-5 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:justify-end">
+        <button
+          type="button"
+          disabled={!exportOn}
+          onClick={() => download(`${exportBase}&format=xlsx`, "Excel")}
+          className={`${button.secondary} w-full sm:w-auto`}
+        >
+          {text.excel}
+        </button>
+        <button
+          type="button"
+          disabled={!exportOn}
+          onClick={() => download(`${exportBase}&format=pdf`, "PDF")}
+          className={`${button.secondary} w-full sm:w-auto`}
+        >
+          {text.pdf}
+        </button>
+        <button
+          type="button"
+          className={`${button.secondary} w-full sm:w-auto`}
+          disabled={!rights.post || !allComplete || posted}
+          onClick={() => setPosting(true)}
+        >
+          {text.post}
+        </button>
+        {rights.remove ? (
           <button
             type="button"
-            className={button.secondary}
-            disabled={!rights.post || !allComplete || posted}
-            onClick={() => setPosting(true)}
+            className={`${button.danger} w-full sm:w-auto`}
+            disabled={!canRemove}
+            onClick={() => setRemoving(true)}
           >
-            {text.post}
+            {text.remove}
           </button>
-          <button
-            type="button"
-            className={saveClass}
-            disabled={!rights.save || busy || locked}
-            onClick={onSave}
-          >
-            {saveLabel}
-          </button>
-        </div>
+        ) : null}
       </div>
       <p className="mt-2 text-right text-[0.78rem] text-muted">
         {posted
@@ -754,12 +731,42 @@ export function CountPanel({
               ? ""
               : text.hintNeedAll}
       </p>
+      {downloadError ? (
+        <p role="alert" className="mt-2 rounded-[10px] bg-error-bg px-3 py-2.5 text-[0.85rem] text-error">
+          {downloadError}
+        </p>
+      ) : null}
       {saveNote ? (
         <p role="alert" className="mt-2 rounded-[10px] bg-error-bg px-3 py-2.5 text-[0.85rem] text-error">
           {saveNote}
         </p>
       ) : null}
       <p className="mt-3.5 rounded-xl bg-accent-soft px-3 py-2.5 text-[0.84rem] text-link">{text.note}</p>
+
+      <div className="sticky bottom-0 -mx-4 mt-5 flex flex-col gap-2 border-t border-divider bg-surface px-4 py-3 shadow-[0_-4px_18px_rgba(0,0,0,0.05)] sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+        <div className="text-[0.84rem]" role="status">
+          <span
+            className={`mr-1.5 inline-flex rounded-full px-2.5 py-0.5 text-[0.74rem] font-semibold ${
+              complete ? "bg-success-bg text-success" : "bg-warn-bg text-warn"
+            }`}
+          >
+            {posted ? text.posted : complete ? text.complete : text.draft}
+          </span>
+          <b className="font-semibold">{point.name}</b>
+          {` \u00B7 ${blank ? text.blank(blank) : text.allFilled}`}
+          <span className="block text-muted">
+            {auto === "saving" ? text.saving : text.savedAuto}
+          </span>
+        </div>
+        <button
+          type="button"
+          className={`${saveClass} w-full sm:w-auto sm:min-w-[160px]`}
+          disabled={!rights.save || busy || locked}
+          onClick={onSave}
+        >
+          {saveLabel}
+        </button>
+      </div>
 
       {posting ? (
         <PostDialog

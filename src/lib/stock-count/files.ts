@@ -2,6 +2,7 @@ import "server-only";
 import ExcelJS from "exceljs";
 import { jsPDF } from "jspdf";
 import { autoTable } from "jspdf-autotable";
+import { LOGO_HEIGHT, LOGO_PNG_BASE64, LOGO_WIDTH } from "@/lib/brand/logo-data";
 
 // The count sheet as a PDF and an Excel file. Quantities only, never a value.
 // The layout follows the standalone count tool's sheet: a header with the stock
@@ -37,7 +38,6 @@ type RGB = [number, number, number];
 
 const NAVY: RGB = [11, 31, 58];
 const BLUE: RGB = [31, 95, 168];
-const TEAL: RGB = [27, 163, 156];
 const GREEN: RGB = [30, 142, 90];
 const MUTED: RGB = [102, 116, 138];
 const SOFT: RGB = [238, 243, 248];
@@ -81,17 +81,14 @@ export function buildCountPdf(sheet: CountSheet): Buffer {
   doc.setTextColor(...TEXT);
   doc.text(`${sheet.pointName}  ·  Stock as on ${sheet.date}`, left, 31);
 
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(13);
-  const flowW = doc.getTextWidth("Flow");
-  doc.setTextColor(...TEAL);
-  doc.text("Flow", right - flowW, 19);
-  doc.setTextColor(...NAVY);
-  doc.text("Spirit", right - flowW - doc.getTextWidth("Spirit"), 19);
+  // The Spirit Flow logo, top right.
+  const logoW = 40;
+  const logoH = (logoW * LOGO_HEIGHT) / LOGO_WIDTH;
+  doc.addImage(`data:image/png;base64,${LOGO_PNG_BASE64}`, "PNG", right - logoW, 11, logoW, logoH);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(6.5);
   doc.setTextColor(...MUTED);
-  doc.text("Quantities only · no values", right, 23.5, { align: "right" });
+  doc.text("Quantities only · no values", right, 11 + logoH + 3.5, { align: "right" });
 
   doc.setDrawColor(...NAVY);
   doc.setLineWidth(0.7);
@@ -339,6 +336,12 @@ export async function buildCountExcel(sheet: CountSheet): Promise<Buffer> {
     cell.font = { name: "Calibri", ...font };
     cell.alignment = { vertical: "middle" };
   };
+  // The Spirit Flow logo, top right, over the empty part of the first rows.
+  const logo = workbook.addImage({ base64: LOGO_PNG_BASE64, extension: "png" });
+  ws.addImage(logo, {
+    tl: { col: sheet.pegsColumn ? 2.45 : 2.45, row: 0.15 },
+    ext: { width: 190, height: Math.round((190 * LOGO_HEIGHT) / LOGO_WIDTH) },
+  });
   merged(1, (sheet.hotelName || "Hotel").toUpperCase(), { size: 9, bold: true, color: { argb: "FF66748A" } });
   merged(2, "Physical Stock Count Sheet", { size: 16, bold: true, color: { argb: navy } });
   merged(3, `${sheet.pointName}  ·  Stock as on ${sheet.date}`, { size: 10, color: { argb: "FF1B2A41" } });

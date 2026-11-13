@@ -2,7 +2,10 @@ import "server-only";
 import ExcelJS from "exceljs";
 import { jsPDF } from "jspdf";
 import { autoTable } from "jspdf-autotable";
+import { LOGO_HEIGHT, LOGO_PNG_BASE64, LOGO_WIDTH } from "@/lib/brand/logo-data";
 import type { DocRow, ReportDocument } from "./types";
+
+const LOGO_DATA_URL = `data:image/png;base64,${LOGO_PNG_BASE64}`;
 
 // Excel number format with lakh and crore grouping.
 const INDIAN_FORMAT = "[>=10000000]##\\,##\\,##\\,##0.00;[>=100000]##\\,##\\,##0.00;##,##0.00";
@@ -26,6 +29,14 @@ export function fileName(doc: ReportDocument, extension: string): string {
 export async function buildExcel(doc: ReportDocument): Promise<Buffer> {
   const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet(doc.title.slice(0, 31));
+
+  // The logo sits in three blank rows at the top.
+  const logo = workbook.addImage({ base64: LOGO_PNG_BASE64, extension: "png" });
+  for (let i = 0; i < 3; i += 1) sheet.addRow([]).height = 20;
+  sheet.addImage(logo, {
+    tl: { col: 0, row: 0 },
+    ext: { width: 168, height: Math.round((168 * LOGO_HEIGHT) / LOGO_WIDTH) },
+  });
 
   const widest = Math.max(1, ...doc.tables.map((t) => t.columns.length));
   headerLines(doc).forEach((line, index) => {
@@ -84,6 +95,12 @@ export function buildPdf(doc: ReportDocument): Buffer {
   const pdf = new jsPDF({ orientation: widest > 4 ? "landscape" : "portrait", unit: "pt", format: "a4" });
   const margin = 36;
   let y = margin;
+
+  // The logo, then the title lines.
+  const logoWidth = 110;
+  const logoHeight = (logoWidth * LOGO_HEIGHT) / LOGO_WIDTH;
+  pdf.addImage(LOGO_DATA_URL, "PNG", margin, y - 8, logoWidth, logoHeight);
+  y += logoHeight + 10;
 
   headerLines(doc).forEach((line, index) => {
     pdf.setFont("helvetica", index === 0 ? "bold" : "normal");

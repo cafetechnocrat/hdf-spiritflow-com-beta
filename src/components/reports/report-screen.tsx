@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useId, useState, useTransition } from "react";
 import { flushSync } from "react-dom";
 import type { ReactNode } from "react";
+import { useDownload } from "@/components/use-download";
 import { badge, button, field } from "@/components/ui/styles";
 import type {
   DocRow,
@@ -378,6 +379,7 @@ export function ReportScreen({
   }
 
   const query = queryFor(values);
+  const { download, popup: downloadPopup, error: downloadError } = useDownload();
   const exportHref = (format: "xlsx" | "pdf") =>
     `/reports/export?report=${doc.key}&format=${format}${query ? `&${query}` : ""}`;
 
@@ -385,6 +387,12 @@ export function ReportScreen({
 
   return (
     <div>
+      {downloadPopup}
+      {downloadError ? (
+        <p role="alert" className="mb-3 rounded-[10px] bg-error-bg px-3 py-2.5 text-[0.85rem] text-error print:hidden">
+          {downloadError}
+        </p>
+      ) : null}
       <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-[1.35rem] font-semibold tracking-[-0.02em]">
@@ -404,18 +412,20 @@ export function ReportScreen({
           >
             {text.print}
           </button>
-          <a
-            href={exportHref("xlsx")}
+          <button
+            type="button"
+            onClick={() => download(exportHref("xlsx"), "Excel")}
             className={`${button.secondary} ${button.small}`}
           >
             {text.excel}
-          </a>
-          <a
-            href={exportHref("pdf")}
+          </button>
+          <button
+            type="button"
+            onClick={() => download(exportHref("pdf"), "PDF")}
             className={`${button.secondary} ${button.small}`}
           >
             {text.pdf}
-          </a>
+          </button>
         </div>
       </div>
 
