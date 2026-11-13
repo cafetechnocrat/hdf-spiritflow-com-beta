@@ -87,8 +87,13 @@ export function isBottle(value: string): boolean {
   return /^\d{1,6}$/.test(value);
 }
 
+// Pegs go in halves (0.5, 1, 1.5 ...) and never above 16.
+export const MAX_PEGS = 16;
+
 export function isPeg(value: string): boolean {
-  return /^\d{1,4}(\.\d{1,2})?$/.test(value);
+  if (!/^\d{1,2}(\.\d{1,2})?$/.test(value)) return false;
+  const n = Number(value);
+  return n <= MAX_PEGS && Number.isInteger(n * 2);
 }
 
 // Pegs are counted only where the stock point and the item both allow them.

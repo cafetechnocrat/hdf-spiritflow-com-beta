@@ -48,6 +48,7 @@ const text = {
   bottlesOnly: "Bottles only",
   bottleSaleOnly: "Bottle sale only",
   noItems: "No items match.",
+  badPegs: "Pegs go in halves (0.5, 1, 1.5 and so on), up to 16.",
   noBlank: "No blank items. Every item has a value.",
   noPoints: "No Liquor Stock Points",
   noPointsHint: "Add an active Liquor stock point on the Stock Points screen.",
@@ -75,7 +76,7 @@ const text = {
   hintNoPost:
     "Post To Closing Stock needs the Post right (Chief Accountant, Accountant or System Admin).",
   hintNeedAll: "Post To Closing Stock needs a saved, Complete count for every stock point on this date.",
-  note: "Enter at least 0 for every item, to show every item was handled. Entries save as you type. Press Save at the end: if any item is blank the Save button shows how many are left; if none are blank it shows Saved. PDF and Excel open once a count is Complete. This screen shows counts only.",
+  note: "Enter at least 0 for every item, to show every item was handled. Entries save as you type. Press Save at the end: if any item is blank the Save button shows how many are left; if none are blank it shows Saved. PDF and Excel open once a count is Complete. Pegs go in halves (0.5, 1, 1.5 and so on), up to 16. This screen shows counts only.",
   valueTitle: "Stock Value",
   valueSub: (date: string) => `As on ${date}, from the saved counts, at cost`,
   valueDraft: "Draft, not saved yet",
@@ -351,6 +352,11 @@ export function CountPanel({
     const entry = entries[item.id] ?? { b: "", p: "" };
     const key = `${entry.b}|${entry.p}`;
     if (saver.isSaved(item.id, key)) return;
+    // A peg count that breaks the rule is not saved. The box turns red until it is fixed.
+    if (entry.p !== "" && !isPeg(entry.p)) {
+      setSaveNote(text.badPegs);
+      return;
+    }
     saver.mark(item.id, key);
     const by = countedBy;
     saver.run(async () => {
@@ -658,7 +664,8 @@ export function CountPanel({
                               onBlur={() => persist(item)}
                               onKeyDown={onKeyDown}
                               onFocus={(event) => event.currentTarget.select()}
-                              className={`${box} ${entry.p === "" ? "!border-[#e7b8b8] !bg-[#fff7f7]" : ""}`}
+                              title={text.badPegs}
+                              className={`${box} ${entry.p === "" || !isPeg(entry.p) ? "!border-[#e7b8b8] !bg-[#fff7f7]" : ""}`}
                             />
                           </div>
                         ) : (

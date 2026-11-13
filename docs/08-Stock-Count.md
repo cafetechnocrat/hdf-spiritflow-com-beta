@@ -37,6 +37,7 @@ The F & B Manager gets Stock Taking, Save and Export. The Chief Accountant, Acco
 
 - Entries save as the person leaves each box. A count can continue on another phone.
 - Every item needs a value, at least 0, to show it was handled.
+- Pegs go in halves only (0, 0.5, 1, 1.5 and so on) and never above 16. A value such as 1.2 or 17 is refused, on the screen and in the database. The rule applies from 17 November 2026; counts saved before then are left as they are.
 - **Save** checks every item. If any are blank, the Save button shows how many ("3 items not counted") and the count stays a Draft. If none are blank, the button shows Saved and the count is Complete.
 - Changing a Complete count returns it to Draft until Save is pressed again. The audit log keeps the old and new values.
 - PDF and Excel open only for a Complete count. They show quantities only.

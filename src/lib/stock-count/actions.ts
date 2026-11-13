@@ -24,6 +24,7 @@ const text = {
   notAllowed: "You do not have permission to do this.",
   failed: "Something went wrong. Nothing was changed. Try again.",
   badInput: "That entry is not valid.",
+  badPegs: "Pegs must be in halves (0.5, 1, 1.5 and so on) and not more than 16.",
   noAccount: "No stock account is set up for closing stock.",
 } as const;
 
@@ -74,6 +75,11 @@ export async function saveLine(raw: {
     .safeParse(raw);
   if (!parsed.success) return { error: text.badInput };
   const v = parsed.data;
+  // Pegs go in halves, up to 16. The database holds the same rule.
+  if (v.pegs !== "" && v.pegs !== ".") {
+    const pegs = Number(v.pegs);
+    if (!(pegs >= 0 && pegs <= 16 && Number.isInteger(pegs * 2))) return { error: text.badPegs };
+  }
 
   const supabase = await createClient();
   const { error } = await supabase.rpc("stock_count_set_line", {
