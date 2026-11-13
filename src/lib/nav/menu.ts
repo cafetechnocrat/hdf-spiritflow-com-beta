@@ -58,6 +58,12 @@ const MENU: MenuDefinition[] = [
         area: "liquor_items",
       },
       {
+        id: "stock-count",
+        label: "Stock Count",
+        href: "/stock-count",
+        area: "stock_count",
+      },
+      {
         id: "structure",
         label: "Stock Points, Outlets And Counters",
         href: "/stock-outlets",

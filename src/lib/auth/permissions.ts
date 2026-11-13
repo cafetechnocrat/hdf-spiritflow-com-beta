@@ -14,6 +14,11 @@ export type FeatureKey =
   | "closing_stock"
   | "liquor_items"
   | "liquor_rates"
+  | "stock_count"
+  | "stock_count_save"
+  | "stock_count_export"
+  | "stock_count_value"
+  | "stock_count_post"
   | ReportFeature
   | DashboardFeature;
 

@@ -56,7 +56,8 @@ export type DayBookBlock = {
 };
 
 export type ReportDocument = {
-  key: ReportKey;
+  // The Stock Count sheet reuses the same document for its PDF and Excel.
+  key: ReportKey | "stock-count";
   title: string;
   hotelName: string;
   period: string;
