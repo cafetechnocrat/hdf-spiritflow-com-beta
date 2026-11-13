@@ -45,6 +45,13 @@
   .right { text-align: right; }
   .num { font-variant-numeric: tabular-nums; font-weight: 600; }
   .note { padding: 10px 12px; border-radius: 12px; background: var(--accent-soft); color: var(--link); font-size: .84rem; margin-top: 14px; }
+  .bottom .acts { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .btn.warnbtn { background: var(--warn-bg); color: var(--warn); }
+  .btn.okbtn { background: var(--success-bg); color: var(--success); }
+  .btn:disabled { opacity: .5; pointer-events: none; }
+  .asrole { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 14px; padding: 8px 12px; border-radius: 12px; background: var(--track); font-size: .8rem; color: var(--text-muted); }
+  .asrole select { max-width: 360px; min-height: 36px; }
+  .hintline { margin: 8px 0 0; font-size: .78rem; color: var(--text-muted); text-align: right; }
   .saved { position: fixed; right: 16px; bottom: 76px; z-index: 60; padding: 9px 14px; border-radius: 12px; background: #0F1B3D; color: #fff; font-size: .84rem; opacity: 0; transition: opacity .2s; pointer-events: none; }
   .saved.show { opacity: 1; }
   .filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
@@ -60,6 +67,15 @@
         <h1>Stock Count</h1>
         <p>Physical stock taking, by stock point and date. Quantities only, no values. Every entry is saved as you type, so a count can continue on another phone.</p>
       </div>
+    </div>
+
+    <div class="asrole">
+      <span>Mockup only. Viewing as:</span>
+      <select id="role" aria-label="Viewing as">
+        <option value="fb" selected>F &amp; B Manager (stock taking, saving, PDF and Excel)</option>
+        <option value="acc">Accountant (all four rights)</option>
+        <option value="view">Viewer only (no rights)</option>
+      </select>
     </div>
 
     <div class="tabs" role="tablist" aria-label="Section">
@@ -99,12 +115,16 @@
 
       <div class="bottom">
         <div class="st" id="status"></div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <div class="acts">
           <button class="btn secondary" id="xlsBtn" type="button">Excel</button>
-          <button class="btn" id="pdfBtn" type="button">PDF</button>
+          <button class="btn secondary" id="pdfBtn" type="button">PDF</button>
+          <button class="btn secondary" id="postBtn" type="button" data-open="postModal">Post To Closing Stock</button>
+          <button class="btn" id="saveBtn" type="button">Save</button>
         </div>
       </div>
-      <p class="note">Items are the Active liquor items. A stock point that allows pegs shows a Pegs box for items that allow peg sale. Beer, and the Liquor Store, are counted in bottles only. Enter at least 0 for every item. A count is Complete when no item is blank, and PDF and Excel open then.</p>
+      <p class="hintline" id="postHint"></p>
+      <p class="note">Items are the Active liquor items. A stock point that allows pegs shows a Pegs box for items that allow peg sale. Beer, and the Liquor Store, are counted in bottles only. Enter at least 0 for every item, to show every item was handled. Entries save as you type. Press Save at the end: if any item is blank the Save button shows how many are left, and nothing is marked Complete; if none are blank it shows Saved. PDF and Excel open once a count is Complete. This screen shows counts only, never values.</p>
+      <p class="note" style="margin-top:8px">Rights, each set on the Roles screen: Stock Taking (enter counts), Save Stock Count, Export PDF And Excel, and Post To Closing Stock. The F &amp; B Manager gets the first three. Post To Closing Stock goes to the Chief Accountant, Accountant and System Admin only; others see the button switched off. Posting is the only link to the accounts: it posts the total closing stock value of all the stock points for the date. The counts themselves change no other figure.</p>
     </section>
 
     <!-- PAST COUNTS -->
@@ -130,6 +150,20 @@
     </section>
   </main>
 </div>
+<div class="modal-scrim" id="postModal" role="dialog" aria-modal="true" aria-labelledby="postTitle">
+  <div class="modal">
+    <h2 id="postTitle">Post To Closing Stock</h2>
+    <p class="sub">Closing stock for 12/11/2026, from the saved counts of all three stock points.</p>
+    <div class="card card-pad" style="margin-bottom:12px">
+      <div style="font-size:.74rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted)">Total Closing Stock At Cost</div>
+      <div style="margin-top:3px;font-size:1.35rem;font-weight:600;font-variant-numeric:tabular-nums"><span class="rup" style="font-weight:500;color:var(--text-muted)">&#8377;</span>29,04,000.26</div>
+      <div style="font-size:.78rem;color:var(--text-muted);margin-top:2px">Liquor Store, Dhruvam and Spadikam, valued at the rates in force on that date, cess included. Only people who can post see this figure.</div>
+    </div>
+    <p class="note" style="margin:0 0 12px">Closing stock is already entered for 12/11/2026 (Journal No. 36). Posting again replaces it, and the books are adjusted. A reason is needed.</p>
+    <div class="field"><label class="lbl" for="why">Reason <span class="req">*</span></label><input id="why" type="text" placeholder="For example Recount of the Liquor Store"></div>
+    <div class="modal-actions"><button class="btn secondary" data-close>Cancel</button><button class="btn" data-close id="doPost">Post Closing Stock</button></div>
+  </div>
+</div>
 <div class="saved" id="saved" role="status">Saved</div>
 
 <script src="../phase-1/shell.js"></script>
@@ -154,7 +188,16 @@
       ["12678201W", "8 PM PREMIUM BLACK WHISKY", "8PM WHISKY", 750, "Whisky", true],
       ["15512391W", "VINHO TINTO NURTURED PORT WINE", "VINHO TINTO PORT WINE", 750, "Wine", true]
     ];
-    var pt = 0, filter = "all", query = "";
+    var pt = 0, filter = "all", query = "", role = "fb";
+    // Whether each stock point's count has been saved as Complete (mockup state).
+    var savedFlag = [false, true, true];
+    var lastSave = ""; // "", "short" or "ok"
+    var RIGHTS = {
+      fb: { take: true, save: true, exp: true, post: false },
+      acc: { take: true, save: true, exp: true, post: true },
+      view: { take: false, save: false, exp: false, post: false }
+    };
+    function R() { return RIGHTS[role]; }
     var qty = {};   // per stock point: code -> {b, p}
     POINTS.forEach(function (p, i) { qty[i] = {}; });
     // A few sample entries so the states show.
@@ -168,6 +211,7 @@
     function entry(c) { return qty[pt][c] || { b: "", p: "" }; }
     function isB(v) { return /^\d+$/.test(v); }
     function isP(v) { return /^\d+(\.\d{1,2})?$/.test(v); }
+    function filledAny(it) { return filled(it); }
     function filled(it) { var e = entry(it[0]); return hasPegs(it) ? isB(e.b) && isP(e.p) : isB(e.b); }
     function counts() { var d = 0; ITEMS.forEach(function (it) { if (filled(it)) d++; }); return { done: d, blank: ITEMS.length - d }; }
     function visible(it) {
@@ -208,12 +252,27 @@
         return '<h3 class="cat">' + k + "<span>" + d + "/" + all.length + '</span></h3><div class="card">' + groups[k].map(row).join("") + "</div>";
       }).join("");
     }
+    function setBtn(label, cls) {
+      var b = $("#saveBtn"); b.textContent = label; b.className = "btn" + (cls ? " " + cls : "");
+    }
     function renderProgress() {
       var c = counts();
       $("#pdone").textContent = c.done; $("#ptotal").textContent = ITEMS.length; $("#pblank").textContent = c.blank;
       $("#pbar").style.width = (c.done / ITEMS.length * 100).toFixed(1) + "%";
-      $("#status").innerHTML = (c.blank ? '<span class="pill inc">Draft</span>' : '<span class="pill com">Complete</span>') + "<b>" + POINTS[pt].id + "</b> &middot; " + (c.blank ? c.blank + " blank" : "all items filled") + "<br>Saved just now";
-      ["#pdfBtn", "#xlsBtn"].forEach(function (id) { $(id).disabled = c.blank > 0; $(id).style.opacity = c.blank ? ".5" : "1"; });
+      var complete = savedFlag[pt];
+      $("#status").innerHTML = (complete ? '<span class="pill com">Complete</span>' : '<span class="pill inc">Draft</span>') + "<b>" + POINTS[pt].id + "</b> &middot; " + (c.blank ? c.blank + " blank" : "all items filled") + "<br>Entries save as you type";
+      // The Save button carries the result: how many items are missed, or Saved.
+      if (lastSave === "short") setBtn(c.blank + (c.blank === 1 ? " item not counted" : " items not counted"), "warnbtn");
+      else if (lastSave === "ok" && complete) setBtn("Saved", "okbtn");
+      else setBtn("Save", "");
+      var r = R();
+      $("#saveBtn").disabled = !r.save;
+      $("#xlsBtn").disabled = !(complete && r.exp);
+      $("#pdfBtn").disabled = !(complete && r.exp);
+      var all = savedFlag.every(Boolean);
+      $("#postBtn").disabled = !(r.post && all);
+      $("#postHint").textContent = !r.post ? "Post To Closing Stock needs the Post right (Chief Accountant, Accountant or System Admin)." : (all ? "" : "Post To Closing Stock needs a saved, Complete count for every stock point on this date.");
+      document.querySelectorAll("#list input").forEach(function (i) { i.disabled = !r.take; });
     }
     function renderAll() { renderSeg(); renderChips(); renderList(); renderProgress(); }
 
@@ -228,9 +287,23 @@
       if (v !== inp.value) inp.value = v;
       var e0 = qty[pt][c] || { b: "", p: "" }; e0[f] = v; qty[pt][c] = e0;
       var it = ITEMS.filter(function (i) { return i[0] === c; })[0], ok = filled(it);
+      // Changing a saved count returns it to Draft until Save is pressed again.
+      savedFlag[pt] = false; lastSave = "";
       rowEl.classList.toggle("done", ok); inp.classList.toggle("miss", v === "");
       renderProgress(); renderChips();
     });
+    $("#saveBtn").addEventListener("click", function () {
+      var c = counts();
+      if (c.blank > 0) {
+        lastSave = "short"; savedFlag[pt] = false;
+        filter = "blank"; query = ""; $("#q").value = ""; renderChips(); renderList(); renderProgress();
+        var first = document.querySelector("#list input.miss"); if (first) first.scrollIntoView({ block: "center" });
+        return;
+      }
+      lastSave = "ok"; savedFlag[pt] = true; renderProgress();
+    });
+    $("#role").addEventListener("change", function (e) { role = e.target.value; renderAll(); });
+    $("#doPost").addEventListener("click", function () { var s = $("#saved"); s.textContent = "Closing stock posted. Journal updated."; s.classList.add("show"); setTimeout(function () { s.classList.remove("show"); }, 1800); });
     ["#pdfBtn", "#xlsBtn"].forEach(function (id) {
       $(id).addEventListener("click", function () { var s = $("#saved"); s.textContent = id === "#pdfBtn" ? "PDF count sheet downloaded." : "Excel downloaded."; s.classList.add("show"); setTimeout(function () { s.classList.remove("show"); }, 1800); });
     });
