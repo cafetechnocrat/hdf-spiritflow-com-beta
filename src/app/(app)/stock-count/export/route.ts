@@ -1,7 +1,7 @@
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { canEdit, canView } from "@/lib/auth/permissions";
-import { buildExcel, buildPdf, fileName } from "@/lib/reports/export-files";
-import { buildCountDocument } from "@/lib/stock-count/export";
+import { loadCountSheet } from "@/lib/stock-count/export";
+import { buildCountExcel, buildCountPdf, sheetFileName } from "@/lib/stock-count/files";
 
 const XLSX_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -27,13 +27,13 @@ export async function GET(request: Request) {
   }
 
   try {
-    const doc = await buildCountDocument(point, date, me.fullName);
-    if (!doc) return new Response("Save the count first. Only a Complete count can be exported.", { status: 409 });
-    const body = format === "xlsx" ? await buildExcel(doc) : buildPdf(doc);
+    const sheet = await loadCountSheet(point, date, me.fullName);
+    if (!sheet) return new Response("Save the count first. Only a Complete count can be exported.", { status: 409 });
+    const body = format === "xlsx" ? await buildCountExcel(sheet) : buildCountPdf(sheet);
     return new Response(new Uint8Array(body), {
       headers: {
         "Content-Type": format === "xlsx" ? XLSX_TYPE : "application/pdf",
-        "Content-Disposition": `attachment; filename="${fileName(doc, format)}"`,
+        "Content-Disposition": `attachment; filename="${sheetFileName(sheet, format)}"`,
         "Cache-Control": "no-store",
       },
     });
