@@ -15,9 +15,9 @@ export const metadata: Metadata = {
 };
 
 const text = {
-  title: "Stock Count",
+  title: "Physical Stock Correction",
   subtitle:
-    "Physical stock taking, by stock point and date. Every entry is saved as you type, so a count can continue on another phone.",
+    "Enter the real stock, by stock point and date. Every entry is saved as you type, so a count can continue on another phone. Reconciling it against the system stock comes with purchases and POS.",
   errorTitle: "The Stock Count Could Not Be Loaded",
   errorHint: "Nothing was changed. Reload the page to try again.",
 } as const;

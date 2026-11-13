@@ -58,12 +58,6 @@ const MENU: MenuDefinition[] = [
         area: "liquor_items",
       },
       {
-        id: "stock-count",
-        label: "Stock Count",
-        href: "/stock-count",
-        area: "stock_count",
-      },
-      {
         id: "structure",
         label: "Stock Points, Outlets And Counters",
         href: "/stock-outlets",
@@ -71,7 +65,12 @@ const MENU: MenuDefinition[] = [
       },
       { id: "purchases", label: "Purchase Entry", planned: true },
       { id: "transfers", label: "Stock Transfers", planned: true },
-      { id: "corrections", label: "Physical Stock Correction", planned: true },
+      {
+        id: "corrections",
+        label: "Physical Stock Correction",
+        href: "/stock-count",
+        area: "stock_count",
+      },
       {
         id: "stock-reports",
         label: "Stock Reports",

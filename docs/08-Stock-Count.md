@@ -1,6 +1,10 @@
-# Stock Count
+# Stock Count (Physical Stock Correction)
 
 Phase 3. Physical stock taking, by stock point and date, in the web app. It replaces the standalone count tool (`HDF_Stock_Count`). Mockup: `docs/mockups/phase-3/stock-count.html` (approved 15 November 2026).
+
+## Menu
+
+The screen sits under Inventory Management as **Physical Stock Correction**, the menu item planned for it. This slice is the first half of that feature: entering the real stock. The second half, reconciling it with the system stock (excess reduces peg sales on bills, short is passed as damaged), needs purchases, transfers and the POS, and is built in Phase 4. The rights keep the name Stock Count on the Roles screen.
 
 ## Scope
 
