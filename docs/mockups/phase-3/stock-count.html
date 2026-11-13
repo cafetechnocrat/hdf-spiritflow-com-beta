@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spirit Flow</title>
+<link rel="icon" type="image/png" href="../../../src/app/icon.png">
+<link rel="stylesheet" href="../phase-1/shared.css">
+<style>
+  .tabs { display: flex; gap: 2px; padding: 2px; background: var(--track); border-radius: 10px; margin-bottom: 14px; max-width: 420px; }
+  .tabs button { flex: 1; min-height: 40px; border-radius: 8px; font-size: .86rem; font-weight: 500; color: var(--text-muted); white-space: nowrap; padding: 0 10px; }
+  .tabs button[aria-selected="true"] { background: var(--surface); color: var(--text); font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,.2), 0 0 0 .5px rgba(0,0,0,.04); }
+  .panel[hidden] { display: none; }
+  .alt { margin-top: 1px; font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: .72rem; color: var(--link); letter-spacing: .01em; }
+  .seg2 { display: flex; flex-wrap: wrap; gap: 2px; padding: 2px; background: var(--track); border-radius: 10px; margin-bottom: 12px; max-width: 520px; }
+  .seg2 button { flex: 1; min-height: 42px; border-radius: 8px; font-size: .88rem; font-weight: 500; color: var(--text-muted); white-space: nowrap; padding: 0 12px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
+  .seg2 button[aria-pressed="true"] { background: var(--surface); color: var(--text); font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+  .seg2 i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+  .setup { display: grid; gap: 4px 16px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .prog { margin-top: 6px; }
+  .bar { height: 8px; border-radius: 99px; background: var(--track); overflow: hidden; }
+  .bar span { display: block; height: 100%; background: var(--success); border-radius: 99px; transition: width .2s; }
+  .meta { display: flex; justify-content: space-between; margin-top: 6px; font-size: .82rem; color: var(--text-muted); }
+  .tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 14px 0 10px; }
+  .tools input[type=search] { max-width: 260px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { min-height: 34px; padding: 0 12px; border-radius: 999px; background: var(--track); font-size: .8rem; font-weight: 500; color: var(--text-muted); display: inline-flex; gap: 6px; align-items: center; }
+  .chips button[aria-pressed="true"] { background: var(--accent-soft); color: var(--link); font-weight: 600; }
+  .chips .n { font-variant-numeric: tabular-nums; opacity: .8; }
+  h3.cat { display: flex; justify-content: space-between; align-items: baseline; font-size: .78rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); margin: 18px 2px 8px; }
+  .qrow { display: grid; grid-template-columns: 1fr auto auto; gap: 10px 14px; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--divider); }
+  .qrow:last-child { border-bottom: 0; }
+  .qrow.done { background: rgba(31,140,90,.05); }
+  .qrow .nm { font-weight: 600; font-size: .92rem; }
+  .qrow label { display: block; font-size: .68rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); margin-bottom: 3px; }
+  .qrow input { width: 92px; text-align: center; font-variant-numeric: tabular-nums; font-weight: 600; }
+  .qrow input.miss { border-color: #e7b8b8; background: #fff7f7; }
+  .qrow .nopeg { width: 92px; text-align: center; font-size: .8rem; color: var(--text-muted); padding-top: 18px; }
+  .bottom { position: sticky; bottom: 0; margin: 18px -16px -16px; padding: 12px 16px; background: var(--surface); border-top: 1px solid var(--divider); display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; box-shadow: 0 -4px 18px rgba(0,0,0,.05); }
+  .bottom .st { font-size: .84rem; }
+  .bottom .st b { font-weight: 600; }
+  .pill { display: inline-flex; padding: 2px 10px; border-radius: 999px; font-size: .74rem; font-weight: 600; margin-right: 6px; }
+  .pill.inc { background: var(--warn-bg); color: var(--warn); }
+  .pill.com { background: var(--success-bg); color: var(--success); }
+  .right { text-align: right; }
+  .num { font-variant-numeric: tabular-nums; font-weight: 600; }
+  .note { padding: 10px 12px; border-radius: 12px; background: var(--accent-soft); color: var(--link); font-size: .84rem; margin-top: 14px; }
+  .saved { position: fixed; right: 16px; bottom: 76px; z-index: 60; padding: 9px 14px; border-radius: 12px; background: #0F1B3D; color: #fff; font-size: .84rem; opacity: 0; transition: opacity .2s; pointer-events: none; }
+  .saved.show { opacity: 1; }
+  .filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+  .filters select, .filters input { max-width: 220px; }
+</style>
+</head>
+<body data-page="stock-count" data-title="Stock Count">
+<div class="mock-note">Mockup. Sample data only. Not the real app. In the real screen the stock points, items and counts come from the database.</div>
+<div class="shell">
+  <main class="content">
+    <div class="page-head">
+      <div>
+        <h1>Stock Count</h1>
+        <p>Physical stock taking, by stock point and date. Quantities only, no values. Every entry is saved as you type, so a count can continue on another phone.</p>
+      </div>
+    </div>
+
+    <div class="tabs" role="tablist" aria-label="Section">
+      <button type="button" role="tab" id="t-co" aria-selected="true" aria-controls="p-co">Count</button>
+      <button type="button" role="tab" id="t-pa" aria-selected="false" aria-controls="p-pa">Past Counts</button>
+    </div>
+
+    <!-- COUNT -->
+    <section class="panel" id="p-co" role="tabpanel" aria-labelledby="t-co">
+      <div class="seg2" id="seg" role="group" aria-label="Stock point"></div>
+
+      <div class="card card-pad">
+        <div class="setup">
+          <div class="field">
+            <label class="lbl" for="cdate">Stock Date <span class="req">*</span></label>
+            <input id="cdate" type="date" value="2026-11-12">
+            <p class="hint">Starts on the transaction date in the top bar.</p>
+          </div>
+          <div class="field">
+            <label class="lbl" for="cby">Counted By</label>
+            <input id="cby" type="text" value="Sample Admin" placeholder="Name">
+            <p class="hint">Starts as the signed in user. You can change it.</p>
+          </div>
+        </div>
+        <div class="prog">
+          <div class="bar"><span id="pbar" style="width:0"></span></div>
+          <div class="meta"><span><b id="pdone">0</b> of <b id="ptotal">0</b> items counted</span><span><b id="pblank">0</b> blank</span></div>
+        </div>
+      </div>
+
+      <div class="tools">
+        <input type="search" id="q" placeholder="Search Name Or Code" aria-label="Search">
+        <div class="chips" id="chips"></div>
+      </div>
+
+      <div id="list"></div>
+
+      <div class="bottom">
+        <div class="st" id="status"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn secondary" id="xlsBtn" type="button">Excel</button>
+          <button class="btn" id="pdfBtn" type="button">PDF</button>
+        </div>
+      </div>
+      <p class="note">Items are the Active liquor items. A stock point that allows pegs shows a Pegs box for items that allow peg sale. Beer, and the Liquor Store, are counted in bottles only. Enter at least 0 for every item. A count is Complete when no item is blank, and PDF and Excel open then.</p>
+    </section>
+
+    <!-- PAST COUNTS -->
+    <section class="panel" id="p-pa" role="tabpanel" aria-labelledby="t-pa" hidden>
+      <div class="filters">
+        <select aria-label="Stock point"><option>All Stock Points</option><option>Liquor Store</option><option>Dhruvam</option><option>Spadikam</option></select>
+        <input type="date" aria-label="From" value="2026-11-01">
+        <input type="date" aria-label="To" value="2026-11-12">
+        <select aria-label="Status"><option>All</option><option>Complete</option><option>Draft</option></select>
+      </div>
+      <div class="card table-wrap">
+        <table class="data">
+          <thead><tr><th>Date</th><th>Stock Point</th><th class="right">Items Counted</th><th class="right">Bottles</th><th class="right">Pegs</th><th>Counted By</th><th>Status</th><th><span class="sr-only">Actions</span></th></tr></thead>
+          <tbody>
+            <tr><td class="first"><div class="cell-main">12/11/2026</div></td><td data-label="Stock Point">Spadikam</td><td data-label="Items Counted" class="right"><span class="num">142 of 142</span></td><td data-label="Bottles" class="right"><span class="num">1,061</span></td><td data-label="Pegs" class="right"><span class="num">398.5</span></td><td data-label="Counted By">Sample Admin</td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Complete</span></td><td class="act"><div class="actions"><button class="btn secondary small">Open</button><button class="btn secondary small">PDF</button><button class="btn secondary small">Excel</button></div></td></tr>
+            <tr><td class="first"><div class="cell-main">12/11/2026</div></td><td data-label="Stock Point">Dhruvam</td><td data-label="Items Counted" class="right"><span class="num">142 of 142</span></td><td data-label="Bottles" class="right"><span class="num">702</span></td><td data-label="Pegs" class="right"><span class="num">361</span></td><td data-label="Counted By">Sample Admin</td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Complete</span></td><td class="act"><div class="actions"><button class="btn secondary small">Open</button><button class="btn secondary small">PDF</button><button class="btn secondary small">Excel</button></div></td></tr>
+            <tr><td class="first"><div class="cell-main">12/11/2026</div></td><td data-label="Stock Point">Liquor Store</td><td data-label="Items Counted" class="right"><span class="num">97 of 142</span></td><td data-label="Bottles" class="right"><span class="num">3,310</span></td><td data-label="Pegs" class="right"><span class="dash">-</span></td><td data-label="Counted By">Sample Admin</td><td data-label="Status"><span class="badge warn">Draft</span></td><td class="act"><div class="actions"><button class="btn secondary small">Continue</button></div></td></tr>
+            <tr><td class="first"><div class="cell-main">10/11/2026</div></td><td data-label="Stock Point">Liquor Store</td><td data-label="Items Counted" class="right"><span class="num">142 of 142</span></td><td data-label="Bottles" class="right"><span class="num">4,733</span></td><td data-label="Pegs" class="right"><span class="dash">-</span></td><td data-label="Counted By">Imported</td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Complete</span></td><td class="act"><div class="actions"><button class="btn secondary small">Open</button><button class="btn secondary small">PDF</button><button class="btn secondary small">Excel</button></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">Open shows a finished count. Continue returns to a draft. Changing a Complete count is recorded in the audit log with the old and new values. The 10, 11 and 12 Nov counts come in from your PDFs and show Imported under Counted By.</p>
+    </section>
+  </main>
+</div>
+<div class="saved" id="saved" role="status">Saved</div>
+
+<script src="../phase-1/shell.js"></script>
+<script>
+  // Mockup behaviour only. The real screen reads the items and saves each entry to the database.
+  (function () {
+    var POINTS = [
+      { id: "Liquor Store", color: "#1F5FA8", pegs: false },
+      { id: "Dhruvam", color: "#1BA39C", pegs: true },
+      { id: "Spadikam", color: "#E39A2D", pegs: true }
+    ];
+    // [code, BevCo name, stock name, ml, category, peg sale allowed]
+    var ITEMS = [
+      ["21583164X", "AMSTEL BIER PREMIUM STRONG BEER", "AMSTEL BEER", 650, "Beer", false],
+      ["21742185X", "BRITISH EMPIRE PREMIUM STRONG BEER", "BRITISH EMPIRE", 500, "Beer", false],
+      ["15314182V", "BRO CODE GRAND RESERVA", "BRO CODE", 375, "Beer", false],
+      ["11678185S", "8 PM EXCELLENCY BRANDY", "8PM EXELLENCY BRANDY", 500, "Brandy", true],
+      ["11702231Q", "ANTIQUITY XO BLENDED BRANDY", "ANTIQUTY BRANDY", 750, "Brandy", true],
+      ["13489475X", "BAGPIPER DELUXE XXX RUM", "BAGPIPER RUM", 500, "Rum", true],
+      ["13074215V", "7 YEARS OLD BLENDED OLD MONK VERY OLD VATTED SPECIAL XXX RUM", "OLD MONK RUM", 500, "Rum", true],
+      ["16813842E", "SMIRNOFF VODKA", "SMIRNOFF VODKA", 375, "Vodka", true],
+      ["12678201W", "8 PM PREMIUM BLACK WHISKY", "8PM WHISKY", 750, "Whisky", true],
+      ["15512391W", "VINHO TINTO NURTURED PORT WINE", "VINHO TINTO PORT WINE", 750, "Wine", true]
+    ];
+    var pt = 0, filter = "all", query = "";
+    var qty = {};   // per stock point: code -> {b, p}
+    POINTS.forEach(function (p, i) { qty[i] = {}; });
+    // A few sample entries so the states show.
+    qty[1]["21583164X"] = { b: "2", p: "" };
+    qty[1]["21742185X"] = { b: "14", p: "" };
+    qty[1]["11678185S"] = { b: "2", p: "5" };
+
+    function $(s) { return document.querySelector(s); }
+    function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]; }); }
+    function hasPegs(it) { return POINTS[pt].pegs && it[5]; }
+    function entry(c) { return qty[pt][c] || { b: "", p: "" }; }
+    function isB(v) { return /^\d+$/.test(v); }
+    function isP(v) { return /^\d+(\.\d{1,2})?$/.test(v); }
+    function filled(it) { var e = entry(it[0]); return hasPegs(it) ? isB(e.b) && isP(e.p) : isB(e.b); }
+    function counts() { var d = 0; ITEMS.forEach(function (it) { if (filled(it)) d++; }); return { done: d, blank: ITEMS.length - d }; }
+    function visible(it) {
+      if (filter === "blank" && filled(it)) return false;
+      if (filter === "done" && !filled(it)) return false;
+      if (filter.indexOf("cat:") === 0 && it[4] !== filter.slice(4)) return false;
+      if (query) { var q = query.toLowerCase(); if (it[0].toLowerCase().indexOf(q) < 0 && it[1].toLowerCase().indexOf(q) < 0 && it[2].toLowerCase().indexOf(q) < 0) return false; }
+      return true;
+    }
+    function sub(it) { return it[1] === it[2] ? "(" + it[0] + ")" : "(" + it[0] + " | " + it[1] + ")"; }
+
+    function renderSeg() {
+      $("#seg").innerHTML = POINTS.map(function (p, i) {
+        return '<button type="button" aria-pressed="' + (i === pt) + '" data-i="' + i + '"><i style="background:' + p.color + '"></i>' + p.id + "</button>";
+      }).join("");
+    }
+    function renderChips() {
+      var c = counts(), cats = []; ITEMS.forEach(function (it) { if (cats.indexOf(it[4]) < 0) cats.push(it[4]); });
+      var opts = [["all", "All", ITEMS.length], ["blank", "Blank", c.blank], ["done", "Counted", c.done]];
+      $("#chips").innerHTML = opts.map(function (o) { return '<button type="button" data-f="' + o[0] + '" aria-pressed="' + (filter === o[0]) + '">' + o[1] + ' <span class="n">' + o[2] + "</span></button>"; }).join("") +
+        cats.map(function (k) { return '<button type="button" data-f="cat:' + k + '" aria-pressed="' + (filter === "cat:" + k) + '">' + k + "</button>"; }).join("");
+    }
+    function row(it) {
+      var e = entry(it[0]), peg = hasPegs(it), ok = filled(it);
+      var bm = e.b === "" ? " miss" : "", pm = e.p === "" ? " miss" : "";
+      return '<div class="qrow ' + (ok ? "done" : "") + '" data-c="' + it[0] + '">' +
+        '<div><div class="nm">' + esc(it[2]) + " " + it[3] + ' ML</div><div class="alt">' + esc(sub(it)) + "</div></div>" +
+        '<div><label for="b' + it[0] + '">Bottles</label><input id="b' + it[0] + '" data-f="b" class="' + bm + '" inputmode="numeric" value="' + esc(e.b) + '"></div>' +
+        (peg ? '<div><label for="p' + it[0] + '">Pegs</label><input id="p' + it[0] + '" data-f="p" class="' + pm + '" inputmode="decimal" value="' + esc(e.p) + '"></div>' : '<div class="nopeg">' + (POINTS[pt].pegs ? "Bottle sale only" : "Bottles only") + "</div>") +
+        "</div>";
+    }
+    function renderList() {
+      var groups = {}, keys = [];
+      ITEMS.forEach(function (it) { if (visible(it)) { if (!groups[it[4]]) { groups[it[4]] = []; keys.push(it[4]); } groups[it[4]].push(it); } });
+      if (!keys.length) { $("#list").innerHTML = '<div class="card card-pad" style="text-align:center;color:var(--text-muted)">No items match.</div>'; return; }
+      $("#list").innerHTML = keys.map(function (k) {
+        var all = ITEMS.filter(function (i) { return i[4] === k; }), d = all.filter(filled).length;
+        return '<h3 class="cat">' + k + "<span>" + d + "/" + all.length + '</span></h3><div class="card">' + groups[k].map(row).join("") + "</div>";
+      }).join("");
+    }
+    function renderProgress() {
+      var c = counts();
+      $("#pdone").textContent = c.done; $("#ptotal").textContent = ITEMS.length; $("#pblank").textContent = c.blank;
+      $("#pbar").style.width = (c.done / ITEMS.length * 100).toFixed(1) + "%";
+      $("#status").innerHTML = (c.blank ? '<span class="pill inc">Draft</span>' : '<span class="pill com">Complete</span>') + "<b>" + POINTS[pt].id + "</b> &middot; " + (c.blank ? c.blank + " blank" : "all items filled") + "<br>Saved just now";
+      ["#pdfBtn", "#xlsBtn"].forEach(function (id) { $(id).disabled = c.blank > 0; $(id).style.opacity = c.blank ? ".5" : "1"; });
+    }
+    function renderAll() { renderSeg(); renderChips(); renderList(); renderProgress(); }
+
+    $("#seg").addEventListener("click", function (e) { var b = e.target.closest("button"); if (!b) return; pt = +b.dataset.i; filter = "all"; renderAll(); });
+    $("#chips").addEventListener("click", function (e) { var b = e.target.closest("button"); if (!b) return; filter = b.dataset.f; renderChips(); renderList(); });
+    $("#q").addEventListener("input", function (e) { query = e.target.value.trim(); renderList(); });
+    $("#list").addEventListener("input", function (e) {
+      var inp = e.target; if (!inp.matches("input[data-f]")) return;
+      var rowEl = inp.closest(".qrow"), c = rowEl.dataset.c, f = inp.dataset.f;
+      var v = inp.value.replace(",", ".").replace(/\s/g, "");
+      v = f === "b" ? v.replace(/[^\d]/g, "") : v.replace(/[^\d.]/g, "").replace(/(\..*)\./g, "$1");
+      if (v !== inp.value) inp.value = v;
+      var e0 = qty[pt][c] || { b: "", p: "" }; e0[f] = v; qty[pt][c] = e0;
+      var it = ITEMS.filter(function (i) { return i[0] === c; })[0], ok = filled(it);
+      rowEl.classList.toggle("done", ok); inp.classList.toggle("miss", v === "");
+      renderProgress(); renderChips();
+    });
+    ["#pdfBtn", "#xlsBtn"].forEach(function (id) {
+      $(id).addEventListener("click", function () { var s = $("#saved"); s.textContent = id === "#pdfBtn" ? "PDF count sheet downloaded." : "Excel downloaded."; s.classList.add("show"); setTimeout(function () { s.classList.remove("show"); }, 1800); });
+    });
+    var tabs = [["t-co", "p-co"], ["t-pa", "p-pa"]];
+    tabs.forEach(function (pair) {
+      document.getElementById(pair[0]).addEventListener("click", function () {
+        tabs.forEach(function (p) { var on = p[0] === pair[0]; document.getElementById(p[0]).setAttribute("aria-selected", String(on)); document.getElementById(p[1]).hidden = !on; });
+      });
+    });
+    renderAll();
+  })();
+</script>
+</body>
+</html>
