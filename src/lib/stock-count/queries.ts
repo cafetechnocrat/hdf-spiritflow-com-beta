@@ -60,7 +60,7 @@ export async function loadCount(
   const supabase = await createClient();
   const { data: head } = await supabase
     .from("stock_counts")
-    .select("id, status, counted_by")
+    .select("id, status, counted_by, posted_at")
     .eq("stock_point_id", pointId)
     .eq("stock_date", date)
     .maybeSingle();
@@ -88,6 +88,7 @@ export async function loadCount(
     header: {
       id: head.id,
       status: head.status as CountStatus,
+      posted: head.posted_at !== null,
       countedBy: head.counted_by ?? "",
     },
     entries,
@@ -100,6 +101,7 @@ type PastRecord = {
   point_name: string;
   stock_date: string;
   status: CountStatus;
+  posted: boolean;
   counted_by: string | null;
   items_counted: number;
   items_total: number;
@@ -123,6 +125,7 @@ export async function loadPastCounts(filters: PastFilters): Promise<PastCount[]>
     pointName: r.point_name,
     date: r.stock_date,
     status: r.status,
+    posted: r.posted,
     countedBy: r.counted_by ?? "",
     itemsCounted: r.items_counted,
     itemsTotal: r.items_total,

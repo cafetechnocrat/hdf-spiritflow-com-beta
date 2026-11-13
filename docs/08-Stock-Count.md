@@ -21,7 +21,7 @@ Each is set on the Roles screen.
 
 | Right | What it allows |
 |---|---|
-| Stock Count (View, Edit) | See counts. Edit is Stock Taking: enter quantities. |
+| Stock Count (View, Edit, Delete) | See counts. Edit is Stock Taking: enter quantities. Delete removes a count that is not posted. |
 | Save Stock Count (Edit) | Press Save. |
 | Export Stock Count (Edit) | PDF and Excel of a Complete count. |
 | View Stock Value (View) | See the stock value, stock point by stock point and in total, and the Value column on Past Counts. |
@@ -36,6 +36,12 @@ The F & B Manager gets Stock Taking, Save and Export. The Chief Accountant, Acco
 - **Save** checks every item. If any are blank, the Save button shows how many ("3 items not counted") and the count stays a Draft. If none are blank, the button shows Saved and the count is Complete.
 - Changing a Complete count returns it to Draft until Save is pressed again. The audit log keeps the old and new values.
 - PDF and Excel open only for a Complete count. They show quantities only.
+
+## Editing, deleting and posting
+
+- A count can be changed or deleted until it is posted to the accounts. A delete removes the count with its lines; the audit log keeps what was in it.
+- Posting to Closing Stock locks every count of that date. After that nothing can be entered, saved, changed or deleted, in the screen or in the database. Counts show Posted.
+- The 10, 11 and 12 November 2026 counts were loaded from the PDF count sheets (counted by Imported). Their totals match the valuation reports and the closing stock already booked for those dates (₹30,36,163.73, ₹29,04,000.26 and ₹27,54,610.02), so they are marked Posted.
 
 ## Stock value
 

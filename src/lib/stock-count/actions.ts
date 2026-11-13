@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/current-user";
-import { canEdit, canView } from "@/lib/auth/permissions";
+import { canDelete, canEdit, canView } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
 import {
   loadPastCounts,
@@ -110,6 +110,23 @@ export async function saveCount(raw: {
   if (!result) return { error: text.failed };
   revalidatePath(PATH);
   return { error: null, missing: result.missing, saved: result.saved };
+}
+
+// Deletes a count that is not posted. The audit log keeps what was in it.
+export async function deleteCount(raw: { pointId: string; date: string }): Promise<CountResult> {
+  const user = await me();
+  if (!user || !canDelete(user, "stock_count")) return { error: text.notAllowed };
+  const parsed = z.object({ pointId: id, date }).safeParse(raw);
+  if (!parsed.success) return { error: text.badInput };
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("delete_stock_count", {
+    p_point: parsed.data.pointId,
+    p_date: parsed.data.date,
+  });
+  if (error) return { error: explain(error) };
+  revalidatePath(PATH);
+  return { error: null };
 }
 
 // The Stock Value panel. Only for a person with the View Stock Value right.

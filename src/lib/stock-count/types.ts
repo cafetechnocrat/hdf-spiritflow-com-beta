@@ -21,6 +21,8 @@ export type CountStatus = "draft" | "complete";
 export type CountHeader = {
   id: string;
   status: CountStatus;
+  // True once the count is posted to the accounts. It can then not be changed or deleted.
+  posted: boolean;
   countedBy: string;
 };
 
@@ -31,6 +33,8 @@ export type CountRights = {
   exportFiles: boolean;
   viewValue: boolean;
   post: boolean;
+  // Delete a count that is not posted yet.
+  remove: boolean;
 };
 
 export type PastCount = {
@@ -39,6 +43,7 @@ export type PastCount = {
   pointName: string;
   date: string;
   status: CountStatus;
+  posted: boolean;
   countedBy: string;
   itemsCounted: number;
   itemsTotal: number;

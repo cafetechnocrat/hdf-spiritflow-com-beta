@@ -35,6 +35,7 @@ export function StockCountScreen({
   rights,
   userName,
   today,
+  refreshKey,
 }: {
   points: CountPoint[];
   items: CountItem[];
@@ -45,12 +46,15 @@ export function StockCountScreen({
   rights: CountRights;
   userName: string;
   today: string;
+  // Changes after a delete so the screen starts again from what the database holds.
+  refreshKey: string;
 }) {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("count");
 
-  function select(nextPoint: string, nextDate: string) {
+  function select(nextPoint: string, nextDate: string, reload = false) {
     const params = new URLSearchParams({ point: nextPoint, date: nextDate });
+    if (reload) params.set("r", String(Date.now()));
     router.replace(`/stock-count?${params.toString()}`);
   }
 
@@ -102,7 +106,7 @@ export function StockCountScreen({
       <section role="tabpanel" id={`count-panel-${tab}`} aria-labelledby={`count-tab-${tab}`}>
         {tab === "count" ? (
           <CountPanel
-            key={`${pointId}|${date}`}
+            key={`${pointId}|${date}|${refreshKey}`}
             points={points}
             items={items}
             pointId={pointId}
@@ -112,6 +116,7 @@ export function StockCountScreen({
             rights={rights}
             userName={userName}
             onSelect={select}
+            onDeleted={() => select(pointId, date, true)}
           />
         ) : (
           <PastPanel

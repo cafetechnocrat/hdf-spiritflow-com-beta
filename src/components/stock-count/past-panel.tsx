@@ -5,7 +5,7 @@ import { DataList } from "@/components/ui/admin-parts";
 import { badge, button, field } from "@/components/ui/styles";
 import { formatAmountText, formatDate } from "@/lib/format/money";
 import { addDays } from "@/lib/reports/dates";
-import { fetchPastCounts } from "@/lib/stock-count/actions";
+import { deleteCount, fetchPastCounts } from "@/lib/stock-count/actions";
 import type {
   CountPoint,
   CountRights,
@@ -22,6 +22,9 @@ const text = {
   allStatus: "All",
   complete: "Complete",
   draft: "Draft",
+  posted: "Posted",
+  remove: "Delete",
+  removeFailed: "The count could not be deleted.",
   colDate: "Date",
   colPoint: "Stock Point",
   colItems: "Items Counted",
@@ -40,7 +43,7 @@ const text = {
   emptyHint: "Change the filters, or take a count on the Count tab.",
   loading: "Loading the counts...",
   failed: "The counts could not be loaded. Change a filter to try again.",
-  note: "Open shows a finished count. Continue returns to a draft. Changing a Complete count is recorded in the audit log with the old and new values.",
+  note: "Open shows a finished count. Continue returns to a draft. A count can be changed or deleted until it is posted to the accounts. After posting it is locked.",
 } as const;
 
 export function PastPanel({
@@ -62,6 +65,8 @@ export function PastPanel({
   });
   const [rows, setRows] = useState<PastCount[] | null>(null);
   const [failed, setFailed] = useState(false);
+  const [version, setVersion] = useState(0);
+  const [rowError, setRowError] = useState<string | null>(null);
 
   useEffect(() => {
     let live = true;
@@ -73,7 +78,17 @@ export function PastPanel({
     return () => {
       live = false;
     };
-  }, [filters]);
+  }, [filters, version]);
+
+  async function onRemove(row: PastCount) {
+    setRowError(null);
+    const result = await deleteCount({ pointId: row.pointId, date: row.date });
+    if (result.error) setRowError(result.error);
+    else {
+      setRows(null);
+      setVersion((v) => v + 1);
+    }
+  }
 
   const change = (next: Partial<PastFilters>) => {
     setRows(null);
@@ -107,7 +122,7 @@ export function PastPanel({
       label: text.colStatus,
       cell: (r: PastCount) => (
         <span className={`${badge.base} ${r.status === "complete" ? badge.ok : badge.warn}`}>
-          {r.status === "complete" ? text.complete : text.draft}
+          {r.posted ? text.posted : r.status === "complete" ? text.complete : text.draft}
         </span>
       ),
     },
@@ -197,10 +212,24 @@ export function PastPanel({
                   </a>
                 </>
               ) : null}
+              {rights.remove && !r.posted ? (
+                <button
+                  type="button"
+                  className={`${button.danger} ${button.small}`}
+                  onClick={() => onRemove(r)}
+                >
+                  {text.remove}
+                </button>
+              ) : null}
             </div>
           )}
         />
       )}
+      {rowError ? (
+        <p role="alert" className="mt-2 rounded-[10px] bg-error-bg px-3 py-2.5 text-[0.85rem] text-error">
+          {rowError}
+        </p>
+      ) : null}
       <p className="mt-3.5 rounded-xl bg-accent-soft px-3 py-2.5 text-[0.84rem] text-link">{text.note}</p>
     </div>
   );

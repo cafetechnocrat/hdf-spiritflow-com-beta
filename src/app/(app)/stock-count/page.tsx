@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { PageLoading } from "@/components/page-loading";
 import { StockCountScreen } from "@/components/stock-count/stock-count-screen";
 import { getCurrentUser } from "@/lib/auth/current-user";
-import { canEdit, canView } from "@/lib/auth/permissions";
+import { canDelete, canEdit, canView } from "@/lib/auth/permissions";
 import { loadCount, loadItems, loadPoints } from "@/lib/stock-count/queries";
 import type { CountRights } from "@/lib/stock-count/types";
 import { loadTransactionDate } from "@/lib/vouchers/transaction-date";
@@ -50,6 +50,7 @@ async function StockCountContent({ searchParams }: { searchParams: Promise<RawPa
     viewValue: canView(me, "stock_count_value"),
     // Posting shows the total, so it needs the value right too.
     post: canEdit(me, "stock_count_post") && canView(me, "stock_count_value"),
+    remove: canDelete(me, "stock_count"),
   };
 
   let body;
@@ -78,6 +79,7 @@ async function StockCountContent({ searchParams }: { searchParams: Promise<RawPa
         rights={rights}
         userName={me.fullName}
         today={today}
+        refreshKey={one(raw.r)}
       />
     );
   }

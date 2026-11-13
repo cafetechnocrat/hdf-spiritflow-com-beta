@@ -7,6 +7,7 @@ import { button, field } from "@/components/ui/styles";
 import { formatAmountText, formatDate } from "@/lib/format/money";
 import { itemSubline, itemTitle } from "@/lib/liquor/calc";
 import {
+  deleteCount,
   fetchValues,
   postClosing,
   previewPost,
@@ -61,6 +62,13 @@ const text = {
   pdf: "PDF",
   excel: "Excel",
   post: "Post To Closing Stock",
+  posted: "Posted",
+  postedNote: "Posted to the accounts. It can no longer be changed or deleted.",
+  remove: "Delete Count",
+  removeTitle: "Delete This Count?",
+  removeBody: (point: string, date: string) =>
+    `The count of ${point} for ${date} will be deleted, with everything entered in it. The audit log keeps a record. This cannot be undone.`,
+  removing: "Deleting...",
   hintNoPost:
     "Post To Closing Stock needs the Post right (Chief Accountant, Accountant or System Admin).",
   hintNeedAll: "Post To Closing Stock needs a saved, Complete count for every stock point on this date.",
@@ -237,6 +245,7 @@ export function CountPanel({
   rights,
   userName,
   onSelect,
+  onDeleted,
 }: {
   points: CountPoint[];
   items: CountItem[];
@@ -247,6 +256,7 @@ export function CountPanel({
   rights: CountRights;
   userName: string;
   onSelect: (pointId: string, date: string) => void;
+  onDeleted: () => void;
 }) {
   const point = points.find((p) => p.id === pointId) ?? points[0];
   const [entries, setEntries] = useState<Record<string, CountEntry>>(initialEntries);
@@ -261,6 +271,10 @@ export function CountPanel({
   const [lines, setLines] = useState<ValueLine[]>([]);
   const [valueKey, setValueKey] = useState(0);
   const [posting, setPosting] = useState(false);
+  const [posted, setPosted] = useState(header?.posted ?? false);
+  const [removing, setRemoving] = useState(false);
+  const [removeBusy, setRemoveBusy] = useState(false);
+  const [removeError, setRemoveError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const dateId = useId();
   const byId = useId();
@@ -393,6 +407,18 @@ export function CountPanel({
   }
 
   const complete = status === "complete";
+  const locked = posted;
+  const canRemove = rights.remove && !posted && (header !== null || Object.keys(entries).length > 0);
+
+  async function onRemove() {
+    setRemoveBusy(true);
+    setRemoveError(null);
+    await saver.idle();
+    const result = await deleteCount({ pointId: point.id, date });
+    setRemoveBusy(false);
+    if (result.error) setRemoveError(result.error);
+    else onDeleted();
+  }
   const allComplete = lines.length > 0 && lines.every((l) => l.status === "complete");
   const exportBase = `/stock-count/export?point=${point.id}&date=${date}`;
   const exportOn = rights.exportFiles && complete;
@@ -602,7 +628,7 @@ export function CountPanel({
                             data-blank={bMiss ? "true" : "false"}
                             inputMode="numeric"
                             autoComplete="off"
-                            disabled={!rights.take}
+                            disabled={!rights.take || locked}
                             value={entry.b}
                             onChange={(event) => onChange(item, "b", event.target.value)}
                             onBlur={() => persist(item)}
@@ -621,7 +647,7 @@ export function CountPanel({
                               data-blank={pMiss ? "true" : "false"}
                               inputMode="decimal"
                               autoComplete="off"
-                              disabled={!rights.take}
+                              disabled={!rights.take || locked}
                               value={entry.p}
                               onChange={(event) => onChange(item, "p", event.target.value)}
                               onBlur={() => persist(item)}
@@ -652,7 +678,7 @@ export function CountPanel({
               complete ? "bg-success-bg text-success" : "bg-warn-bg text-warn"
             }`}
           >
-            {complete ? text.complete : text.draft}
+            {posted ? text.posted : complete ? text.complete : text.draft}
           </span>
           <b className="font-semibold">{point.name}</b>
           {` · ${blank ? text.blank(blank) : text.allFilled}`}
@@ -679,10 +705,20 @@ export function CountPanel({
               </button>
             </>
           )}
+          {rights.remove ? (
+            <button
+              type="button"
+              className={button.danger}
+              disabled={!canRemove}
+              onClick={() => setRemoving(true)}
+            >
+              {text.remove}
+            </button>
+          ) : null}
           <button
             type="button"
             className={button.secondary}
-            disabled={!rights.post || !allComplete}
+            disabled={!rights.post || !allComplete || posted}
             onClick={() => setPosting(true)}
           >
             {text.post}
@@ -690,7 +726,7 @@ export function CountPanel({
           <button
             type="button"
             className={saveClass}
-            disabled={!rights.save || busy}
+            disabled={!rights.save || busy || locked}
             onClick={onSave}
           >
             {saveLabel}
@@ -698,7 +734,13 @@ export function CountPanel({
         </div>
       </div>
       <p className="mt-2 text-right text-[0.78rem] text-muted">
-        {!rights.post ? text.hintNoPost : allComplete ? "" : text.hintNeedAll}
+        {posted
+          ? text.postedNote
+          : !rights.post
+            ? text.hintNoPost
+            : allComplete
+              ? ""
+              : text.hintNeedAll}
       </p>
       {saveNote ? (
         <p role="alert" className="mt-2 rounded-[10px] bg-error-bg px-3 py-2.5 text-[0.85rem] text-error">
@@ -713,10 +755,28 @@ export function CountPanel({
           onClose={() => setPosting(false)}
           onPosted={(value) => {
             setPosting(false);
+            setPosted(true);
             setToast(text.postedToast(formatAmountText(value)));
             setValueKey((k) => k + 1);
           }}
         />
+      ) : null}
+      {removing ? (
+        <Modal
+          title={text.removeTitle}
+          subtitle={text.removeBody(point.name, formatDate(date))}
+          onClose={() => setRemoving(false)}
+        >
+          <ErrorLine message={removeError} />
+          <div className="flex flex-wrap justify-end gap-2">
+            <button type="button" onClick={() => setRemoving(false)} disabled={removeBusy} className={button.secondary}>
+              {text.cancel}
+            </button>
+            <button type="button" onClick={onRemove} disabled={removeBusy} className={button.danger}>
+              {removeBusy ? text.removing : text.remove}
+            </button>
+          </div>
+        </Modal>
       ) : null}
       {toast ? (
         <div
