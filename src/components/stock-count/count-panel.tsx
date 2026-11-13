@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useState } from "react";
 import type { KeyboardEvent } from "react";
+import { LoadingPopup } from "@/components/loading-popup";
 import { ErrorLine, Modal } from "@/components/ui/admin-parts";
 import { button, field } from "@/components/ui/styles";
 import { formatAmountText, formatDate } from "@/lib/format/money";
@@ -62,6 +63,8 @@ const text = {
   pdf: "PDF",
   excel: "Excel",
   post: "Post To Closing Stock",
+  saveWait: "Saving... please wait",
+  removeWait: "Deleting... please wait",
   posted: "Posted",
   postedNote: "Posted to the accounts. It can no longer be changed or deleted.",
   remove: "Delete Count",
@@ -446,6 +449,8 @@ export function CountPanel({
 
   return (
     <div>
+      {busy ? <LoadingPopup message={text.saveWait} /> : null}
+      {removeBusy ? <LoadingPopup message={text.removeWait} /> : null}
       <div
         role="group"
         aria-label={text.stockPoint}

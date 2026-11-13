@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { PageLoading } from "@/components/page-loading";
+import { LoadingPopup } from "@/components/loading-popup";
 import { StockCountScreen } from "@/components/stock-count/stock-count-screen";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { canDelete, canEdit, canView } from "@/lib/auth/permissions";
@@ -99,7 +99,7 @@ async function StockCountContent({ searchParams }: { searchParams: Promise<RawPa
 
 export default function StockCountPage({ searchParams }: { searchParams: Promise<RawParams> }) {
   return (
-    <Suspense fallback={<PageLoading />}>
+    <Suspense fallback={<LoadingPopup />}>
       <StockCountContent searchParams={searchParams} />
     </Suspense>
   );

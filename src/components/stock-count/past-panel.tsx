@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { LoadingPopup } from "@/components/loading-popup";
 import { DataList } from "@/components/ui/admin-parts";
 import { badge, button, field } from "@/components/ui/styles";
 import { formatAmountText, formatDate } from "@/lib/format/money";
@@ -171,9 +172,10 @@ export function PastPanel({
       </div>
 
       {rows === null ? (
-        <p className="rounded-2xl bg-surface px-4 py-7 text-center text-[0.9rem] text-muted shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
-          {text.loading}
-        </p>
+        <>
+          <LoadingPopup />
+          <p className="sr-only">{text.loading}</p>
+        </>
       ) : failed ? (
         <p role="alert" className="rounded-2xl bg-surface px-4 py-7 text-center text-[0.9rem] text-error shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
           {text.failed}

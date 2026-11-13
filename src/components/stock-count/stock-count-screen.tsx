@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { LoadingPopup } from "@/components/loading-popup";
 import type {
   CountEntry,
   CountHeader,
@@ -51,11 +52,15 @@ export function StockCountScreen({
 }) {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("count");
+  // Changing the stock point or date loads another count from the server.
+  const [loading, startLoading] = useTransition();
 
   function select(nextPoint: string, nextDate: string, reload = false) {
     const params = new URLSearchParams({ point: nextPoint, date: nextDate });
     if (reload) params.set("r", String(Date.now()));
-    router.replace(`/stock-count?${params.toString()}`);
+    startLoading(() => {
+      router.replace(`/stock-count?${params.toString()}`);
+    });
   }
 
   if (points.length === 0 || items.length === 0) {
@@ -78,6 +83,7 @@ export function StockCountScreen({
 
   return (
     <div>
+      {loading ? <LoadingPopup /> : null}
       <div
         role="tablist"
         aria-label={text.tabsLabel}
