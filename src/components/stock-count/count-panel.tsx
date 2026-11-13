@@ -50,6 +50,10 @@ const text = {
   bottleSaleOnly: "Bottle sale only",
   noItems: "No items match.",
   badPegs: "Pegs go in halves (0.5, 1, 1.5 and so on), up to 16.",
+  needsFixing: (n: number) => (n === 1 ? "1 entry needs correcting" : `${n} entries need correcting`),
+  invalidNote: (n: number) =>
+    `${n === 1 ? "1 entry is" : `${n} entries are`} not valid and marked red. Pegs must be in halves (0.5, 1, 1.5 and so on), up to 16. Correct ${n === 1 ? "it" : "them"}, then press Save.`,
+  badChip: "Needs correcting",
   noBlank: "No blank items. Every item has a value.",
   noPoints: "No Liquor Stock Points",
   noPointsHint: "Add an active Liquor stock point on the Stock Points screen.",
@@ -125,7 +129,11 @@ function createSaver(initial: Record<string, string>) {
   };
 }
 
-type BtnState = { kind: "idle" } | { kind: "short"; missing: number } | { kind: "ok" };
+type BtnState =
+  | { kind: "idle" }
+  | { kind: "short"; missing: number }
+  | { kind: "invalid"; count: number }
+  | { kind: "ok" };
 
 function PostDialog({
   date,
@@ -312,11 +320,21 @@ export function CountPanel({
   if (!point) return null;
 
   const counted = (item: CountItem) => isCounted(point, item, entries[item.id]);
+  // Entries that were typed but break a rule. They are not saved, so the screen has to say so.
+  const isBad = (item: CountItem): boolean => {
+    const entry = entries[item.id];
+    if (!entry) return false;
+    if (entry.b !== "" && !isBottle(entry.b)) return true;
+    return needsPegs(point, item) && entry.p !== "" && !isPeg(entry.p);
+  };
+  const badCount = items.filter(isBad).length;
   const done = items.filter(counted).length;
   const blank = items.length - done;
   const categories = [...new Set(items.map((i) => i.categoryName))];
 
   function visible(item: CountItem): boolean {
+    // Once nothing needs correcting any more, the list shows everything again.
+    if (filter === "bad" && badCount > 0 && !isBad(item)) return false;
     if (filter === "blank" && counted(item)) return false;
     if (filter === "done" && !counted(item)) return false;
     if (filter.startsWith("cat:") && item.categoryName !== filter.slice(4)) return false;
@@ -391,6 +409,18 @@ export function CountPanel({
   }
 
   async function onSave() {
+    // A value that breaks a rule is never saved, so it would be missed by the check below.
+    // Say so here, before anything is sent.
+    if (badCount > 0) {
+      setBtn({ kind: "invalid", count: badCount });
+      setSaveNote(text.invalidNote(badCount));
+      setFilter("bad");
+      setQuery("");
+      setTimeout(() => {
+        document.querySelector("#count-list input[data-bad='true']")?.scrollIntoView({ block: "center" });
+      }, 50);
+      return;
+    }
     setBusy(true);
     setSaveNote(null);
     await saver.idle();
@@ -433,10 +463,17 @@ export function CountPanel({
   const allComplete = lines.length > 0 && lines.every((l) => l.status === "complete");
   const exportBase = `/stock-count/export?point=${point.id}&date=${date}`;
   const exportOn = rights.exportFiles && complete;
-  const saveLabel =
-    busy ? text.saveBusy : btn.kind === "short" ? text.notCounted(btn.missing) : btn.kind === "ok" && complete ? text.saved : text.save;
+  const saveLabel = busy
+    ? text.saveBusy
+    : btn.kind === "short"
+      ? text.notCounted(btn.missing)
+      : btn.kind === "invalid"
+        ? text.needsFixing(btn.count)
+        : btn.kind === "ok" && complete
+          ? text.saved
+          : text.save;
   const saveClass =
-    btn.kind === "short"
+    btn.kind === "short" || btn.kind === "invalid"
       ? `${button.primary} !bg-warn-bg !text-warn hover:!bg-warn-bg`
       : btn.kind === "ok" && complete
         ? `${button.primary} !bg-success-bg !text-success hover:!bg-success-bg`
@@ -581,6 +618,16 @@ export function CountPanel({
           <button type="button" aria-pressed={filter === "done"} className={chipClass(filter === "done")} onClick={() => setFilter("done")}>
             {text.countedChip} <span className="tabular-nums opacity-80">{done}</span>
           </button>
+          {badCount > 0 ? (
+            <button
+              type="button"
+              aria-pressed={filter === "bad"}
+              className={chipClass(filter === "bad")}
+              onClick={() => setFilter("bad")}
+            >
+              {text.badChip} <span className="tabular-nums opacity-80">{badCount}</span>
+            </button>
+          ) : null}
           {categories.map((category) => (
             <button
               key={category}
@@ -640,6 +687,7 @@ export function CountPanel({
                           <input
                             data-f="b"
                             data-blank={bMiss ? "true" : "false"}
+                            data-bad={entry.b !== "" && !isBottle(entry.b) ? "true" : "false"}
                             inputMode="numeric"
                             autoComplete="off"
                             disabled={!rights.take || locked}
@@ -659,6 +707,7 @@ export function CountPanel({
                             <input
                               data-f="p"
                               data-blank={pMiss ? "true" : "false"}
+                              data-bad={entry.p !== "" && !isPeg(entry.p) ? "true" : "false"}
                               inputMode="decimal"
                               autoComplete="off"
                               disabled={!rights.take || locked}
