@@ -55,3 +55,7 @@ At cost: the bottles plus the pegs (60 ml each) times the cost of a bottle. The 
 ## Post To Closing Stock
 
 Needs a Complete count for every active Liquor stock point on the date, and a rate for every counted item. The dialog shows the total. If closing stock is already entered for that date, posting again needs a reason and the Closing Stock rules apply: the journal is changed and the later days are recalculated. Posting calls the same function as the Closing Stock screen.
+
+## Kept apart from the accounts
+
+Nothing a person enters, saves or deletes in a count reaches the books. The count tables have no link to vouchers, ledgers, the Trial Balance, Profit And Loss, the Balance Sheet or the dashboard. They carry only the audit and updated-by triggers. The stock value shown on the screen is worked out when it is looked at and is never stored. The one and only way into the accounts is **Post To Closing Stock**, which hands the day's total to the Closing Stock function and nothing else: no item, quantity or stock point detail is posted. Until a date is posted, its counts can be changed or deleted with no effect on any account. Linking stock quantities to the accounts waits for the POS.

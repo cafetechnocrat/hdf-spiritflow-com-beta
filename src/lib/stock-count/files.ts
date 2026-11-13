@@ -85,10 +85,6 @@ export function buildCountPdf(sheet: CountSheet): Buffer {
   const logoW = 40;
   const logoH = (logoW * LOGO_HEIGHT) / LOGO_WIDTH;
   doc.addImage(`data:image/png;base64,${LOGO_PNG_BASE64}`, "PNG", right - logoW, 11, logoW, logoH);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(6.5);
-  doc.setTextColor(...MUTED);
-  doc.text("Quantities only · no values", right, 11 + logoH + 3.5, { align: "right" });
 
   doc.setDrawColor(...NAVY);
   doc.setLineWidth(0.7);
@@ -346,7 +342,6 @@ export async function buildCountExcel(sheet: CountSheet): Promise<Buffer> {
   merged(2, "Physical Stock Count Sheet", { size: 16, bold: true, color: { argb: navy } });
   merged(3, `${sheet.pointName}  ·  Stock as on ${sheet.date}`, { size: 10, color: { argb: "FF1B2A41" } });
   merged(4, `Counted by: ${sheet.countedBy || "-"}    Status: Complete (${sheet.itemsCounted}/${sheet.itemsTotal})`, { size: 10, color: { argb: "FF1E8E5A" }, bold: true });
-  merged(5, "Quantities only · no values", { size: 9, italic: true, color: { argb: "FF66748A" } });
   ws.getRow(2).height = 24;
 
   const headRow = ws.getRow(7);
