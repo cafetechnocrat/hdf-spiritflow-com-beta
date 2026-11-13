@@ -51,12 +51,24 @@ export type LedgerBalance = {
   side: "dr" | "cr" | null;
 };
 
+// What the Transactions list asks for. All of it travels in the address.
+export type VoucherQuery = {
+  from: string;
+  to: string;
+  type: string;
+  status: "posted" | "void" | "all";
+  q: string;
+  page: number;
+  size: number;
+};
+
 export type VoucherData = {
   types: VoucherTypeRow[];
   ledgers: LedgerChoice[];
+  // One page of vouchers, newest first, and how many match the filters in all.
   vouchers: VoucherRow[];
-  // True when the list was cut at the newest vouchers.
-  truncated: boolean;
+  total: number;
+  query: VoucherQuery;
   // The date new vouchers start on, and today in India, as YYYY-MM-DD.
   transactionDate: string;
   today: string;

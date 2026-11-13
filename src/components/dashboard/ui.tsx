@@ -190,7 +190,7 @@ export function KpiCard({
           <Icon d={icon} />
         </span>
       </div>
-      <div className="mt-2.5 text-[1.35rem] font-bold leading-[1.1] tracking-[-0.03em] tabular-nums sm:text-[1.75rem]">
+      <div className="mt-2.5 text-[clamp(1.05rem,5.4vw,1.35rem)] font-bold leading-[1.1] tracking-[-0.03em] tabular-nums sm:text-[1.75rem]">
         {value}
       </div>
       <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[0.78rem] text-muted">{footer}</div>

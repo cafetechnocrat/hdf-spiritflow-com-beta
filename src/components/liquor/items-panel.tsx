@@ -4,12 +4,12 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useId, useState, useTransition } from "react";
 import type { FormEvent } from "react";
 import { DataList, ErrorLine, Modal } from "@/components/ui/admin-parts";
+import { Pager } from "@/components/ui/pager";
 import { badge, button, field } from "@/components/ui/styles";
 import { formatDate, formatPaise, parseAmountToPaise } from "@/lib/format/money";
 import { fetchRates, saveItem, saveRate } from "@/lib/liquor/actions";
 import { cessForPrice, itemSubline, itemTitle, rateFigures } from "@/lib/liquor/calc";
 import {
-  PAGE_SIZES,
   VOLUMES,
   type ItemQuery,
   type LiquorItemPage,
@@ -111,7 +111,6 @@ const text = {
   colFl1: "FL1 Price",
 } as const;
 
-const NUMBER = new Intl.NumberFormat("en-IN");
 
 // Builds an address from the filters. The page reloads with them.
 function addressFor(path: string, query: ItemQuery, change: Partial<ItemQuery>): string {
@@ -203,80 +202,6 @@ function Figures({
         row(text.pegFigures, text.bottleOnly)
       )}
     </div>
-  );
-}
-
-function Pager({
-  total,
-  query,
-  go,
-}: {
-  total: number;
-  query: ItemQuery;
-  go: (change: Partial<ItemQuery>) => void;
-}) {
-  const sizeId = useId();
-  const pages = Math.max(1, Math.ceil(total / query.size));
-  const page = Math.min(query.page, pages);
-  const from = total === 0 ? 0 : (page - 1) * query.size + 1;
-  const to = Math.min(total, page * query.size);
-  const nav = `${button.secondary} ${button.small} min-w-[72px]`;
-  return (
-    <nav
-      aria-label={text.pagerLabel}
-      className="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2.5 rounded-2xl bg-surface px-3.5 py-3 text-[0.84rem] shadow-[0_1px_3px_rgba(0,0,0,0.05)]"
-    >
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-        <label htmlFor={sizeId} className="text-muted">
-          {text.rowsPerPage}
-        </label>
-        <select
-          id={sizeId}
-          value={query.size}
-          onChange={(event) => go({ size: Number(event.target.value), page: 1 })}
-          className={`${field.input} !h-10 !w-auto min-w-[84px] sm:!h-9`}
-        >
-          {PAGE_SIZES.map((size) => (
-            <option key={size} value={size}>
-              {size}
-            </option>
-          ))}
-        </select>
-        <span className="tabular-nums text-muted">
-          {`Showing ${NUMBER.format(from)} to ${NUMBER.format(to)} of ${NUMBER.format(total)}`}
-        </span>
-      </div>
-      <div className="flex flex-wrap items-center gap-1.5">
-        <button type="button" className={nav} disabled={page <= 1} onClick={() => go({ page: 1 })}>
-          {text.first}
-        </button>
-        <button
-          type="button"
-          className={nav}
-          disabled={page <= 1}
-          onClick={() => go({ page: page - 1 })}
-        >
-          {text.previous}
-        </button>
-        <span className="px-1.5 tabular-nums text-muted">{`Page ${page} of ${NUMBER.format(pages)}`}</span>
-        <button
-          type="button"
-          className={nav}
-          disabled={page >= pages}
-          onClick={() => go({ page: page + 1 })}
-        >
-          {text.next}
-        </button>
-        <button
-          type="button"
-          className={nav}
-          disabled={page >= pages}
-          onClick={() => go({ page: pages })}
-        >
-          {text.last}
-        </button>
-      </div>
-    </nav>
   );
 }
 
@@ -681,7 +606,7 @@ export function ItemsPanel({
     go({ q: search.trim(), page: 1 });
   }
 
-  const select = `${field.input} !w-auto min-w-[150px]`;
+  const select = `${field.input} !w-full sm:!w-auto sm:min-w-[150px]`;
 
   return (
     <div>
@@ -694,8 +619,8 @@ export function ItemsPanel({
         ) : null}
       </div>
 
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        <form onSubmit={onSearch} className="flex gap-2" role="search">
+      <div className="mb-3 grid grid-cols-1 gap-2 min-[480px]:grid-cols-2 sm:flex sm:flex-wrap sm:items-center">
+        <form onSubmit={onSearch} className="flex w-full gap-2 sm:w-auto" role="search">
           <label htmlFor={searchId} className="sr-only">
             {text.search}
           </label>
@@ -705,7 +630,7 @@ export function ItemsPanel({
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder={text.search}
-            className={`${field.input} !w-[220px]`}
+            className={`${field.input} !w-full sm:!w-[220px]`}
           />
         </form>
         <select aria-label={text.colCategory} className={select} value={query.category} onChange={(e) => go({ category: e.target.value, page: 1 })}>
@@ -742,7 +667,7 @@ export function ItemsPanel({
             type="date"
             value={query.asOn}
             onChange={(event) => event.target.value && go({ asOn: event.target.value, page: 1 })}
-            className={`${field.input} !w-[150px]`}
+            className={`${field.input} !w-full sm:!w-[150px]`}
           />
         </label>
       </div>
@@ -808,7 +733,7 @@ export function ItemsPanel({
           </div>
         )}
       />
-      <Pager total={page.total} query={query} go={go} />
+      <Pager total={page.total} page={query.page} size={query.size} onChange={(next) => go(next)} />
       <p className="mt-4 rounded-xl bg-accent-soft px-3 py-2.5 text-[0.84rem] text-link">{text.note}</p>
 
       {form ? (

@@ -1,8 +1,11 @@
 "use client";
 
+import { usePathname, useRouter } from "next/navigation";
 import { useId, useMemo, useState, useTransition } from "react";
 import type { FormEvent } from "react";
+import { LoadingPopup } from "@/components/loading-popup";
 import { DataList, ErrorLine, Modal } from "@/components/ui/admin-parts";
+import { DEFAULT_PAGE_SIZE, Pager } from "@/components/ui/pager";
 import { badge, button, field } from "@/components/ui/styles";
 import {
   formatAmountText,
@@ -25,13 +28,13 @@ import type {
   VoucherEntryRow,
   VoucherRow,
   VoucherTypeRow,
+  VoucherQuery,
 } from "@/lib/vouchers/types";
 
 // All visible text sits here so it can be translated later.
 const text = {
   newVoucher: "New Voucher",
   hint: "Void a voucher with a reason if it was entered wrongly. A balance shows beside each ledger you pick, as on the voucher date.",
-  truncated: "Showing the newest vouchers only. The Day Book report will cover the full history.",
   fromDate: "From Date",
   toDate: "To Date",
   allTypes: "All Types",
@@ -726,11 +729,34 @@ export function VoucherManager({
   const [busyId, setBusyId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
-  const [typeFilter, setTypeFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"posted" | "void" | "all">("posted");
-  const [search, setSearch] = useState("");
+  // The filters and the page live in the address. Changing one loads that page from
+  // the database, with the loading popup showing meanwhile.
+  const router = useRouter();
+  const path = usePathname();
+  const [loadingPage, startLoadingPage] = useTransition();
+  const query = data.query;
+  const [search, setSearch] = useState(query.q);
+  const [seenSearch, setSeenSearch] = useState(query.q);
+  if (seenSearch !== query.q) {
+    setSeenSearch(query.q);
+    setSearch(query.q);
+  }
+
+  function go(change: Partial<VoucherQuery>) {
+    const next = { ...query, ...change };
+    const params = new URLSearchParams();
+    if (next.from) params.set("from", next.from);
+    if (next.to) params.set("to", next.to);
+    if (next.type) params.set("type", next.type);
+    if (next.status !== "posted") params.set("status", next.status);
+    if (next.q) params.set("q", next.q);
+    if (next.page > 1) params.set("page", String(next.page));
+    if (next.size !== DEFAULT_PAGE_SIZE) params.set("size", String(next.size));
+    const qs = params.toString();
+    startLoadingPage(() => {
+      router.replace(qs ? `${path}?${qs}` : path);
+    });
+  }
 
   // Loads the rows of one voucher, then opens it for viewing or editing.
   function open(voucher: VoucherRow, mode: "view" | "edit") {
@@ -758,21 +784,11 @@ export function VoucherManager({
     });
   }
 
-  const term = search.trim().toLowerCase();
-  const visible = data.vouchers.filter(
-    (v) =>
-      (statusFilter === "all" || v.status === statusFilter) &&
-      (typeFilter === "" || v.voucherTypeId === typeFilter) &&
-      (fromDate === "" || v.date >= fromDate) &&
-      (toDate === "" || v.date <= toDate) &&
-      (term === "" ||
-        (v.narration ?? "").toLowerCase().includes(term) ||
-        (v.reference ?? "").toLowerCase().includes(term) ||
-        v.referenceNo.toLowerCase().includes(term)),
-  );
+  const visible = data.vouchers;
 
   return (
     <>
+      {loadingPage ? <LoadingPopup /> : null}
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <p className="max-w-[640px] text-[0.8rem] text-muted">{text.hint}</p>
         {canEnter ? (
@@ -797,26 +813,26 @@ export function VoucherManager({
         ) : null}
       </div>
 
-      <div className="mb-3 flex flex-wrap gap-2">
+      <div className="mb-3 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
         <input
           type="date"
-          value={fromDate}
-          onChange={(event) => setFromDate(event.target.value)}
+          value={query.from}
+          onChange={(event) => go({ from: event.target.value, page: 1 })}
           aria-label={text.fromDate}
           className={`${field.input} sm:max-w-[170px]`}
         />
         <input
           type="date"
-          value={toDate}
-          onChange={(event) => setToDate(event.target.value)}
+          value={query.to}
+          onChange={(event) => go({ to: event.target.value, page: 1 })}
           aria-label={text.toDate}
           className={`${field.input} sm:max-w-[170px]`}
         />
         <select
-          value={typeFilter}
-          onChange={(event) => setTypeFilter(event.target.value)}
+          value={query.type}
+          onChange={(event) => go({ type: event.target.value, page: 1 })}
           aria-label={text.typeFilter}
-          className={`${field.input} !w-auto min-w-[150px] max-w-full`}
+          className={`${field.input} sm:!w-auto sm:min-w-[150px] sm:max-w-full`}
         >
           <option value="">{text.allTypes}</option>
           {data.types.map((t) => (
@@ -826,23 +842,34 @@ export function VoucherManager({
           ))}
         </select>
         <select
-          value={statusFilter}
-          onChange={(event) => setStatusFilter(event.target.value as "posted" | "void" | "all")}
+          value={query.status}
+          onChange={(event) =>
+            go({ status: event.target.value as "posted" | "void" | "all", page: 1 })
+          }
           aria-label={text.statusFilter}
-          className={`${field.input} !w-auto min-w-[120px] max-w-full`}
+          className={`${field.input} sm:!w-auto sm:min-w-[120px] sm:max-w-full`}
         >
           <option value="posted">{text.statusPosted}</option>
           <option value="void">{text.statusVoid}</option>
           <option value="all">{text.statusAll}</option>
         </select>
-        <input
-          type="search"
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder={text.searchPlaceholder}
-          aria-label={text.searchLabel}
-          className={`${field.input} sm:max-w-[260px]`}
-        />
+        <form
+          role="search"
+          className="col-span-2 sm:col-span-1"
+          onSubmit={(event) => {
+            event.preventDefault();
+            go({ q: search.trim(), page: 1 });
+          }}
+        >
+          <input
+            type="search"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder={text.searchPlaceholder}
+            aria-label={text.searchLabel}
+            className={`${field.input} sm:max-w-[260px]`}
+          />
+        </form>
       </div>
 
       {message ? (
@@ -938,9 +965,12 @@ export function VoucherManager({
         )}
       />
 
-      {data.truncated ? (
-        <p className="mt-3 text-[0.8rem] text-muted">{text.truncated}</p>
-      ) : null}
+      <Pager
+        total={data.total}
+        page={query.page}
+        size={query.size}
+        onChange={(next) => go(next)}
+      />
 
       {form ? (
         <VoucherForm

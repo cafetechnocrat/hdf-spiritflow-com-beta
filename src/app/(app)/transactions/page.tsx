@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { PageLoading } from "@/components/page-loading";
+import { LoadingPopup } from "@/components/loading-popup";
 import { VoucherManager } from "@/components/vouchers/voucher-manager";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { canEdit, canView, canDelete } from "@/lib/auth/permissions";
+import { parseVoucherQuery, type RawParams } from "@/lib/vouchers/params";
 import { loadVoucherData } from "@/lib/vouchers/queries";
 
 export const metadata: Metadata = {
@@ -18,11 +19,12 @@ const text = {
     "Vouchers entered against ledgers. Editing or voiding a posted voucher needs a reason.",
 } as const;
 
-async function TransactionsContent() {
+async function TransactionsContent({ searchParams }: { searchParams: Promise<RawParams> }) {
   const me = await getCurrentUser();
   if (!me || !canView(me, "transactions")) notFound();
 
-  const data = await loadVoucherData(me.id);
+  const query = parseVoucherQuery(await searchParams);
+  const data = await loadVoucherData(me.id, query);
 
   return (
     <div>
@@ -42,10 +44,10 @@ async function TransactionsContent() {
   );
 }
 
-export default function TransactionsPage() {
+export default function TransactionsPage({ searchParams }: { searchParams: Promise<RawParams> }) {
   return (
-    <Suspense fallback={<PageLoading />}>
-      <TransactionsContent />
+    <Suspense fallback={<LoadingPopup />}>
+      <TransactionsContent searchParams={searchParams} />
     </Suspense>
   );
 }

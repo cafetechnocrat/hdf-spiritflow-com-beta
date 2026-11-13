@@ -4,14 +4,11 @@ import { loadTransactionDate, todayInIndia } from "./transaction-date";
 import type {
   LedgerChoice,
   VoucherData,
+  VoucherQuery,
   VoucherRow,
   VoucherStatus,
   VoucherTypeRow,
 } from "./types";
-
-// How many of the newest vouchers the list holds. The Day Book report will
-// cover the full history with date ranges.
-const LIST_LIMIT = 500;
 
 type TypeRecord = {
   id: string;
@@ -56,8 +53,27 @@ function expandGroups(roots: string[], children: Map<string, string[]>): string[
 
 // Types, rules, ledgers and vouchers all come from the database. Row Level
 // Security decides who may read them.
-export async function loadVoucherData(userId: string): Promise<VoucherData> {
+export async function loadVoucherData(userId: string, query: VoucherQuery): Promise<VoucherData> {
   const supabase = await createClient();
+  // One page at a time. The database filters, orders, counts and pages the list.
+  const first = (query.page - 1) * query.size;
+  let list = supabase
+    .from("voucher_summaries")
+    .select(
+      "id, voucher_type_id, type_name, reference_no, voucher_date, reference, narration, status, edit_reason, void_reason, total_text, debit_names, credit_names",
+      { count: "exact" },
+    );
+  if (query.status !== "all") list = list.eq("status", query.status);
+  if (query.type) list = list.eq("voucher_type_id", query.type);
+  if (query.from) list = list.gte("voucher_date", query.from);
+  if (query.to) list = list.lte("voucher_date", query.to);
+  // The search words go into a filter, so the characters that mean something there are dropped.
+  const term = query.q.replace(/[,()%*\\]/g, " ").replace(/\s+/g, " ").trim();
+  if (term) {
+    list = list.or(
+      `narration.ilike.%${term}%,reference.ilike.%${term}%,reference_no.ilike.%${term}%`,
+    );
+  }
   const [typesResult, rulesResult, groupsResult, ledgersResult, vouchersResult, transactionDate] =
     await Promise.all([
       supabase
@@ -73,14 +89,11 @@ export async function loadVoucherData(userId: string): Promise<VoucherData> {
         .select("id, name, group_id")
         .eq("status", "active")
         .order("name"),
-      supabase
-        .from("voucher_summaries")
-        .select(
-          "id, voucher_type_id, type_name, reference_no, voucher_date, reference, narration, status, edit_reason, void_reason, total_text, debit_names, credit_names",
-        )
+      list
         .order("voucher_date", { ascending: false })
         .order("created_at", { ascending: false })
-        .limit(LIST_LIMIT + 1),
+        .order("id")
+        .range(first, first + query.size - 1),
       loadTransactionDate(userId),
     ]);
 
@@ -116,8 +129,7 @@ export async function loadVoucherData(userId: string): Promise<VoucherData> {
   }));
 
   const summaries = (vouchersResult.data ?? []) as SummaryRecord[];
-  const truncated = summaries.length > LIST_LIMIT;
-  const vouchers: VoucherRow[] = summaries.slice(0, LIST_LIMIT).map((v) => ({
+  const vouchers: VoucherRow[] = summaries.map((v) => ({
     id: v.id,
     voucherTypeId: v.voucher_type_id,
     typeName: v.type_name,
@@ -137,7 +149,8 @@ export async function loadVoucherData(userId: string): Promise<VoucherData> {
     types,
     ledgers,
     vouchers,
-    truncated,
+    total: vouchersResult.count ?? summaries.length,
+    query,
     transactionDate,
     today: todayInIndia(),
   };
