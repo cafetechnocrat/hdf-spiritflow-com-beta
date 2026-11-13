@@ -9,6 +9,9 @@ import { parseItemQuery, type RawParams } from "@/lib/liquor/params";
 import { loadItems, loadLookups } from "@/lib/liquor/queries";
 import { loadTransactionDate } from "@/lib/vouchers/transaction-date";
 
+// The Excel import saves thousands of rows in batches and needs more than the default time.
+export const maxDuration = 60;
+
 export const metadata: Metadata = {
   title: "Spirit Flow",
   robots: { index: false, follow: false },

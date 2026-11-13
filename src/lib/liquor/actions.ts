@@ -24,6 +24,8 @@ const text = {
 
 const PATH = "/liquor-items";
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
+// Rows saved per database call.
+const BATCH_SIZE = 150;
 
 type DbError = { code?: string; message?: string } | null;
 
@@ -243,34 +245,50 @@ export async function runImport(formData: FormData): Promise<ImportResult> {
   if (summary.errors > 0) return { error: text.needsErrorsFixed, done: null };
   if (summary.rows.length === 0) return { error: text.nothingToImport, done: null };
 
+  // Saved in small batches, each its own transaction, so no single call runs past
+  // the database time limit. Running the same file again is safe: items already
+  // there are skipped and a rate is added only where it changed.
   const supabase = await createClient();
-  const { data, error } = await supabase.rpc("import_liquor_items", {
-    p_rows: summary.rows.map((r) => ({
-      item_code: r.itemCode,
-      item_name: r.itemName,
-      stock_name: r.stockName,
-      type: r.type,
-      category: r.category,
-      volume_ml: r.volumeMl,
-      bottles_per_case: r.bottlesPerCase,
-      peg_sale_allowed: r.pegSaleAllowed,
-      status: r.status,
-      case_rate: r.caseRate,
-      fl1_price: r.fl1Price,
-    })),
-    p_effective: effective,
-    p_first_load: mode === "first",
-  });
-  if (error) return { error: explain(error, "item"), done: null };
-  const result = (data as { items_added: number; rates_added: number; categories_added: number; types_added: number }[] | null)?.[0];
+  const total = { itemsAdded: 0, ratesAdded: 0, categoriesAdded: 0, typesAdded: 0 };
+  for (let start = 0; start < summary.rows.length; start += BATCH_SIZE) {
+    const batch = summary.rows.slice(start, start + BATCH_SIZE);
+    const { data, error } = await supabase.rpc("import_liquor_items", {
+      p_rows: batch.map((r) => ({
+        item_code: r.itemCode,
+        item_name: r.itemName,
+        stock_name: r.stockName,
+        type: r.type,
+        category: r.category,
+        volume_ml: r.volumeMl,
+        bottles_per_case: r.bottlesPerCase,
+        peg_sale_allowed: r.pegSaleAllowed,
+        status: r.status,
+        case_rate: r.caseRate,
+        fl1_price: r.fl1Price,
+      })),
+      p_effective: effective,
+      p_first_load: mode === "first",
+    });
+    if (error) {
+      console.error("import_liquor_items failed", error.code, error.message);
+      const saved = total.itemsAdded + total.ratesAdded;
+      const reason = explain(error, "item");
+      return {
+        error:
+          saved > 0
+            ? `The import stopped after saving ${total.itemsAdded} items and ${total.ratesAdded} rates. ${reason} (${error.code ?? "no code"}). Check the file again and import to continue.`
+            : `${reason} (${error.code ?? "no code"}: ${error.message ?? ""})`,
+        done: null,
+      };
+    }
+    const result = (data as
+      | { items_added: number; rates_added: number; categories_added: number; types_added: number }[]
+      | null)?.[0];
+    total.itemsAdded += result?.items_added ?? 0;
+    total.ratesAdded += result?.rates_added ?? 0;
+    total.categoriesAdded += result?.categories_added ?? 0;
+    total.typesAdded += result?.types_added ?? 0;
+  }
   revalidatePath(PATH);
-  return {
-    error: null,
-    done: {
-      itemsAdded: result?.items_added ?? 0,
-      ratesAdded: result?.rates_added ?? 0,
-      categoriesAdded: result?.categories_added ?? 0,
-      typesAdded: result?.types_added ?? 0,
-    },
-  };
+  return { error: null, done: total };
 }
