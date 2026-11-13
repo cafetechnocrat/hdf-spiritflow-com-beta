@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spirit Flow</title>
+<link rel="icon" type="image/png" href="../../../src/app/icon.png">
+<link rel="stylesheet" href="../phase-1/shared.css">
+<style>
+  .tabs { display: flex; gap: 2px; padding: 2px; background: var(--track); border-radius: 10px; margin-bottom: 14px; max-width: 560px; }
+  .tabs button { flex: 1; min-height: 40px; border-radius: 8px; font-size: .86rem; font-weight: 500; color: var(--text-muted); white-space: nowrap; padding: 0 10px; }
+  .tabs button[aria-selected="true"] { background: var(--surface); color: var(--text); font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,.2), 0 0 0 .5px rgba(0,0,0,.04); }
+  .panel[hidden] { display: none; }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; align-items: center; justify-content: space-between; }
+  .filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; align-items: center; }
+  .filters select, .filters input { max-width: 220px; }
+  .filters .asof { display: flex; align-items: center; gap: 6px; font-size: .8rem; color: var(--text-muted); }
+  .right { text-align: right; }
+  .num { font-variant-numeric: tabular-nums; font-weight: 600; }
+  .dash { color: var(--text-muted); }
+  /* Second line of an item name: smaller, another colour and another font. */
+  .alt { margin-top: 1px; font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: .72rem; color: var(--link); letter-spacing: .01em; }
+  #itemRows td.first { min-width: 300px; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .calc { margin: 4px 0 12px; padding: 12px 14px; border-radius: 14px; background: var(--track); font-size: .86rem; }
+  .calc .head { font-weight: 600; margin-bottom: 6px; }
+  .calc .row { display: flex; justify-content: space-between; gap: 12px; padding: 2px 0; font-variant-numeric: tabular-nums; }
+  .calc .row span:first-child { color: var(--text-muted); }
+  .namebox { margin: 0 0 12px; padding: 10px 14px; border-radius: 14px; background: var(--accent-soft); }
+  .namebox .cap { font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); margin-bottom: 3px; }
+  .sect { font-size: .78rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); margin: 14px 0 8px; }
+  .modal.wide { max-width: 640px; }
+  .note { padding: 10px 12px; border-radius: 12px; background: var(--accent-soft); color: var(--link); font-size: .84rem; margin-top: 14px; }
+  .sumgrid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); margin-bottom: 14px; }
+  .sumgrid .k { font-size: .74rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); }
+  .sumgrid .v { margin-top: 3px; font-size: 1.3rem; font-weight: 600; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+  .sumgrid .s { font-size: .78rem; color: var(--text-muted); }
+  .pg { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; padding: 12px 16px; border-top: 1px solid var(--divider); font-size: .84rem; }
+  .pg .l, .pg .r { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .pg select { width: auto; min-width: 84px; min-height: 36px; }
+  .pg .muted { color: var(--text-muted); }
+  .saved { position: fixed; right: 16px; bottom: 16px; z-index: 60; padding: 9px 14px; border-radius: 12px; background: #0F1B3D; color: #fff; font-size: .84rem; opacity: 0; transition: opacity .2s; pointer-events: none; }
+  .saved.show { opacity: 1; }
+  .drop { padding: 22px; border: 1.5px dashed var(--divider); border-radius: 16px; text-align: center; color: var(--text-muted); font-size: .9rem; }
+</style>
+</head>
+<body data-page="liquor-items" data-title="Liquor Items">
+<div class="mock-note">Mockup. Sample data only. Not the real app. In the real screen every item, category and rate comes from the database.</div>
+<div class="shell">
+  <main class="content">
+    <div class="page-head">
+      <div>
+        <h1>Liquor Items</h1>
+        <p>The liquor inventory master. Every BevCo item is kept here. Active items are the ones you stock now; Inactive ones are on the BevCo list and can be bought later.</p>
+      </div>
+    </div>
+
+    <div class="tabs" role="tablist" aria-label="Section">
+      <button type="button" role="tab" id="t-it" aria-selected="true" aria-controls="p-it">Items</button>
+      <button type="button" role="tab" id="t-ca" aria-selected="false" aria-controls="p-ca">Categories And Types</button>
+      <button type="button" role="tab" id="t-im" aria-selected="false" aria-controls="p-im">Import From Excel</button>
+    </div>
+
+    <!-- ITEMS -->
+    <section class="panel" id="p-it" role="tabpanel" aria-labelledby="t-it">
+      <div class="toolbar">
+        <p class="hint" style="margin:0">Rates and costs shown are the list rates in force on the chosen date, worked out from the rate history. Items are never deleted, only made Inactive.</p>
+        <button class="btn" data-open="itemModal" data-mode="add">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add Item
+        </button>
+      </div>
+      <div class="filters">
+        <input type="search" placeholder="Search Name Or Code" aria-label="Search">
+        <select aria-label="Category"><option>All Categories</option><option>Beer</option><option>Brandy</option><option>Gin</option><option>Liqueur</option><option>Rum</option><option>Tequila</option><option>Vodka</option><option>Whisky</option><option>White Rum</option><option>Wine</option></select>
+        <select aria-label="Type"><option>All Types</option><option>IMFL</option><option>FMFL</option></select>
+        <select aria-label="Size"><option>All Sizes</option><option>180 ml</option><option>250 ml</option><option>330 ml</option><option>375 ml</option><option>500 ml</option><option>650 ml</option><option>700 ml</option><option>750 ml</option><option>1000 ml</option></select>
+        <select aria-label="Peg sale"><option>Peg Sale: All</option><option>Peg Sale: Yes</option><option>Peg Sale: No</option></select>
+        <select aria-label="Status"><option>Active</option><option>Inactive</option><option>All</option></select>
+        <label class="asof">Rates As On <input type="date" value="2026-11-12" aria-label="Rates as on" style="max-width:150px"></label>
+      </div>
+      <div class="card table-wrap">
+        <table class="data">
+          <thead><tr>
+            <th>Item</th><th>Category</th><th class="right">Bottles / Case</th>
+            <th class="right">Rate / Bottle</th><th class="right">Cess</th><th class="right">Cost / Bottle</th><th class="right">Cost / Peg</th>
+            <th>Peg Sale</th><th>Status</th><th><span class="sr-only">Actions</span></th>
+          </tr></thead>
+          <tbody id="itemRows"></tbody>
+        </table>
+        <div class="pg">
+          <div class="l">
+            <label class="muted" for="pgSize">Rows per page</label>
+            <select id="pgSize"><option selected>10</option><option>25</option><option>50</option><option>100</option><option>200</option></select>
+            <span class="muted">Showing 1 to 9 of 4,627 items (sample shows 9)</span>
+          </div>
+          <div class="r">
+            <button class="btn secondary small" disabled>First</button>
+            <button class="btn secondary small" disabled>Previous</button>
+            <span class="muted">Page 1 of 463</span>
+            <button class="btn secondary small">Next</button>
+            <button class="btn secondary small">Last</button>
+          </div>
+        </div>
+      </div>
+      <p class="note">Average cost and stock on hand are added to this list in Phase 4, when purchases and stock movements are built. Average cost is not a master-data value: it is worked out from the actual purchases.</p>
+    </section>
+
+    <!-- CATEGORIES AND TYPES -->
+    <section class="panel" id="p-ca" role="tabpanel" aria-labelledby="t-ca" hidden>
+      <div class="toolbar">
+        <p class="hint" style="margin:0">Categories and types are kept in tables, not fixed in the code. A category that has items is made Inactive, never deleted.</p>
+        <button class="btn" data-open="catModal">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add Category
+        </button>
+      </div>
+      <div class="card table-wrap">
+        <table class="data">
+          <thead><tr><th>Category</th><th class="right">Items</th><th class="right">Active Items</th><th class="right">Order</th><th>Status</th><th><span class="sr-only">Actions</span></th></tr></thead>
+          <tbody>
+            <tr><td class="first"><div class="cell-main">Beer</div></td><td data-label="Items" class="right"><span class="num">464</span></td><td data-label="Active Items" class="right"><span class="num">19</span></td><td data-label="Order" class="right">1</td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td><td class="act"><div class="actions"><button class="btn secondary small" data-open="catModal">Edit</button></div></td></tr>
+            <tr><td class="first"><div class="cell-main">Brandy</div></td><td data-label="Items" class="right"><span class="num">1,275</span></td><td data-label="Active Items" class="right"><span class="num">28</span></td><td data-label="Order" class="right">2</td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td><td class="act"><div class="actions"><button class="btn secondary small" data-open="catModal">Edit</button></div></td></tr>
+            <tr><td class="first"><div class="cell-main">Gin</div></td><td data-label="Items" class="right"><span class="num">66</span></td><td data-label="Active Items" class="right"><span class="num">0</span></td><td data-label="Order" class="right">3</td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td><td class="act"><div class="actions"><button class="btn secondary small" data-open="catModal">Edit</button></div></td></tr>
+            <tr><td class="first"><div class="cell-main">Liqueur</div></td><td data-label="Items" class="right"><span class="num">8</span></td><td data-label="Active Items" class="right"><span class="num">0</span></td><td data-label="Order" class="right">4</td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td><td class="act"><div class="actions"><button class="btn secondary small" data-open="catModal">Edit</button></div></td></tr>
+            <tr><td class="first"><div class="cell-main">Rum</div></td><td data-label="Items" class="right"><span class="num">926</span></td><td data-label="Active Items" class="right"><span class="num">39</span></td><td data-label="Order" class="right">5</td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td><td class="act"><div class="actions"><button class="btn secondary small" data-open="catModal">Edit</button></div></td></tr>
+            <tr><td class="first"><div class="cell-main">Tequila</div></td><td data-label="Items" class="right"><span class="num">21</span></td><td data-label="Active Items" class="right"><span class="num">0</span></td><td data-label="Order" class="right">6</td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td><td class="act"><div class="actions"><button class="btn secondary small" data-open="catModal">Edit</button></div></td></tr>
+            <tr><td class="first"><div class="cell-main">Vodka</div></td><td data-label="Items" class="right"><span class="num">735</span></td><td data-label="Active Items" class="right"><span class="num">23</span></td><td data-label="Order" class="right">7</td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td><td class="act"><div class="actions"><button class="btn secondary small" data-open="catModal">Edit</button></div></td></tr>
+            <tr><td class="first"><div class="cell-main">Whisky</div></td><td data-label="Items" class="right"><span class="num">479</span></td><td data-label="Active Items" class="right"><span class="num">18</span></td><td data-label="Order" class="right">8</td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td><td class="act"><div class="actions"><button class="btn secondary small" data-open="catModal">Edit</button></div></td></tr>
+            <tr><td class="first"><div class="cell-main">White Rum</div></td><td data-label="Items" class="right"><span class="num">151</span></td><td data-label="Active Items" class="right"><span class="num">10</span></td><td data-label="Order" class="right">9</td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td><td class="act"><div class="actions"><button class="btn secondary small" data-open="catModal">Edit</button></div></td></tr>
+            <tr><td class="first"><div class="cell-main">Wine</div></td><td data-label="Items" class="right"><span class="num">502</span></td><td data-label="Active Items" class="right"><span class="num">5</span></td><td data-label="Order" class="right">10</td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td><td class="act"><div class="actions"><button class="btn secondary small" data-open="catModal">Edit</button></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 class="sect" style="margin-top:22px">Types</h3>
+      <div class="card table-wrap">
+        <table class="data">
+          <thead><tr><th>Type</th><th>Meaning</th><th class="right">Items</th><th>Status</th><th><span class="sr-only">Actions</span></th></tr></thead>
+          <tbody>
+            <tr><td class="first"><div class="cell-main">IMFL</div></td><td data-label="Meaning">Indian Made Foreign Liquor</td><td data-label="Items" class="right"><span class="num">4,403</span></td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td><td class="act"><div class="actions"><button class="btn secondary small" data-open="catModal">Edit</button></div></td></tr>
+            <tr><td class="first"><div class="cell-main">FMFL</div></td><td data-label="Meaning">Foreign Made Foreign Liquor</td><td data-label="Items" class="right"><span class="num">224</span></td><td data-label="Status"><span class="badge ok"><span class="dot"></span>Active</span></td><td class="act"><div class="actions"><button class="btn secondary small" data-open="catModal">Edit</button></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- IMPORT -->
+    <section class="panel" id="p-im" role="tabpanel" aria-labelledby="t-im" hidden>
+      <div class="card card-pad" style="margin-bottom:14px">
+        <h2 style="font-size:1rem;font-weight:600;margin-bottom:10px">Step 1. Choose The File</h2>
+        <div class="two">
+          <div class="field">
+            <label class="lbl" for="imEff">Rates Effective From <span class="req">*</span></label>
+            <input id="imEff" type="date" value="2023-04-01">
+            <p class="hint">The first load uses 01/04/2023. A later price list uses its own date.</p>
+          </div>
+          <div class="field">
+            <label class="lbl" for="imMode">What The File Is</label>
+            <select id="imMode"><option>First load: items and rates</option><option>Price list update: rates only</option></select>
+          </div>
+        </div>
+        <div class="drop">HDF_Inventory_Master_20261113_Full.xlsx<br><span class="hint">Sheet read: Inventory Master. Nothing is saved until you press Import.</span></div>
+      </div>
+
+      <div class="card card-pad" style="margin-bottom:14px">
+        <h2 style="font-size:1rem;font-weight:600;margin-bottom:10px">Step 2. Check The Result</h2>
+        <div class="sumgrid">
+          <div><div class="k">Rows Read</div><div class="v">4,627</div><div class="s">142 Active, 4,485 Inactive</div></div>
+          <div><div class="k">New Items</div><div class="v">4,627</div><div class="s">No code is in the database yet</div></div>
+          <div><div class="k">New Rates</div><div class="v">4,627</div><div class="s">All effective 01/04/2023</div></div>
+          <div><div class="k">New Categories</div><div class="v">3</div><div class="s">Gin, Tequila, Liqueur</div></div>
+          <div><div class="k">Warnings</div><div class="v">2</div><div class="s">Review before importing</div></div>
+          <div><div class="k">Errors</div><div class="v">0</div><div class="s">Nothing blocks the import</div></div>
+        </div>
+        <div class="table-wrap" style="border:1px solid var(--divider);border-radius:14px">
+          <table class="data">
+            <thead><tr><th>Row</th><th>Item Code</th><th>Level</th><th>What To Check</th></tr></thead>
+            <tbody>
+              <tr><td class="first">312</td><td data-label="Item Code">12345678X</td><td data-label="Level"><span class="badge warn">Warning</span></td><td data-label="What To Check">Cess is 20 but the FL1 price of 450 gives 0 by the cess rule. The file value is kept; please confirm.</td></tr>
+              <tr><td class="first">1,204</td><td data-label="Item Code">98765432Q</td><td data-label="Level"><span class="badge warn">Warning</span></td><td data-label="What To Check">Stock name has a possible spelling mistake. It can be corrected on the item afterwards.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="hint" style="margin-top:8px">These two warning rows are samples. Errors, such as a missing code or a duplicate code, stop the import until the file is fixed.</p>
+        <div class="modal-actions" style="margin-top:14px"><button class="btn secondary" type="button">Choose Another File</button><button class="btn" type="button" id="doImport">Import 4,627 Items</button></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- ITEM FORM -->
+<div class="modal-scrim" id="itemModal" role="dialog" aria-modal="true" aria-labelledby="itTitle">
+  <div class="modal wide">
+    <h2 id="itTitle">Liquor Item</h2>
+    <p class="sub">Identity of the item. Rates are kept in the rate history, not here.</p>
+
+    <div class="namebox" aria-live="polite">
+      <div class="cap">How It Shows On Screens</div>
+      <div class="cell-main" id="pvMain">STOCK NAME 000 ML</div>
+      <div class="alt" id="pvAlt">(Item Code | Item Name)</div>
+    </div>
+
+    <div class="two">
+      <div class="field"><label class="lbl" for="f-code">Item Code <span class="req">*</span></label><input id="f-code" type="text" value="11678185S"><p class="hint">The BevCo code. It cannot repeat.</p></div>
+      <div class="field"><label class="lbl" for="f-vol">Volume (ml) <span class="req">*</span></label><input id="f-vol" type="text" inputmode="numeric" value="500"></div>
+    </div>
+    <div class="field"><label class="lbl" for="f-name">Item Name (BevCo) <span class="req">*</span></label><input id="f-name" type="text" value="8 PM EXCELLENCY BRANDY"></div>
+    <div class="field"><label class="lbl" for="f-stock">Stock Name <span class="req">*</span></label><input id="f-stock" type="text" value="8PM EXELLENCY BRANDY"><p class="hint">The short name staff use. Shown first, followed by the size.</p></div>
+    <div class="two">
+      <div class="field"><label class="lbl" for="f-cat">Category <span class="req">*</span></label><select id="f-cat"><option>Beer</option><option selected>Brandy</option><option>Gin</option><option>Liqueur</option><option>Rum</option><option>Tequila</option><option>Vodka</option><option>Whisky</option><option>White Rum</option><option>Wine</option></select></div>
+      <div class="field"><label class="lbl" for="f-type">Type <span class="req">*</span></label><select id="f-type"><option selected>IMFL</option><option>FMFL</option></select></div>
+    </div>
+    <div class="two">
+      <div class="field"><label class="lbl" for="f-bpc">Bottles Per Case <span class="req">*</span></label><input id="f-bpc" type="text" inputmode="numeric" value="18"></div>
+      <div class="field"><label class="lbl" for="f-peg">Peg Sale Allowed</label><select id="f-peg"><option selected>Yes</option><option>No</option></select><p class="hint">No means it can only be sold by the bottle.</p></div>
+    </div>
+    <div class="field"><label class="lbl" for="f-st">Status</label><select id="f-st"><option selected>Active</option><option>Inactive</option></select></div>
+
+    <h3 class="sect" id="rateHead">First Rate (Saved With The New Item)</h3>
+    <div id="rateBox">
+      <div class="two">
+        <div class="field"><label class="lbl" for="f-case">Case Rate <span class="req">*</span></label><input id="f-case" type="text" inputmode="decimal" value="6,500.00"><p class="hint">BevCo price after tax, per case.</p></div>
+        <div class="field"><label class="lbl" for="f-fl1">FL1 Shop Price <span class="req">*</span></label><input id="f-fl1" type="text" inputmode="decimal" value="410.00"><p class="hint">Decides the cess slab.</p></div>
+      </div>
+      <div class="field"><label class="lbl" for="f-eff">Effective From <span class="req">*</span></label><input id="f-eff" type="date" value="2023-04-01"></div>
+    </div>
+    <div class="calc" id="calc" aria-live="polite"></div>
+    <p class="hint" id="editHint" hidden>To change a price, use Rate History on the item. Changing a price adds a new dated row and keeps the old one.</p>
+
+    <div class="modal-actions"><button class="btn secondary" data-close>Cancel</button><button class="btn" data-close id="saveItem">Save Item</button></div>
+  </div>
+</div>
+
+<!-- RATE HISTORY -->
+<div class="modal-scrim" id="rateModal" role="dialog" aria-modal="true" aria-labelledby="rtTitle">
+  <div class="modal wide">
+    <h2 id="rtTitle">Rate History</h2>
+    <p class="sub">
+      <span class="cell-main" style="display:inline">8PM EXELLENCY BRANDY 500 ML</span>
+      <span class="alt" style="display:block">(11678185S | 8 PM EXCELLENCY BRANDY)</span>
+    </p>
+    <div class="card table-wrap" style="margin-bottom:12px">
+      <table class="data">
+        <thead><tr><th>Effective From</th><th class="right">Case Rate</th><th class="right">FL1 Price</th><th class="right">Cess</th><th class="right">Cost / Bottle</th><th class="right">Cost / Peg</th></tr></thead>
+        <tbody>
+          <tr><td class="first"><div class="cell-main">12/11/2026</div><div class="cell-sub">In force now</div></td><td data-label="Case Rate" class="right"><span class="num">6,680.00</span></td><td data-label="FL1 Price" class="right">420.00</td><td data-label="Cess" class="right">0.00</td><td data-label="Cost / Bottle" class="right"><span class="num">371.11</span></td><td data-label="Cost / Peg" class="right"><span class="num">44.53</span></td></tr>
+          <tr><td class="first"><div class="cell-main">01/04/2023</div><div class="cell-sub">First load</div></td><td data-label="Case Rate" class="right"><span class="num">6,500.00</span></td><td data-label="FL1 Price" class="right">410.00</td><td data-label="Cess" class="right">0.00</td><td data-label="Cost / Bottle" class="right"><span class="num">361.11</span></td><td data-label="Cost / Peg" class="right"><span class="num">43.33</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="hint">Rows are never edited or deleted. A mistake is corrected by adding a new row from that date.</p>
+
+    <h3 class="sect">Update Rate</h3>
+    <div class="two">
+      <div class="field"><label class="lbl" for="u-eff">Effective From <span class="req">*</span></label><input id="u-eff" type="date" value="2026-11-12"></div>
+      <div class="field"><label class="lbl" for="u-case">Case Rate <span class="req">*</span></label><input id="u-case" type="text" inputmode="decimal" value="6,700.00"></div>
+    </div>
+    <div class="field"><label class="lbl" for="u-fl1">FL1 Shop Price <span class="req">*</span></label><input id="u-fl1" type="text" inputmode="decimal" value="420.00"></div>
+    <div class="calc" id="ucalc" aria-live="polite"></div>
+    <div class="modal-actions"><button class="btn secondary" data-close>Close</button><button class="btn" data-close id="saveRate">Add Rate</button></div>
+  </div>
+</div>
+
+<!-- CATEGORY -->
+<div class="modal-scrim" id="catModal" role="dialog" aria-modal="true" aria-labelledby="catTitle">
+  <div class="modal">
+    <h2 id="catTitle">Category</h2>
+    <p class="sub">A group of liquor items, such as Gin.</p>
+    <div class="field"><label class="lbl" for="c1">Name <span class="req">*</span></label><input id="c1" type="text" placeholder="For example Gin"></div>
+    <div class="field"><label class="lbl" for="c2">Order On Screens</label><input id="c2" type="text" inputmode="numeric" placeholder="1"></div>
+    <div class="field"><label class="lbl" for="c3">Status</label><select id="c3"><option>Active</option><option>Inactive</option></select></div>
+    <div class="modal-actions"><button class="btn secondary" data-close>Cancel</button><button class="btn" data-close>Save</button></div>
+  </div>
+</div>
+
+<div class="saved" id="saved" role="status">Saved.</div>
+
+<script src="../phase-1/shell.js"></script>
+<script>
+  // Mockup behaviour only. The real screen reads every figure from the database.
+  (function () {
+    function inr(n) {
+      var s = Math.abs(n).toFixed(2).split("."), x = s[0], last = x.slice(-3), rest = x.slice(0, -3);
+      if (rest) last = rest.replace(/\B(?=(\d{2})+(?!\d))/g, ",") + "," + last;
+      return last + "." + s[1];
+    }
+    function num(v) { return parseFloat(String(v).replace(/,/g, "")); }
+    // Cess rule: FL1 price below 500 is 0, 500 to 999 is 20, 1000 and above is 40.
+    function cess(fl1) { return fl1 < 500 ? 0 : (fl1 < 1000 ? 20 : 40); }
+    function calc(caseRate, bpc, vol, fl1, peg) {
+      var rate = caseRate / bpc, c = cess(fl1), cost = rate + c;
+      return { rate: rate, cess: c, cost: cost, pegRate: rate / vol * 60, pegCost: cost / vol * 60, peg: vol / 60 };
+    }
+
+    // Item list.
+    var items = [
+      ["21583164X", "AMSTEL BIER PREMIUM STRONG BEER", "AMSTEL BEER", 650, 12, "Beer", 1400, 140, "No", "Active"],
+      ["21742185X", "BRITISH EMPIRE PREMIUM STRONG BEER", "BRITISH EMPIRE", 500, 24, "Beer", 2400, 120, "No", "Active"],
+      ["15314182V", "BRO CODE GRAND RESERVA", "BRO CODE", 375, 24, "Beer", 3400, 170, "No", "Active"],
+      ["21764875S", "CORONA EXTRA INTERNATIONAL BEER", "CORONA BEER", 500, 24, "Beer", 4200, 210, "No", "Active"],
+      ["11678185S", "8 PM EXCELLENCY BRANDY", "8PM EXELLENCY BRANDY", 500, 18, "Brandy", 6500, 410, "Yes", "Active"],
+      ["12678201W", "8 PM PREMIUM BLACK WHISKY", "8PM WHISKY", 750, 12, "Whisky", 14200, 1350, "Yes", "Active"],
+      ["15512391W", "VINHO TINTO NURTURED PORT WINE", "VINHO TINTO PORT WINE", 750, 12, "Wine", 5700, 560, "Yes", "Active"],
+      ["11678183S", "8 PM EXCELLENCY BRANDY", "8 PM EXCELLENCY BRANDY", 180, 48, "Brandy", 7200, 170, "Yes", "Inactive"],
+      ["11678181S", "8 PM EXCELLENCY BRANDY", "8 PM EXCELLENCY BRANDY", 750, 12, "Brandy", 7400, 700, "Yes", "Inactive"]
+    ];
+    var body = document.getElementById("itemRows");
+    body.innerHTML = items.map(function (it) {
+      var c = calc(it[6], it[4], it[3], it[7]), pegOk = it[8] === "Yes";
+      // The second line repeats nothing: when the stock name is only the BevCo
+      // name, it shows the code alone.
+      var same = it[1] === it[2];
+      var alt = same ? "(" + it[0] + ")" : "(" + it[0] + " | " + it[1] + ")";
+      return '<tr>' +
+        '<td class="first"><div class="cell-main">' + it[2] + " " + it[3] + ' ML</div><div class="alt">' + alt + '</div></td>' +
+        '<td data-label="Category">' + it[5] + '</td>' +
+        '<td data-label="Bottles / Case" class="right">' + it[4] + '</td>' +
+        '<td data-label="Rate / Bottle" class="right"><span class="num">' + inr(c.rate) + '</span></td>' +
+        '<td data-label="Cess" class="right">' + inr(c.cess) + '</td>' +
+        '<td data-label="Cost / Bottle" class="right"><span class="num">' + inr(c.cost) + '</span></td>' +
+        '<td data-label="Cost / Peg" class="right">' + (pegOk ? '<span class="num">' + inr(c.pegCost) + '</span>' : '<span class="dash">-</span>') + '</td>' +
+        '<td data-label="Peg Sale"><span class="badge ' + (pegOk ? "ok" : "off") + '">' + it[8] + '</span></td>' +
+        '<td data-label="Status"><span class="badge ' + (it[9] === "Active" ? "ok" : "off") + '">' + (it[9] === "Active" ? '<span class="dot"></span>' : "") + it[9] + '</span></td>' +
+        '<td class="act"><div class="actions"><button class="btn secondary small" data-open="rateModal">Rates</button><button class="btn secondary small" data-open="itemModal" data-mode="edit">Edit</button></div></td>' +
+        '</tr>';
+    }).join("");
+
+    // Item form: live name and rate preview.
+    var f = {}, ids = ["code", "vol", "name", "stock", "bpc", "peg", "case", "fl1"];
+    ids.forEach(function (k) { f[k] = document.getElementById("f-" + k); });
+    function renderItem() {
+      var vol = num(f.vol.value), stock = f.stock.value.trim() || "STOCK NAME", nm = f.name.value.trim(), code = f.code.value.trim() || "Item Code";
+      document.getElementById("pvMain").textContent = stock + " " + (isNaN(vol) ? "000" : vol) + " ML";
+      document.getElementById("pvAlt").textContent = (nm && nm !== stock) ? "(" + code + " | " + nm + ")" : "(" + code + ")";
+      var cs = num(f.case.value), bp = num(f.bpc.value), fl = num(f.fl1.value), box = document.getElementById("calc");
+      if ([cs, bp, fl, vol].some(function (v) { return isNaN(v) || v <= 0; })) {
+        box.innerHTML = '<div class="head">Enter the case rate, FL1 price, bottles per case and volume.</div>'; return;
+      }
+      var c = calc(cs, bp, vol, fl), pegOk = f.peg.value === "Yes";
+      box.innerHTML = '<div class="head">Worked out by the system, never typed</div>' +
+        '<div class="row"><span>Rate per bottle (' + inr(cs) + ' &divide; ' + bp + ')</span><span>&#8377;' + inr(c.rate) + '</span></div>' +
+        '<div class="row"><span>Cess per bottle (FL1 price ' + inr(fl) + ')</span><span>&#8377;' + inr(c.cess) + '</span></div>' +
+        '<div class="row"><span>Cost per bottle</span><span><strong>&#8377;' + inr(c.cost) + '</strong></span></div>' +
+        (pegOk ? '<div class="row"><span>Pegs per bottle (' + vol + ' &divide; 60)</span><span>' + (Math.round(c.peg * 100) / 100) + '</span></div>' +
+          '<div class="row"><span>Rate per peg</span><span>&#8377;' + inr(c.pegRate) + '</span></div>' +
+          '<div class="row"><span>Cost per peg</span><span><strong>&#8377;' + inr(c.pegCost) + '</strong></span></div>'
+          : '<div class="row"><span>Peg figures</span><span>Not used. Bottle sale only.</span></div>');
+    }
+    ids.forEach(function (k) { f[k].addEventListener("input", renderItem); f[k].addEventListener("change", renderItem); });
+    renderItem();
+
+    // Add or Edit: Edit hides the first-rate fields (rates have their own history).
+    document.addEventListener("click", function (e) {
+      var b = e.target.closest("[data-open='itemModal']");
+      if (!b) return;
+      var edit = b.getAttribute("data-mode") === "edit";
+      document.getElementById("itTitle").textContent = edit ? "Edit Liquor Item" : "Add Liquor Item";
+      document.getElementById("rateHead").hidden = edit;
+      document.getElementById("rateBox").hidden = edit;
+      document.getElementById("editHint").hidden = !edit;
+      document.getElementById("saveItem").textContent = edit ? "Save Changes" : "Save Item";
+    });
+
+    // Rate history: preview of the new row against the one in force.
+    var uc = document.getElementById("u-case"), uf = document.getElementById("u-fl1");
+    function renderRate() {
+      var cs = num(uc.value), fl = num(uf.value), box = document.getElementById("ucalc");
+      if (isNaN(cs) || isNaN(fl) || cs <= 0) { box.innerHTML = '<div class="head">Enter the case rate and FL1 price.</div>'; return; }
+      var c = calc(cs, 18, 500, fl), old = calc(6680, 18, 500, 420), d = c.cost - old.cost;
+      box.innerHTML = '<div class="head">New row, worked out by the system</div>' +
+        '<div class="row"><span>Cost per bottle</span><span><strong>&#8377;' + inr(c.cost) + '</strong> (' + (d >= 0 ? "+" : "&minus;") + inr(d) + ' from &#8377;' + inr(old.cost) + ')</span></div>' +
+        '<div class="row"><span>Cost per peg</span><span>&#8377;' + inr(c.pegCost) + '</span></div>' +
+        '<div class="row"><span>Cess per bottle</span><span>&#8377;' + inr(c.cess) + '</span></div>';
+    }
+    uc.addEventListener("input", renderRate); uf.addEventListener("input", renderRate); renderRate();
+
+    // Tabs.
+    var tabs = [["t-it", "p-it"], ["t-ca", "p-ca"], ["t-im", "p-im"]];
+    tabs.forEach(function (pair) {
+      document.getElementById(pair[0]).addEventListener("click", function () {
+        tabs.forEach(function (p) {
+          var on = p[0] === pair[0];
+          document.getElementById(p[0]).setAttribute("aria-selected", String(on));
+          document.getElementById(p[1]).hidden = !on;
+        });
+      });
+    });
+
+    // Saved toast.
+    ["saveItem", "saveRate", "doImport"].forEach(function (id) {
+      document.getElementById(id).addEventListener("click", function () {
+        var s = document.getElementById("saved");
+        s.textContent = id === "doImport" ? "Imported 4,627 items and 4,627 rates." : "Saved.";
+        s.classList.add("show");
+        setTimeout(function () { s.classList.remove("show"); }, 1800);
+      });
+    });
+  })();
+</script>
+</body>
+</html>
