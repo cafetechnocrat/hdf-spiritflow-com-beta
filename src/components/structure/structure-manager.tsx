@@ -19,9 +19,11 @@ import {
 } from "@/lib/structure/actions";
 import type { StructureResult } from "@/lib/structure/schemas";
 import {
+  canAllowPegs,
   OUTLET_TYPES,
   OUTLET_TYPE_LABELS,
   STOCK_POINT_TYPES,
+  type StockPointType,
   STOCK_POINT_TYPE_LABELS,
   type CounterRow,
   type OutletRow,
@@ -54,7 +56,13 @@ const text = {
   colCounters: "Counters",
   colStatus: "Status",
   none: "None",
-  noStockPoint: "No Stock Point",
+  noStockPoint: "Not Applicable",
+  colPeg: "Peg Sale",
+  pegAllowed: "Allowed",
+  pegNotAllowed: "Not Allowed",
+  pegLabel: "Peg Allowed",
+  pegHint:
+    "Tick if this stock point counts and sells liquor in pegs. Leave it off for a store that holds bottles only.",
   shared: "(shared)",
   active: "Active",
   inactive: "Inactive",
@@ -70,7 +78,7 @@ const text = {
   emptyCountersHint: "Add an outlet first, then its counters.",
   connectTitle: "How They Connect",
   connectNoOutlet: "No outlet sells from it. Stock is only transferred out.",
-  connectNoStockPoint: "No Stock Point",
+  connectNoStockPoint: "Not Applicable",
   connectStockPoint: "stock point",
   connectOutlet: "outlet",
   // Forms
@@ -88,7 +96,7 @@ const text = {
   status: "Status",
   stockPointField: "Stock Point",
   stockPointHint:
-    "Only one. Choose where this outlet's stock comes from. Several outlets may share a stock point and still keep their own selling rates. Leave as No Stock Point for an outlet that sells nothing from stock.",
+    "Only one. Choose where this outlet's stock comes from. Several outlets may share a stock point and still keep their own selling rates. Choose Not Applicable for an outlet that sells nothing from stock.",
   outletField: "Outlet",
   selectOutlet: "Select An Outlet",
   counterName: "Counter Name",
@@ -168,6 +176,12 @@ function FormDialog({
 }) {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  // The Peg Allowed box shows only for a Liquor stock point.
+  const [spType, setSpType] = useState<string>(
+    target.kind === "stock_point" ? (target.record?.type ?? "") : "",
+  );
+  const spTypeId = useId();
+  const pegId = useId();
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -225,19 +239,44 @@ function FormDialog({
                 placeholder="LST"
                 hint={text.codeHint}
               />
-              <SelectField
-                label={text.type}
-                name="type"
-                defaultValue={target.record?.type ?? ""}
-              >
-                <option value="">{text.selectType}</option>
-                {STOCK_POINT_TYPES.map((value) => (
-                  <option key={value} value={value}>
-                    {STOCK_POINT_TYPE_LABELS[value]}
-                  </option>
-                ))}
-              </SelectField>
+              <div className="mb-3.5">
+                <label htmlFor={spTypeId} className={field.label}>
+                  {text.type} <span className="text-error">*</span>
+                </label>
+                <select
+                  id={spTypeId}
+                  name="type"
+                  value={spType}
+                  onChange={(event) => setSpType(event.target.value)}
+                  className={field.input}
+                >
+                  <option value="">{text.selectType}</option>
+                  {STOCK_POINT_TYPES.map((value) => (
+                    <option key={value} value={value}>
+                      {STOCK_POINT_TYPE_LABELS[value]}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
+            {STOCK_POINT_TYPES.includes(spType as StockPointType) &&
+            canAllowPegs(spType as StockPointType) ? (
+              <div className="mb-3.5">
+                <label htmlFor={pegId} className="flex items-center gap-2 text-[0.88rem]">
+                  <input
+                    id={pegId}
+                    name="pegAllowed"
+                    type="checkbox"
+                    defaultChecked={
+                      target.kind === "stock_point" && (target.record?.pegAllowed ?? false)
+                    }
+                    className="h-4 w-4"
+                  />
+                  {text.pegLabel}
+                </label>
+                <p className={field.hint}>{text.pegHint}</p>
+              </div>
+            ) : null}
             <StatusSelect defaultValue={target.record?.status ?? "active"} />
           </>
         ) : null}
@@ -291,6 +330,12 @@ function FormDialog({
 
         {target.kind === "counter" ? (
           <>
+            <TextField
+              label={text.counterName}
+              name="name"
+              defaultValue={target.record?.name ?? ""}
+              placeholder={text.counterNamePlaceholder}
+            />
             <SelectField
               label={text.outletField}
               name="outletId"
@@ -303,12 +348,6 @@ function FormDialog({
                 </option>
               ))}
             </SelectField>
-            <TextField
-              label={text.counterName}
-              name="name"
-              defaultValue={target.record?.name ?? ""}
-              placeholder={text.counterNamePlaceholder}
-            />
             <StatusSelect defaultValue={target.record?.status ?? "active"} />
           </>
         ) : null}
@@ -626,6 +665,19 @@ export function StructureManager({
               cell: (row) => <NameCell name={row.name} sub={row.code} />,
             },
             { label: text.colType, cell: (row) => STOCK_POINT_TYPE_LABELS[row.type] },
+            {
+              label: text.colPeg,
+              cell: (row) =>
+                canAllowPegs(row.type) ? (
+                  row.pegAllowed ? (
+                    text.pegAllowed
+                  ) : (
+                    text.pegNotAllowed
+                  )
+                ) : (
+                  <span className="text-muted">-</span>
+                ),
+            },
             {
               label: text.colOutlets,
               cell: (row) => (

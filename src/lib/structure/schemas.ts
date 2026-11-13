@@ -18,12 +18,19 @@ const status = z.enum(["active", "inactive"]);
 
 export const idSchema = z.uuid();
 
-export const stockPointSchema = z.object({
-  name,
-  code,
-  type: z.enum(STOCK_POINT_TYPES, "Choose a type."),
-  status,
-});
+export const stockPointSchema = z
+  .object({
+    name,
+    code,
+    type: z.enum(STOCK_POINT_TYPES, "Choose a type."),
+    // Only a Liquor stock point can allow pegs. The form sends "on" when ticked.
+    pegAllowed: z.boolean(),
+    status,
+  })
+  .transform((value) => ({
+    ...value,
+    pegAllowed: value.type === "liquor" && value.pegAllowed,
+  }));
 
 export const outletSchema = z.object({
   name,

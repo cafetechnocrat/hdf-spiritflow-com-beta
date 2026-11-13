@@ -65,7 +65,7 @@ Create with migrations. Every table gets Row Level Security, `created_at`, `crea
 
 ### Tables
 - `profiles`: `id` (matches `auth.users.id`), `full_name`, `role` (enum of the nine roles), `username` (unique, nullable), `phone` (nullable), `status` (active, inactive), `must_change_password`.
-- `outlets`: `code`, `name`, `type` (bar, restaurant, front_office, other), `status`, `sort_order`.
+- `outlets`: `code`, `name`, `type` (liquor, food, hospitality), `status`, `sort_order`.
 - `counters`: `outlet_id`, `name`, `status`.
 - `user_outlet_access`: `user_id`, `outlet_id`, `counter_id` (nullable). Limits cashiers and other scoped roles. Roles that see all outlets (MD, accounts, admin) need no rows.
 - `audit_log`: `occurred_at`, `actor_id`, `action` (insert, update, void, login, logout, failed_login), `table_name`, `record_id`, `old_data` (jsonb), `new_data` (jsonb). Insert-only: no update or delete allowed for any role through the app.

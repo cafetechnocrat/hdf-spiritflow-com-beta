@@ -15,6 +15,7 @@ type StockPointRecord = {
   code: string;
   name: string;
   type: StockPointType;
+  peg_allowed: boolean;
   status: RecordStatus;
 };
 
@@ -38,7 +39,10 @@ type CounterRecord = {
 export async function loadStructure(): Promise<StructureData> {
   const supabase = await createClient();
   const [stockPointsResult, outletsResult, countersResult] = await Promise.all([
-    supabase.from("stock_points").select("id, code, name, type, status").order("name"),
+    supabase
+      .from("stock_points")
+      .select("id, code, name, type, peg_allowed, status")
+      .order("name"),
     supabase
       .from("outlets")
       .select("id, code, name, type, status, stock_point_id")
@@ -54,7 +58,12 @@ export async function loadStructure(): Promise<StructureData> {
   const outletNames = new Map(outletRecords.map((o) => [o.id, o.name]));
 
   const stockPoints: StockPointRow[] = stockPointRecords.map((sp) => ({
-    ...sp,
+    id: sp.id,
+    code: sp.code,
+    name: sp.name,
+    type: sp.type,
+    pegAllowed: sp.peg_allowed,
+    status: sp.status,
     outletNames: outletRecords
       .filter((o) => o.stock_point_id === sp.id)
       .map((o) => o.name),

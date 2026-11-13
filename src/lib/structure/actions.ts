@@ -75,17 +75,20 @@ export async function saveStockPoint(
     name: field(formData, "name"),
     code: field(formData, "code"),
     type: field(formData, "type"),
+    pegAllowed: formData.get("pegAllowed") === "on",
     status: field(formData, "status"),
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? text.failed };
   }
 
+  const { pegAllowed, ...rest } = parsed.data;
+  const values = { ...rest, peg_allowed: pegAllowed };
   const id = field(formData, "id");
   const supabase = await createClient();
   const { error } = id
-    ? await supabase.from("stock_points").update(parsed.data).eq("id", id)
-    : await supabase.from("stock_points").insert({ ...parsed.data, created_by: me.id });
+    ? await supabase.from("stock_points").update(values).eq("id", id)
+    : await supabase.from("stock_points").insert({ ...values, created_by: me.id });
   if (error) return { error: explain(error, "stock_point") };
 
   revalidatePath(PATH);

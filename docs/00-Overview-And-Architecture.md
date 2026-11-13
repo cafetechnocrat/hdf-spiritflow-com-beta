@@ -72,7 +72,7 @@ Starting roles (confirmed): MD, System Admin, Chief Accountant, Accounts Staff, 
 ## 7. Outlets And Stock Points
 
 - **Outlets:** Spadikam, Dhruvam, No 20, Malarvadi, Front Office, Touchings. Each outlet can have several counters.
-- **Stock Points:** Liquor Store (warehouse), Dhruvam, Spadikam, and the in-room mini bar. The mini bar is a stock point, not a cashier counter.
+- **Stock Points:** Liquor Store, Dhruvam, Spadikam, and the in-room mini bar. The mini bar is a stock point, not a cashier counter. A stock point has a type: Liquor, Kitchen or House Keeping. A Liquor stock point has a Peg Allowed choice: Liquor Store is bottles only; Dhruvam and Spadikam allow pegs. Kitchen and House Keeping stock points are created later. An outlet has a type (Liquor, Food or Hospitality) and one stock point picked from the list, or Not Applicable.
 - Room service sales belong to the outlet that serves them.
 
 ## 8. Design System
