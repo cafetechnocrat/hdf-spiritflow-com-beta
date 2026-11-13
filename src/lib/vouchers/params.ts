@@ -1,4 +1,4 @@
-import { DEFAULT_PAGE_SIZE, PAGE_SIZES } from "@/components/ui/pager";
+import { DEFAULT_PAGE_SIZE, PAGE_SIZES } from "@/lib/paging";
 import type { VoucherQuery } from "./types";
 
 export type RawParams = Record<string, string | string[] | undefined>;

@@ -5,7 +5,8 @@ import { useId, useMemo, useState, useTransition } from "react";
 import type { FormEvent } from "react";
 import { LoadingPopup } from "@/components/loading-popup";
 import { DataList, ErrorLine, Modal } from "@/components/ui/admin-parts";
-import { DEFAULT_PAGE_SIZE, Pager } from "@/components/ui/pager";
+import { Pager } from "@/components/ui/pager";
+import { DEFAULT_PAGE_SIZE } from "@/lib/paging";
 import { badge, button, field } from "@/components/ui/styles";
 import {
   formatAmountText,

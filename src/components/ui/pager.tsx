@@ -2,6 +2,7 @@
 
 import { useId } from "react";
 import { button, field } from "@/components/ui/styles";
+import { PAGE_SIZES } from "@/lib/paging";
 
 // All visible text sits here so it can be translated later.
 const text = {
@@ -14,9 +15,6 @@ const text = {
 } as const;
 
 const NUMBER = new Intl.NumberFormat("en-IN");
-
-export const PAGE_SIZES = [10, 25, 50, 100, 200] as const;
-export const DEFAULT_PAGE_SIZE = 10;
 
 // Rows per page, and First, Previous, Next and Last, under a list that is read a
 // page at a time. It works from a phone up: the two groups stack and the buttons
